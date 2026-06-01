@@ -22,6 +22,8 @@ jobs:
       matrix:
         arch: [amd64, arm64]
       fail-fast: false
+    outputs:
+      version: ${{ steps.vars.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,6 +39,13 @@ jobs:
           chmod +x build_seafari.sh
           ./build_seafari.sh ${{ matrix.arch }}
 
+      - name: Get Version
+        id: vars
+        run: |
+          V=$(grep '^VERSION=' build_seafari.sh | cut -d'"' -f2)
+          echo "VERSION=$V" >> $GITHUB_OUTPUT
+          echo "VERSION=$V" >> $GITHUB_ENV
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -44,8 +53,8 @@ jobs:
             seafari_*.deb
             Seafari-*.AppImage
             seafari-*.rpm
-          tag_name: v1.0.0
-          name: Seafari v1.0.0
+          tag_name: v${{ env.VERSION }}
+          name: Seafari v${{ env.VERSION }}
           draft: false
           prerelease: false
           make_latest: true
@@ -58,24 +67,25 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      - name: Check for successful artifacts
-        id: check_files
-        run: |
-          if gh release view v1.0.0 --repo ${{ github.repository }} | grep -q "seafari_1.0.0_amd64.deb"; then
-            echo "found=true" >> $GITHUB_OUTPUT
-          else
-            echo "found=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Trigger APT Repo Update
-        if: steps.check_files.outputs.found == 'true'
         run: |
-          DEB_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.0/seafari_1.0.0_amd64.deb"
-          echo "Triggering update at InledGroup/apt for $DEB_URL..."
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
-            https://api.github.com/repos/InledGroup/apt/dispatches \
-            -d "{\"event_type\": \"package_upload\", \"client_payload\": {\"deb_url\": \"$DEB_URL\"}}"
+          VERSION="${{ needs.build-and-release.outputs.version }}"
+          DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_amd64.deb"
+          
+          echo "Target Version: $VERSION"
+          echo "Checking if artifact exists at $DEB_URL..."
+          
+          # Wait a few seconds for GitHub to finish processing the release assets
+          sleep 10
+          
+          if curl --output /dev/null --silent --head --fail "$DEB_URL"; then
+            echo "Artifact found! Triggering update at InledGroup/apt..."
+            curl -X POST \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
+              https://api.github.com/repos/InledGroup/apt/dispatches \
+              -d "{\"event_type\": \"package_upload\", \"client_payload\": {\"deb_url\": \"$DEB_URL\"}}"
+          else
+            echo "ERROR: Artifact not found at $DEB_URL. APT update skipped."
+            exit 1
+          fi
