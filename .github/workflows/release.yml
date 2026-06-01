@@ -1,0 +1,61 @@
+name: Build and Release Seafari
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[RELEASE]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip unzip wget tar sed dpkg-dev binutils
+
+      - name: Build Seafari
+        run: |
+          chmod +x build_seafari.sh
+          ./build_seafari.sh
+
+      - name: Get Version
+        run: |
+          VERSION=$(grep '^Version:' build_workspace/deb/DEBIAN/control | cut -d' ' -f2)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
+          echo "DEB_NAME=seafari_${VERSION}_amd64.deb" >> $GITHUB_ENV
+          echo "APPIMAGE_NAME=Seafari-x86_64.AppImage" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.DEB_NAME }}
+            ${{ env.APPIMAGE_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          name: Seafari ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger APT Repo Update
+        if: success()
+        run: |
+          DEB_URL="https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/${{ env.DEB_NAME }}"
+          echo "Triggering update at InledGroup/apt for $DEB_URL..."
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
+            https://api.github.com/repos/InledGroup/apt/dispatches \
+            -d "{\"event_type\": \"package_upload\", \"client_payload\": {\"deb_url\": \"$DEB_URL\"}}"
