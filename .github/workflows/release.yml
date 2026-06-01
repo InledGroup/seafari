@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y zip unzip wget tar sed dpkg-dev binutils
+          sudo apt-get install -y zip unzip wget tar sed dpkg-dev binutils libfuse2
 
       - name: Build Seafari
         run: |

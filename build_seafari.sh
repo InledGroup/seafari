@@ -283,6 +283,6 @@ cp "seafari.png" "$APPDIR/seafari.png"
 cp "$DEB_ROOT/usr/share/applications/seafari.desktop" "$APPDIR/"
 ln -sf seafari.png "$APPDIR/.DirIcon"
 export ARCH=x86_64
-./appimagetool "$APPDIR" "Seafari-x86_64.AppImage"
+./appimagetool --appimage-extract-and-run "$APPDIR" "Seafari-x86_64.AppImage"
 
 echo "Build complete."
