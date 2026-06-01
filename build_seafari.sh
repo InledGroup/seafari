@@ -204,22 +204,24 @@ else
     # We will install fpm in the CI
 fi
 
-# We ALWAYS use the x86_64 appimagetool because the GitHub Actions runner is x86_64.
-# It can still package ARM64 AppDirs if the ARCH environment variable is set.
-APPIMAGE_TOOL_URL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-
-echo "Packaging AppImage..."
-wget -O appimagetool "$APPIMAGE_TOOL_URL"
-chmod +x appimagetool
-APPDIR="$WORKSPACE/Seafari.AppDir"
-mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib/seafari"
-cp -r "$FIREFOX_DIR/"* "$APPDIR/usr/lib/seafari/"
-cp "$WORKSPACE/seafari.sh" "$APPDIR/AppRun"
-chmod +x "$APPDIR/AppRun"
-cp "seafari.png" "$APPDIR/seafari.png"
-cp "$DEB_ROOT/usr/share/applications/seafari.desktop" "$APPDIR/"
-ln -sf seafari.png "$APPDIR/.DirIcon"
-echo "Packaging AppImage for $APPIMAGE_ARCH..."
-ARCH="$APPIMAGE_ARCH" ./appimagetool --appimage-extract-and-run "$APPDIR" "Seafari-${APPIMAGE_ARCH}.AppImage"
+if [ "$ARCH_TYPE" == "amd64" ]; then
+    echo "Packaging AppImage (AMD64 only)..."
+    APPIMAGE_TOOL_URL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+    wget -O appimagetool "$APPIMAGE_TOOL_URL"
+    chmod +x appimagetool
+    
+    APPDIR="$WORKSPACE/Seafari.AppDir"
+    mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib/seafari"
+    cp -r "$FIREFOX_DIR/"* "$APPDIR/usr/lib/seafari/"
+    cp "$WORKSPACE/seafari.sh" "$APPDIR/AppRun"
+    chmod +x "$APPDIR/AppRun"
+    cp "seafari.png" "$APPDIR/seafari.png"
+    cp "$DEB_ROOT/usr/share/applications/seafari.desktop" "$APPDIR/"
+    ln -sf seafari.png "$APPDIR/.DirIcon"
+    
+    ARCH="x86_64" ./appimagetool --appimage-extract-and-run "$APPDIR" "Seafari-x86_64.AppImage"
+else
+    echo "Skipping AppImage for $ARCH_TYPE (AMD64 only)."
+fi
 
 echo "Build complete for $ARCH_TYPE."

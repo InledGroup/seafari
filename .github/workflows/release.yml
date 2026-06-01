@@ -49,19 +49,18 @@ jobs:
           draft: false
           prerelease: false
           make_latest: true
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-apt-update:
     needs: build-and-release
-    # Trigger even if one fails, as long as it wasn't cancelled
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - name: Check for successful artifacts
         id: check_files
         run: |
-          # Use GH CLI to check if the amd64 deb exists in the release
           if gh release view v1.0.0 --repo ${{ github.repository }} | grep -q "seafari_1.0.0_amd64.deb"; then
             echo "found=true" >> $GITHUB_OUTPUT
           else
