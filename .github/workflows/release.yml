@@ -54,11 +54,24 @@ jobs:
 
   trigger-apt-update:
     needs: build-and-release
-    # Trigger if at least the amd64 build succeeded (even if arm64 failed)
-    if: always() && !cancelled() && contains(needs.build-and-release.result, 'success')
+    # Trigger even if one fails, as long as it wasn't cancelled
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
+      - name: Check for successful artifacts
+        id: check_files
+        run: |
+          # Use GH CLI to check if the amd64 deb exists in the release
+          if gh release view v1.0.0 --repo ${{ github.repository }} | grep -q "seafari_1.0.0_amd64.deb"; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Trigger APT Repo Update
+        if: steps.check_files.outputs.found == 'true'
         run: |
           DEB_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.0/seafari_1.0.0_amd64.deb"
           echo "Triggering update at InledGroup/apt for $DEB_URL..."
