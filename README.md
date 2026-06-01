@@ -1,73 +1,62 @@
+# 🧭 Seafari
 
-## <p align="center"> <b> Firefox Safari theme </b> </p>
-![01](preview.png?raw=true)
-<p align="center">A MacOSX Tahoe Safari theme for Firefox 120+</p>
+Seafari is a professional-grade, Safari-styled web browser for Linux, built on top of a highly optimized and patched Firefox binary. It combines the privacy and extensibility of Firefox with the elegant aesthetic and user experience of macOS Safari.
 
-## Description
+![Seafari Logo](seafari.png)
 
-This is a bunch of CSS code to make Firefox look closer to MacOSX Tahoe Safari theme.
-Based on https://github.com/rafaelmardojai/firefox-gnome-theme
+## ✨ Features
 
-## Installation
+- **Safari Aesthetic:** Complete UI overhaul using the MacTahoe theme and custom CSS.
+- **Privacy First:** Pre-installed and force-enabled **uBlock Origin**.
+- **Dynamic Styling:** Pre-installed **Adaptive Tab Bar Colour** for a seamless look.
+- **Enterprise Ready:** Custom policies to disable telemetry, data collection, and unwanted Firefox features.
+- **Multi-Arch Support:** Available for both **AMD64 (x86_64)** and **ARM64 (aarch64)**.
+- **Multiple Formats:** Distributed as `.deb`, `.rpm`, and `AppImage`.
 
-Run: `./tweaks.sh -f`
+## 🚀 Installation
 
-or you can edit the config file
+### Debian / Ubuntu / Mint (Recommended)
 
-Run: `./tweaks.sh -e`
+Add the InledGroup repository to your system:
 
-### Adaptive version support now!
+```bash
+curl -sS https://apt.inled.es/pubkey.gpg | sudo gpg --dearmor -o /usr/share/keyrings/inled-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es/ stable main" | sudo tee /etc/apt/sources.list.d/inled.list
+sudo apt update
+sudo apt install seafari
+```
 
-https://github.com/user-attachments/assets/9b99297f-e6b3-4aa0-812a-331cddb517ce
+### Fedora / RHEL / CentOS
 
-Run: `./tweaks.sh -f adaptive` to install it
+Download the latest `.rpm` from the [Releases](https://github.com/InledGroup/seafari/releases) page and install it:
 
-You need install adaptive-tab-bar-colour plugin first. https://addons.mozilla.org/firefox/addon/adaptive-tab-bar-colour/
+```bash
+sudo dnf install ./seafari-1.0.0-1.x86_64.rpm
+```
 
-### Manual installation
+### Generic Linux (AppImage)
 
-1. Go to `about:support` in Firefox.
-2. Application Basics > Profile Directory > Open Directory.
-3. Copy `chrome` folder Firefox config folder.
-4. If you are using Firefox 69+:
-	1. Go to `about:config` in Firefox.
-	2. Search for `toolkit.legacyUserProfileCustomizations.stylesheets` and set it to `true`.
-5. Restart Firefox.
-6. Open Firefox customization panel and:
-	1. Use *Title bar* option to toggle CSD if is not set by default.
-	2. Move the new tab button to headerbar.
-	3. Select light or dark variants on theme switcher.
-7. Be happy with your new gnomish Firefox.
+Download the `.AppImage` from the [Releases](https://github.com/InledGroup/seafari/releases) page, make it executable, and run:
 
-## Enabling optional features
-Open `userChrome.css` with a text editor and follow instructions to enable extra features. Keep in mind this file might change in future versions and your configuration will be lost. You can copy the @imports you want to enable to a new file named `customChrome` directly in your `chrome` directory if you want it to survive updates. Remember all @imports must be at the top of the file, before other statements.
+```bash
+chmod +x Seafari-x86_64.AppImage
+./Seafari-x86_64.AppImage
+```
 
-## Known bugs
+## 🛠️ Build from Source
 
-### CSD have sharp corners
-See upstream [bug](https://bugzilla.mozilla.org/show_bug.cgi?id=1408360).
+To build Seafari locally:
 
-#### Wayland fix:
-1. Go to the `about:config` page
-2. Search for the `layers.acceleration.force-enabled` preference and set it to true.
-3. Now restart Firefox, and it should look good!
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/InledGroup/seafari.git
+   cd seafari
+   ```
+2. Run the build script (requires `dpkg-dev`, `binutils`, and `fpm` for RPM):
+   ```bash
+   ./build_seafari.sh amd64  # or arm64
+   ```
 
-#### X11 fix:
-1. Go to the `about:config` page
-2. Type `mozilla.widget.use-argb-visuals`
-3. Set it as a `boolean` and click on the add button
-4. Now restart Firefox, and it should look good!
+## 📄 License
 
-## Development
-
-If you wanna mess around the styles and change something, you might find these
-things useful.
-
-To use the Inspector to debug the UI, open the developer tools (F12) on any
-page, go to options, check both of those:
-
-- Enable browser chrome and add-on debugging toolboxes
-- Enable remote debugging
-
-Now you can close those tools and press Ctrl+Alt+Shift+I to Inspect the browser
-UI.
+Seafari is distributed under the same terms as Mozilla Firefox. Theme components and branding are property of their respective owners.
