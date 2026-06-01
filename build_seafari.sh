@@ -219,7 +219,8 @@ chmod +x "$APPDIR/AppRun"
 cp "seafari.png" "$APPDIR/seafari.png"
 cp "$DEB_ROOT/usr/share/applications/seafari.desktop" "$APPDIR/"
 ln -sf seafari.png "$APPDIR/.DirIcon"
-export ARCH=$APPIMAGE_ARCH
+echo "Packaging AppImage for $APPIMAGE_ARCH..."
+export ARCH="$APPIMAGE_ARCH"
 ./appimagetool --appimage-extract-and-run "$APPDIR" "Seafari-${ARCH}.AppImage"
 
 echo "Build complete for $ARCH_TYPE."

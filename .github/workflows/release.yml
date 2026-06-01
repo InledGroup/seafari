@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         arch: [amd64, arm64]
-      fail-fast: false # Don't cancel other jobs if one fails
+      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,7 +54,8 @@ jobs:
 
   trigger-apt-update:
     needs: build-and-release
-    if: success()
+    # Trigger if at least the amd64 build succeeded (even if arm64 failed)
+    if: always() && !cancelled() && contains(needs.build-and-release.result, 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Trigger APT Repo Update
