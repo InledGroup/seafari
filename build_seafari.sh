@@ -204,6 +204,10 @@ else
     # We will install fpm in the CI
 fi
 
+# We ALWAYS use the x86_64 appimagetool because the GitHub Actions runner is x86_64.
+# It can still package ARM64 AppDirs if the ARCH environment variable is set.
+APPIMAGE_TOOL_URL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+
 echo "Packaging AppImage..."
 wget -O appimagetool "$APPIMAGE_TOOL_URL"
 chmod +x appimagetool
