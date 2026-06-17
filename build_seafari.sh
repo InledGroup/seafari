@@ -1,8 +1,19 @@
 #!/bin/bash
 set -e
 
-# Support for architecture selection
-ARCH_TYPE=${1:-"amd64"} # default to amd64, options: amd64, arm64
+# Support for architecture selection and build options
+ARCH_TYPE="amd64"
+SKIP_RPM="false"
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --arch) ARCH_TYPE="$2"; shift ;;
+        --skip-rpm) SKIP_RPM="true" ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 VERSION="1.0.0"
 
 WORKSPACE="build_workspace"
@@ -88,8 +99,11 @@ cat <<EOF > "$DIST_DIR/policies.json"
       "browser.newtabpage.activity-stream.feeds.snippets": false,
       "browser.newtabpage.activity-stream.section.highlights.includeBookmarks": false,
       "browser.newtabpage.activity-stream.section.highlights.includeDownloads": false,
-      "browser.newtabpage.activity-stream.section.highlights.includeVisited": false,
-      "browser.newtabpage.activity-stream.section.highlights.includePocket": false
+      "browser.newtabpage.activity-stream.section.highlights.includeVisited": true,
+      "browser.newtabpage.activity-stream.section.highlights.includePocket": false,
+      "browser.newtabpage.activity-stream.feeds.section.highlights": true,
+      "browser.newtabpage.activity-stream.topSitesRows": 1,
+      "browser.newtabpage.activity-stream.highlights.rows": 1
     }
   }
 }
@@ -121,21 +135,116 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 :root { --theme-primary-color: #007aff !important; --theme-primary-hover-color: #0063cc !important; --theme-primary-active-color: #004da6 !important; --gnome-toolbar-icon-fill: #ffffff !important; --gnome-toolbar-color: #ffffff !important; }
 #about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
+
+/* Unify toolbar buttons into a single bubble */
+#nav-bar #reload-button,
+#nav-bar #tracking-protection-icon-container,
+#nav-bar #new-tab-button,
+#nav-bar #unified-extensions-button,
+#nav-bar #PanelUI-menu-button {
+    background: var(--gnome-headerbar-button-background) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    box-shadow: none !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+#nav-bar #reload-button {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    padding-left: 8px !important;
+    border-left: none !important;
+}
+
+#nav-bar #PanelUI-menu-button {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 8px !important;
+}
+
+#nav-bar #reload-button:hover,
+#nav-bar #tracking-protection-icon-container:hover,
+#nav-bar #new-tab-button:hover,
+#nav-bar #unified-extensions-button:hover,
+#nav-bar #PanelUI-menu-button:hover {
+    background: var(--gnome-headerbar-button-hover-background) !important;
+}
+
+#nav-bar #reload-button:active,
+#nav-bar #tracking-protection-icon-container:active,
+#nav-bar #new-tab-button:active,
+#nav-bar #unified-extensions-button:active,
+#nav-bar #PanelUI-menu-button:active {
+    background: var(--gnome-headerbar-button-active-background) !important;
+}
+
+/* Replace Firefox tab icon for New Tab */
+.tab-icon-image[src="chrome://branding/content/icon32.png"],
+.tab-icon-image[src="chrome://browser/skin/newtab/favicon.png"],
+.tab-icon-image[src="page-icon:about:newtab"],
+.tab-icon-image[src="page-icon:about:home"] {
+    content: url("seafari.png") !important;
+}
 EOF
 
 cat <<EOF > "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:welcome") {
-    .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration { display: none !important; }
+    .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration, .brand-logo { display: none !important; }
     .main-content { max-width: 100% !important; margin: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; height: 100vh !important; background-color: #1a1a1a !important; }
-    .page-content::before { content: ""; display: block; width: 200px; height: 200px; background: url("seafari.png") no-repeat center; background-size: contain; margin-bottom: 30px; }
     h1, p { color: white !important; }
 }
 @-moz-document url("about:home"), url("about:newtab") {
-    body { background-color: #1a1a1a !important; background-image: url("seafari.png") !important; background-repeat: no-repeat !important; background-position: center 20% !important; background-size: 150px !important; }
+    body { background-color: #1a1a1a !important; }
     .activity-stream { background: transparent !important; }
-    .search-wrapper, .logo-and-wordmark, .wordmark, .logo { display: none !important; }
-    .top-site-outer .tile { background-color: rgba(255, 255, 255, 0.1) !important; border-radius: 12px !important; backdrop-filter: blur(10px) !important; width: 80px !important; height: 80px !important; }
-    .top-site-outer .title { color: white !important; font-weight: 500 !important; }
+    .search-wrapper, .wordmark { display: none !important; }
+    
+    .logo-and-wordmark {
+        display: flex !important;
+        justify-content: center !important;
+        margin-top: 60px !important;
+        margin-bottom: 20px !important;
+    }
+    .logo {
+        background: url("seafari.png") no-repeat center !important;
+        background-size: contain !important;
+        width: 120px !important;
+        height: 120px !important;
+        display: block !important;
+    }
+
+    /* Titles */
+    .section-title span { visibility: hidden !important; }
+    .section-title span::before { visibility: visible !important; font-weight: 600 !important; font-size: 24px !important; color: white !important; }
+    
+    .top-sites .section-title span::before { content: "Favorites" !important; }
+    .highlights .section-title span::before { content: "Frequently Visited" !important; }
+
+    /* Top Sites (Favorites) */
+    .top-site-outer .tile { 
+        background-color: rgba(255, 255, 255, 0.1) !important; 
+        border-radius: 12px !important; 
+        backdrop-filter: blur(10px) !important; 
+        width: 70px !important; 
+        height: 70px !important; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    }
+    .top-site-outer .title { color: white !important; font-weight: 500 !important; margin-top: 8px !important; }
+
+    /* Highlights (Frequently Visited) */
+    .highlights .card-outer {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        transition: transform 0.2s !important;
+    }
+    .highlights .card-outer:hover { transform: scale(1.02) !important; background: rgba(255, 255, 255, 0.08) !important; }
+    .highlights .card-preview-image-outer { height: 120px !important; }
+    .highlights .card-title { color: white !important; padding: 10px !important; }
+    .highlights .card-context { display: none !important; }
 }
 @-moz-document url-prefix("about:") { .brand-logo, .logo { background: url("seafari.png") no-repeat center !important; background-size: contain !important; } }
 EOF
@@ -190,18 +299,21 @@ Description: Seafari - Safari styled browser.
 EOF
 dpkg-deb --build --root-owner-group "$DEB_ROOT" "seafari_${VERSION}_${DEB_ARCH}.deb"
 
-echo "Packaging .rpm..."
-# Using fpm for RPM if available, otherwise manual structure
-if command -v fpm &> /dev/null; then
-    fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
-        --description "Seafari - Safari styled browser" \
-        "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
-        "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
-        "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
+if [ "$SKIP_RPM" != "true" ]; then
+    echo "Packaging .rpm..."
+    # Using fpm for RPM if available, otherwise manual structure
+    if command -v fpm &> /dev/null; then
+        fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
+            --description "Seafari - Safari styled browser" \
+            "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
+            "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
+            "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
+            "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
+    else
+        echo "fpm not found, skipping RPM for now or use alien later."
+    fi
 else
-    echo "fpm not found, skipping RPM for now or use alien later."
-    # We will install fpm in the CI
+    echo "Skipping RPM build as requested."
 fi
 
 if [ "$ARCH_TYPE" == "amd64" ]; then
