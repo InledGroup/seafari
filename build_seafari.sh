@@ -192,9 +192,39 @@ EOF
 
 cat <<EOF > "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:welcome") {
-    .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration, .brand-logo { display: none !important; }
-    .main-content { max-width: 100% !important; margin: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; height: 100vh !important; background-color: #1a1a1a !important; }
-    h1, p { color: white !important; }
+    .section-secondary, .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration, .brand-logo, .logo-container { 
+        display: none !important; 
+    }
+    .onboardingContainer {
+        background: #1a1a1a !important;
+        background-image: none !important;
+    }
+    .screen {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        background: transparent !important;
+    }
+    .section-main {
+        width: 100% !important;
+        max-width: 800px !important;
+        margin: 0 auto !important;
+        background: transparent !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    .main-content {
+        max-width: 100% !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        background-color: transparent !important;
+    }
+    h1, h2, p, span, label { color: white !important; }
 }
 @-moz-document url("about:home"), url("about:newtab") {
     body { background-color: #1a1a1a !important; }
