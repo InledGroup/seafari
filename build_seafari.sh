@@ -436,7 +436,7 @@ if command -v fpm &> /dev/null; then
         "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
         "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
         "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
+        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png || true
     
     # Arch Linux (pacman) Packaging
     fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
@@ -446,7 +446,7 @@ if command -v fpm &> /dev/null; then
         "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
         "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
         "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
+        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png || true
 else
     echo "WARNING: fpm not found. Skipping RPM and Arch Linux packaging."
     echo "To install fpm: gem install fpm"
