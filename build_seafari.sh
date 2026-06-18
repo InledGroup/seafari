@@ -6,6 +6,11 @@ ARCH_TYPE="amd64"
 SKIP_RPM="false"
 
 # Parse arguments
+if [[ "$#" -gt 0 && ! "$1" =~ ^-- ]]; then
+    ARCH_TYPE="$1"
+    shift
+fi
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --arch) ARCH_TYPE="$2"; shift ;;
