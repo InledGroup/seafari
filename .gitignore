@@ -2,6 +2,7 @@
 Seafari-*.AppImage
 seafari_*.deb
 seafari_*.rpm
+seafari_*.pkg.tar.zst
 appimagetool
 build_workspace/
 tmp_ja*/

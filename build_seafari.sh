@@ -430,6 +430,7 @@ echo "Packaging .rpm and .pacman using fpm..."
 if command -v fpm &> /dev/null; then
     # RPM Packaging
     fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
+        -p "seafari_${VERSION}_${RPM_ARCH}.rpm" \
         --description "Seafari - Safari styled browser" \
         --category "Network" \
         --license "MPL 2.0" \
@@ -440,6 +441,7 @@ if command -v fpm &> /dev/null; then
     
     # Arch Linux (pacman) Packaging
     fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
+        -p "seafari_${VERSION}_${RPM_ARCH}.pkg.tar.zst" \
         --description "Seafari - Safari styled browser" \
         --category "Network" \
         --license "MPL 2.0" \
