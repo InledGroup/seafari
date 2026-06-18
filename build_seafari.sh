@@ -395,7 +395,7 @@ exec "$LIB_DIR/firefox" --name "Seafari" --class "Seafari" --profile "$PROFILE_D
 EOF
 chmod +x "$WORKSPACE/seafari.sh"
 
-echo "Packaging .deb..."
+echo "Packaging .deb for $ARCH_TYPE..."
 DEB_ROOT="$WORKSPACE/deb"
 mkdir -p "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/lib/seafari" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps" "$DEB_ROOT/DEBIAN"
 cp -r "$FIREFOX_DIR/"* "$DEB_ROOT/usr/lib/seafari/"
@@ -420,29 +420,31 @@ Description: Seafari - Safari styled browser.
 EOF
 dpkg-deb --build --root-owner-group "$DEB_ROOT" "seafari_${VERSION}_${DEB_ARCH}.deb"
 
-if [ "$SKIP_RPM" != "true" ]; then
-    echo "Packaging .rpm..."
-    # Using fpm for RPM if available, otherwise manual structure
-    if command -v fpm &> /dev/null; then
-        fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
-            --description "Seafari - Safari styled browser" \
-            "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
-            "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
-            "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-            "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
-        
-        echo "Packaging for Arch Linux (.pacman)..."
-        fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
-            --description "Seafari - Safari styled browser" \
-            "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
-            "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
-            "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-            "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
-    else
-        echo "fpm not found, skipping RPM for now or use alien later."
-    fi
+echo "Packaging .rpm and .pacman using fpm..."
+# Ensure fpm is available or notify
+if command -v fpm &> /dev/null; then
+    # RPM Packaging
+    fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
+        --description "Seafari - Safari styled browser" \
+        --category "Network" \
+        --license "MPL 2.0" \
+        "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
+        "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
+        "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
+        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
+    
+    # Arch Linux (pacman) Packaging
+    fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
+        --description "Seafari - Safari styled browser" \
+        --category "Network" \
+        --license "MPL 2.0" \
+        "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
+        "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
+        "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
+        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
 else
-    echo "Skipping RPM build as requested."
+    echo "WARNING: fpm not found. Skipping RPM and Arch Linux packaging."
+    echo "To install fpm: gem install fpm"
 fi
 
 if [ "$ARCH_TYPE" == "amd64" ]; then

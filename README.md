@@ -60,3 +60,5 @@ To build Seafari locally:
 ## 📄 License
 
 Seafari is distributed under the same terms as Mozilla Firefox. Theme components and branding are property of their respective owners.
+
+v1.0
