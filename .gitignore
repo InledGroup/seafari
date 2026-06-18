@@ -1,0 +1,13 @@
+# Build artifacts
+Seafari-*.AppImage
+seafari_*.deb
+seafari_*.rpm
+appimagetool
+build_workspace/
+tmp_ja*/
+
+# Firefox temporary files
+*.ja.bak
+
+# OS files
+.DS_Store

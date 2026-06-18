@@ -1,3 +1,91 @@
+@import "MacTahoe/theme.css";
+.toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
+.toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
+:root { --theme-primary-color: #007aff !important; --theme-primary-hover-color: #0063cc !important; --theme-primary-active-color: #004da6 !important; --gnome-toolbar-icon-fill: #ffffff !important; --gnome-toolbar-color: #ffffff !important; }
+#about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
+#about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
-/* Add your own custom styles here */
+/* Ensure New Tab and Overview buttons are visible and white */
+#new-tab-button, #tabs-newtab-button, #tab-overview-button {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+    fill: white !important;
+    color: white !important;
+}
 
+#new-tab-button image, #tabs-newtab-button image, #tab-overview-button image {
+    fill: white !important;
+    color: white !important;
+    filter: invert(1) brightness(100) !important;
+}
+
+#tab-overview-button {
+    list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
+}
+
+/* Unify toolbar buttons into a single bubble */
+#nav-bar #reload-button,
+#nav-bar #tracking-protection-icon-container,
+#nav-bar #new-tab-button,
+#nav-bar #tabs-newtab-button,
+#nav-bar #tab-overview-button,
+#nav-bar #unified-extensions-button,
+#nav-bar #PanelUI-menu-button {
+    background: var(--gnome-headerbar-button-background) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    box-shadow: none !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+#nav-bar #reload-button {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    padding-left: 8px !important;
+    border-left: none !important;
+}
+
+#nav-bar #PanelUI-menu-button {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 8px !important;
+}
+
+#nav-bar #reload-button:hover,
+#nav-bar #tracking-protection-icon-container:hover,
+#nav-bar #new-tab-button:hover,
+#nav-bar #tabs-newtab-button:hover,
+#nav-bar #tab-overview-button:hover,
+#nav-bar #unified-extensions-button:hover,
+#nav-bar #PanelUI-menu-button:hover {
+    background: var(--gnome-headerbar-button-hover-background) !important;
+}
+
+#nav-bar #reload-button:active,
+#nav-bar #tracking-protection-icon-container:active,
+#nav-bar #new-tab-button:active,
+#nav-bar #tabs-newtab-button:active,
+#nav-bar #tab-overview-button:active,
+#nav-bar #unified-extensions-button:active,
+#nav-bar #PanelUI-menu-button:active {
+    background: var(--gnome-headerbar-button-active-background) !important;
+}
+
+/* Tab close button white */
+.tab-close-button {
+    fill: white !important;
+    color: white !important;
+    filter: invert(1) brightness(100) !important;
+}
+
+/* Replace Firefox tab icon for New Tab */
+.tab-icon-image[src="chrome://branding/content/icon32.png"],
+.tab-icon-image[src="chrome://browser/skin/newtab/favicon.png"],
+.tab-icon-image[src="page-icon:about:newtab"],
+.tab-icon-image[src="page-icon:about:home"] {
+    content: url("seafari.png") !important;
+}

@@ -118,8 +118,64 @@ pref("general.config.sandbox_enabled", false);
 EOF
 
 cat <<EOF > "$FIREFOX_DIR/seafari.cfg"
-// seafari configuration
+# seafari configuration
+try {
+  let { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
+  function setupUI(window) {
+    let document = window.document;
+    let navBar = document.getElementById("nav-bar-customization-target");
+    let reloadBtn = document.getElementById("reload-button");
+
+    if (!navBar || !reloadBtn) return;
+
+    // Move New Tab button
+    let newTabBtn = document.getElementById("new-tab-button") || document.getElementById("tabs-newtab-button");
+    if (newTabBtn) {
+      navBar.insertBefore(newTabBtn, reloadBtn.nextSibling);
+    }
+
+    // Add Tab Overview button
+    if (!document.getElementById("tab-overview-button")) {
+      let overviewBtn = document.createXULElement("toolbarbutton");
+      overviewBtn.setAttribute("id", "tab-overview-button");
+      overviewBtn.setAttribute("class", "toolbarbutton-1 chrome64-button");
+      overviewBtn.setAttribute("label", "Tab Overview");
+      overviewBtn.setAttribute("tooltiptext", "Tab Overview");
+      overviewBtn.setAttribute("oncommand", "FirefoxViewHandler.openTab();");
+      navBar.insertBefore(overviewBtn, reloadBtn.nextSibling);
+    }
+  }
+
+  // Monitor for new windows
+  Services.obs.addObserver(function(aSubject, aTopic, aData) {
+    let window = aSubject;
+    window.addEventListener("load", function() {
+      if (window.location.href === "chrome://browser/content/browser.xhtml") {
+        setupUI(window);
+      }
+    }, { once: true });
+  }, "domwindowopened", false);
+
+  // Apply to existing windows
+  let windows = Services.wm.getEnumerator("navigator:browser");
+  while (windows.hasMoreElements()) {
+    let window = windows.getNext();
+    if (window.location.href === "chrome://browser/content/browser.xhtml") {
+      setupUI(window);
+    }
+  }
+} catch (e) {
+  Components.utils.reportError(e);
+}
 EOF
+
+mkdir -p "$FIREFOX_DIR/defaults/pref"
+cat <<EOF > "$FIREFOX_DIR/defaults/pref/autoconfig.js"
+pref("general.config.filename", "seafari.cfg");
+pref("general.config.obscure_value", 0);
+EOF
+
 
 echo "Preparing Theme Folder..."
 THEME_DIR="$FIREFOX_DIR/seafari-theme"
@@ -136,10 +192,31 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 #about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
+/* Ensure New Tab button is visible and white */
+#new-tab-button, #tabs-newtab-button, #tab-overview-button {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+    fill: white !important;
+    color: white !important;
+}
+
+#new-tab-button image, #tabs-newtab-button image, #tab-overview-button image {
+    fill: white !important;
+    color: white !important;
+    filter: invert(1) brightness(100) !important;
+}
+
+#tab-overview-button {
+    list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
+}
+
 /* Unify toolbar buttons into a single bubble */
 #nav-bar #reload-button,
 #nav-bar #tracking-protection-icon-container,
 #nav-bar #new-tab-button,
+#nav-bar #tabs-newtab-button,
+#nav-bar #tab-overview-button,
 #nav-bar #unified-extensions-button,
 #nav-bar #PanelUI-menu-button {
     background: var(--gnome-headerbar-button-background) !important;
@@ -168,6 +245,8 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 #nav-bar #reload-button:hover,
 #nav-bar #tracking-protection-icon-container:hover,
 #nav-bar #new-tab-button:hover,
+#nav-bar #tabs-newtab-button:hover,
+#nav-bar #tab-overview-button:hover,
 #nav-bar #unified-extensions-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
     background: var(--gnome-headerbar-button-hover-background) !important;
@@ -176,9 +255,20 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 #nav-bar #reload-button:active,
 #nav-bar #tracking-protection-icon-container:active,
 #nav-bar #new-tab-button:active,
+#nav-bar #tabs-newtab-button:active,
+#nav-bar #tab-overview-button:active,
 #nav-bar #unified-extensions-button:active,
 #nav-bar #PanelUI-menu-button:active {
     background: var(--gnome-headerbar-button-active-background) !important;
+}
+
+/* Tab close button white */
+
+/* Tab close button white */
+.tab-close-button {
+    fill: white !important;
+    color: white !important;
+    filter: invert(1) brightness(100) !important;
 }
 
 /* Replace Firefox tab icon for New Tab */
@@ -282,8 +372,9 @@ EOF
 echo "Binary Patching..."
 patch_ja() {
     local ja_file=$1
-    sed -i 's/Firefox/Seafari/g' "$ja_file"
-    sed -i 's/firefox/seafari/g' "$ja_file"
+    echo "Patching $ja_file..."
+    # Safe name replacement (same length strings)
+    sed -i 's/Firefox/Seafari/g; s/firefox/seafari/g' "$ja_file"
 }
 patch_ja "$FIREFOX_DIR/omni.ja"
 patch_ja "$FIREFOX_DIR/browser/omni.ja"
@@ -334,6 +425,14 @@ if [ "$SKIP_RPM" != "true" ]; then
     # Using fpm for RPM if available, otherwise manual structure
     if command -v fpm &> /dev/null; then
         fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
+            --description "Seafari - Safari styled browser" \
+            "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
+            "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
+            "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
+            "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png
+        
+        echo "Packaging for Arch Linux (.pacman)..."
+        fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
             --description "Seafari - Safari styled browser" \
             "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
             "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \

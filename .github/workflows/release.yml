@@ -53,6 +53,7 @@ jobs:
             seafari_*.deb
             Seafari-*.AppImage
             seafari-*.rpm
+            seafari-*.pacman
           tag_name: v${{ env.VERSION }}
           name: Seafari v${{ env.VERSION }}
           draft: false
