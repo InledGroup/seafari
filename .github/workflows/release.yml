@@ -53,7 +53,7 @@ jobs:
             seafari_*.deb
             Seafari-*.AppImage
             seafari-*.rpm
-            seafari-*.pacman
+            *.pkg.tar.zst
           tag_name: v${{ env.VERSION }}
           name: Seafari v${{ env.VERSION }}
           draft: false
@@ -71,22 +71,22 @@ jobs:
       - name: Trigger APT Repo Update
         run: |
           VERSION="${{ needs.build-and-release.outputs.version }}"
-          DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_amd64.deb"
           
-          echo "Target Version: $VERSION"
-          echo "Checking if artifact exists at $DEB_URL..."
-          
-          # Wait a few seconds for GitHub to finish processing the release assets
-          sleep 10
-          
-          if curl --output /dev/null --silent --head --fail "$DEB_URL"; then
-            echo "Artifact found! Triggering update at InledGroup/apt..."
-            curl -X POST \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
-              https://api.github.com/repos/InledGroup/apt/dispatches \
-              -d "{\"event_type\": \"package_upload\", \"client_payload\": {\"deb_url\": \"$DEB_URL\"}}"
-          else
-            echo "ERROR: Artifact not found at $DEB_URL. APT update skipped."
-            exit 1
-          fi
+          for ARCH in amd64 arm64; do
+            DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${ARCH}.deb"
+            echo "Checking artifact for $ARCH at $DEB_URL..."
+            
+            # Wait a bit for each
+            sleep 5
+            
+            if curl --output /dev/null --silent --head --fail "$DEB_URL"; then
+              echo "Artifact found for $ARCH! Triggering update..."
+              curl -X POST \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
+                https://api.github.com/repos/InledGroup/apt/dispatches \
+                -d "{\"event_type\": \"package_upload\", \"client_payload\": {\"deb_url\": \"$DEB_URL\"}}"
+            else
+              echo "WARNING: Artifact not found for $ARCH at $DEB_URL."
+            fi
+          done
