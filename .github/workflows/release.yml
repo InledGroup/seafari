@@ -28,6 +28,49 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Auto-increment Version
+        if: github.event_name == 'schedule' || github.event_name == 'repository_dispatch'
+        run: |
+          # English: Configure Git for the automated bot commit
+          # Español: Configurar Git para el commit automatizado del bot
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # English: Extract current version from build_seafari.sh
+          # Español: Extraer la versión actual de build_seafari.sh
+          CURRENT_VERSION=$(grep '^VERSION=' build_seafari.sh | cut -d'"' -f2)
+          echo "Current Version: $CURRENT_VERSION"
+          
+          # English: Parse version components
+          # Español: Parsear los componentes de la versión
+          MAJOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f1)
+          MINOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f2)
+          PATCH=$(echo "$CURRENT_VERSION" | cut -d'.' -f3)
+          
+          # English: Force major and minor version to 1.1 if they are not already set to it
+          # Español: Forzar las versiones mayor y menor a 1.1 si aún no están configuradas así
+          if [ "$MAJOR" != "1" ] || [ "$MINOR" != "1" ]; then
+            MAJOR="1"
+            MINOR="1"
+            PATCH="0"
+          fi
+          
+          # English: Increment the patch version number
+          # Español: Incrementar el número de la versión de parche
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "New Version: $NEW_VERSION"
+          
+          # English: Update the version variable in build_seafari.sh
+          # Español: Actualizar la variable de versión en build_seafari.sh
+          sed -i "s/^VERSION=\"[^\"]*\"/VERSION=\"$NEW_VERSION\"/" build_seafari.sh
+          
+          # English: Commit and push changes back to the main branch
+          # Español: Hacer commit y push de los cambios de vuelta a la rama principal
+          git add build_seafari.sh
+          git commit -m "Auto-increment version to $NEW_VERSION [skip ci]"
+          git push origin HEAD:${{ github.ref }}
+
       - name: Install dependencies
         run: |
           sudo apt-get update

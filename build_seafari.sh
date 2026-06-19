@@ -19,7 +19,9 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
-VERSION="1.0.0"
+# English: Package version (automatically incremented by CI for automated builds)
+# Español: Versión del paquete (incrementada automáticamente por el CI para compilaciones automáticas)
+VERSION="1.1.0"
 
 WORKSPACE="build_workspace"
 rm -rf "$WORKSPACE"
