@@ -73,20 +73,67 @@ jobs:
           VERSION="${{ needs.build-and-release.outputs.version }}"
           
           for ARCH in amd64 arm64; do
-            DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${ARCH}.deb"
-            echo "Checking artifact for $ARCH at $DEB_URL..."
-            
-            # Wait a bit for each
+            # English: Determine architecture naming conventions for the package formats
+            # Español: Determinar las convenciones de nomenclatura de arquitectura para los formatos de paquete
+            if [ "$ARCH" = "amd64" ]; then
+              DEB_ARCH="amd64"
+              RPM_ARCH="x86_64"
+            else
+              DEB_ARCH="arm64"
+              RPM_ARCH="aarch64"
+            fi
+
+            DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${DEB_ARCH}.deb"
+            RPM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${RPM_ARCH}.rpm"
+            PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${RPM_ARCH}.pkg.tar.zst"
+
+            echo "Checking artifacts for $ARCH..."
+            # English: Wait a few seconds to let GitHub Releases complete the upload process
+            # Español: Esperar unos segundos para permitir que GitHub Releases complete el proceso de subida
             sleep 5
-            
+
+            # English: Build client payload dynamically based on which artifacts are successfully uploaded
+            # Español: Construir el payload del cliente de manera dinámica según qué artefactos se hayan subido correctamente
+            PAYLOAD_ITEMS=()
+
             if curl --output /dev/null --silent --head --fail "$DEB_URL"; then
-              echo "Artifact found for $ARCH! Triggering update..."
+              echo "  .deb artifact found!"
+              PAYLOAD_ITEMS+=("\"deb_url\": \"$DEB_URL\"")
+            else
+              echo "  WARNING: .deb artifact not found at $DEB_URL"
+            fi
+
+            if curl --output /dev/null --silent --head --fail "$RPM_URL"; then
+              echo "  .rpm artifact found!"
+              PAYLOAD_ITEMS+=("\"rpm_url\": \"$RPM_URL\"")
+            else
+              echo "  WARNING: .rpm artifact not found at $RPM_URL"
+            fi
+
+            if curl --output /dev/null --silent --head --fail "$PKG_URL"; then
+              echo "  .pkg.tar.zst artifact found!"
+              PAYLOAD_ITEMS+=("\"pkg_url\": \"$PKG_URL\"")
+            else
+              echo "  WARNING: .pkg.tar.zst artifact not found at $PKG_URL"
+            fi
+
+            # English: If at least one package is found, trigger the repository update
+            # Español: Si se encuentra al menos un paquete, disparar la actualización del repositorio
+            if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
+              # English: Join the payload elements with commas
+              # Español: Unir los elementos del payload con comas
+              IFS=,
+              CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
+              unset IFS
+
+              echo "Triggering update for $ARCH with payload: $CLIENT_PAYLOAD"
               curl -X POST \
                 -H "Accept: application/vnd.github.v3+json" \
                 -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
                 https://api.github.com/repos/InledGroup/apt/dispatches \
-                -d "{\"event_type\": \"package_upload\", \"client_payload\": {\"deb_url\": \"$DEB_URL\"}}"
+                -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
             else
-              echo "WARNING: Artifact not found for $ARCH at $DEB_URL."
+              echo "WARNING: No artifacts found for $ARCH. Skipping update trigger."
             fi
           done
+
