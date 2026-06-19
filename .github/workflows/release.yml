@@ -52,8 +52,8 @@ jobs:
           files: |
             seafari_*.deb
             Seafari-*.AppImage
-            seafari_*.rpm
-            seafari_*.pkg.tar.zst
+            seafari-*.rpm
+            seafari-*.pkg.tar.zst
           tag_name: v${{ env.VERSION }}
           name: Seafari v${{ env.VERSION }}
           draft: false
@@ -84,8 +84,8 @@ jobs:
             fi
 
             DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${DEB_ARCH}.deb"
-            RPM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${RPM_ARCH}.rpm"
-            PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${RPM_ARCH}.pkg.tar.zst"
+            RPM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari-${VERSION}-1.${RPM_ARCH}.rpm"
+            PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
 
             echo "Checking artifacts for $ARCH..."
             # English: Wait a few seconds to let GitHub Releases complete the upload process
