@@ -78,6 +78,9 @@ cat <<EOF > "$DIST_DIR/policies.json"
   "policies": {
     "AppUpdateURL": "https://apt.inled.es",
     "DisableAppUpdate": true,
+    "SearchEngines": {
+      "Default": "Google"
+    },
     "ExtensionSettings": {
       "uBlock0@raymondhill.net": {
         "installation_mode": "force_installed",
@@ -94,8 +97,6 @@ cat <<EOF > "$DIST_DIR/policies.json"
       "browser.search.suggest.enabled": true,
       "browser.urlbar.suggest.searches": true,
       "browser.urlbar.showSearchSuggestionsFirst": true,
-      "browser.search.defaultEngine.US": "Google",
-      "browser.search.order.1": "Google",
       "browser.shell.checkDefaultBrowser": false,
       "browser.aboutConfig.showWarning": false,
       "browser.tabs.warnOnClose": false,
@@ -420,15 +421,11 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:") { .brand-logo, .logo { background: url("seafari.png") no-repeat center !important; background-size: contain !important; } }
 EOF
 
-echo "Binary Patching..."
-patch_ja() {
-    local ja_file=$1
-    echo "Patching $ja_file..."
-    # Safe name replacement (same length strings)
-    sed -i 's/Firefox/Seafari/g; s/firefox/seafari/g' "$ja_file"
-}
-patch_ja "$FIREFOX_DIR/omni.ja"
-patch_ja "$FIREFOX_DIR/browser/omni.ja"
+echo "Binary Patching skipped to prevent ZIP corruption and fix Search Engines..."
+# English: We skip patching omni.ja directly via sed because it corrupts the ZIP structure,
+# breaking the built-in search engine configuration and preventing searches.
+# Español: Omitimos el parcheo de omni.ja directamente vía sed porque corrompe la estructura del ZIP,
+# rompiendo la configuración del motor de búsqueda integrado y evitando las búsquedas.
 
 echo "Creating Wrapper Script..."
 cat <<'EOF' > "$WORKSPACE/seafari.sh"
