@@ -6,7 +6,7 @@
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
 /* Ensure New Tab and Overview buttons are visible and white */
-#new-tab-button, #tabs-newtab-button, #tab-overview-button {
+#new-tab-button, #tab-overview-button {
     visibility: visible !important;
     opacity: 1 !important;
     display: flex !important;
@@ -14,7 +14,7 @@
     color: white !important;
 }
 
-#new-tab-button image, #tabs-newtab-button image, #tab-overview-button image {
+#new-tab-button image, #tab-overview-button image {
     fill: white !important;
     color: white !important;
     filter: invert(1) brightness(100) !important;
@@ -24,11 +24,17 @@
     list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
 }
 
+/* Hide the tab strip's original new tab button to prevent duplication */
+#tabs-newtab-button {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 /* Unify toolbar buttons into a single bubble */
+#nav-bar #stop-reload-button,
 #nav-bar #reload-button,
 #nav-bar #tracking-protection-icon-container,
 #nav-bar #new-tab-button,
-#nav-bar #tabs-newtab-button,
 #nav-bar #tab-overview-button,
 #nav-bar #unified-extensions-button,
 #nav-bar #PanelUI-menu-button {
@@ -42,6 +48,7 @@
     border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
+#nav-bar #stop-reload-button,
 #nav-bar #reload-button {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
@@ -55,20 +62,20 @@
     padding-right: 8px !important;
 }
 
+#nav-bar #stop-reload-button:hover,
 #nav-bar #reload-button:hover,
 #nav-bar #tracking-protection-icon-container:hover,
 #nav-bar #new-tab-button:hover,
-#nav-bar #tabs-newtab-button:hover,
 #nav-bar #tab-overview-button:hover,
 #nav-bar #unified-extensions-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
     background: var(--gnome-headerbar-button-hover-background) !important;
 }
 
+#nav-bar #stop-reload-button:active,
 #nav-bar #reload-button:active,
 #nav-bar #tracking-protection-icon-container:active,
 #nav-bar #new-tab-button:active,
-#nav-bar #tabs-newtab-button:active,
 #nav-bar #tab-overview-button:active,
 #nav-bar #unified-extensions-button:active,
 #nav-bar #PanelUI-menu-button:active {

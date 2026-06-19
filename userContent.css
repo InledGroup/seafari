@@ -5,3 +5,49 @@
 @import "MacTahoe/pages/newtab.css";
 @import "MacTahoe/pages/reader.css";
 @import "MacTahoe/pages/privatebrowsing.css";
+
+/* English: Hide all default Firefox foxes and decorative illustrations in error and system pages */
+/* Español: Ocultar todos los zorros por defecto de Firefox e ilustraciones decorativas en páginas de error y sistema */
+.illustration, 
+.error-illustration, 
+.fox-image, 
+.onboarding-hero-image,
+.hero-image,
+#errorPageContainer .illustration,
+#errorPageContainer .error-illustration,
+.illustration-container {
+    display: none !important;
+}
+
+/* English: Replace Firefox branding logos with Seafari logo globally in internal pages */
+/* Español: Reemplazar los logos de marca de Firefox por el logo de Seafari globalmente en páginas internas */
+.brand-logo,
+.firefox-logo,
+.logo-container img,
+.logo-container svg,
+.logo img,
+.logo svg,
+#about-logo,
+.about-logo,
+#about-logo-container img,
+#about-logo-container svg,
+.brand-logo-container img,
+.brand-logo-container svg {
+    content: url("seafari.png") !important;
+    width: 90px !important;
+    height: 90px !important;
+    display: block !important;
+    margin: 0 auto !important;
+}
+
+/* English: Fix for background-based branding logos */
+/* Español: Corrección para logos de marca basados en fondo de imagen */
+.brand-logo,
+.firefox-logo,
+#about-logo,
+.about-logo {
+    background-image: url("seafari.png") !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}

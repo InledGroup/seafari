@@ -90,6 +90,12 @@ cat <<EOF > "$DIST_DIR/policies.json"
     },
     "Preferences": {
       "toolkit.legacyUserProfileCustomizations.stylesheets": true,
+      "keyword.enabled": true,
+      "browser.search.suggest.enabled": true,
+      "browser.urlbar.suggest.searches": true,
+      "browser.urlbar.showSearchSuggestionsFirst": true,
+      "browser.search.defaultEngine.US": "Google",
+      "browser.search.order.1": "Google",
       "browser.shell.checkDefaultBrowser": false,
       "browser.aboutConfig.showWarning": false,
       "browser.tabs.warnOnClose": false,
@@ -125,62 +131,95 @@ pref("general.config.sandbox_enabled", false);
 EOF
 
 cat <<EOF > "$FIREFOX_DIR/seafari.cfg"
-# seafari configuration
+// seafari configuration
 try {
-  let { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+  // English: Set default preferences to ensure search engine and suggestions work properly
+  // Español: Establecer preferencias predeterminadas para asegurar que el motor de búsqueda y sugerencias funcionen bien
+  pref("keyword.enabled", true);
+  pref("browser.search.suggest.enabled", true);
+  pref("browser.urlbar.suggest.searches", true);
+  pref("browser.urlbar.showSearchSuggestionsFirst", true);
+  pref("browser.search.defaultEngine.US", "Google");
+  pref("browser.search.order.1", "Google");
+  pref("browser.fixup.alternate.enabled", false);
+  pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0);
+} catch (e) {
+  // Silently ignore if preference engine is not fully loaded
+}
 
+try {
   function setupUI(window) {
     let document = window.document;
     let navBar = document.getElementById("nav-bar-customization-target");
-    let reloadBtn = document.getElementById("reload-button");
+    if (!navBar) return;
 
-    if (!navBar || !reloadBtn) return;
-
-    // Move New Tab button
+    // English: Obtain the necessary UI elements
+    // Español: Obtener los elementos de interfaz necesarios
+    let backBtn = document.getElementById("back-button");
+    let forwardBtn = document.getElementById("forward-button");
+    let urlbar = document.getElementById("urlbar-container");
+    let reloadBtn = document.getElementById("stop-reload-button") || document.getElementById("reload-button");
     let newTabBtn = document.getElementById("new-tab-button") || document.getElementById("tabs-newtab-button");
-    if (newTabBtn) {
-      navBar.insertBefore(newTabBtn, reloadBtn.nextSibling);
-    }
 
-    // Add Tab Overview button
-    if (!document.getElementById("tab-overview-button")) {
-      let overviewBtn = document.createXULElement("toolbarbutton");
+    // English: Create or get the Tab Overview button
+    // Español: Crear u obtener el botón de Tab Overview
+    let overviewBtn = document.getElementById("tab-overview-button");
+    if (!overviewBtn) {
+      overviewBtn = document.createXULElement("toolbarbutton");
       overviewBtn.setAttribute("id", "tab-overview-button");
       overviewBtn.setAttribute("class", "toolbarbutton-1 chrome64-button");
       overviewBtn.setAttribute("label", "Tab Overview");
       overviewBtn.setAttribute("tooltiptext", "Tab Overview");
       overviewBtn.setAttribute("oncommand", "FirefoxViewHandler.openTab();");
-      navBar.insertBefore(overviewBtn, reloadBtn.nextSibling);
     }
+
+    let extensionsBtn = document.getElementById("unified-extensions-button");
+    let menuBtn = document.getElementById("PanelUI-menu-button");
+
+    // English: Reorder elements to ensure macOS Safari layout: [Back] [Forward] [UrlBar] [Reload] [NewTab] [Overview] [Extensions] [Menu]
+    // Español: Reordenar elementos para asegurar la disposición de macOS Safari: [Atrás] [Adelante] [UrlBar] [Recargar] [NuevaPestaña] [Overview] [Extensiones] [Menú]
+    if (backBtn) navBar.appendChild(backBtn);
+    if (forwardBtn) navBar.appendChild(forwardBtn);
+    if (urlbar) navBar.appendChild(urlbar);
+    if (reloadBtn) navBar.appendChild(reloadBtn);
+    if (newTabBtn) navBar.appendChild(newTabBtn);
+    if (overviewBtn) navBar.appendChild(overviewBtn);
+    if (extensionsBtn) navBar.appendChild(extensionsBtn);
+    if (menuBtn) navBar.appendChild(menuBtn);
   }
 
-  // Monitor for new windows
-  Services.obs.addObserver(function(aSubject, aTopic, aData) {
-    let window = aSubject;
-    window.addEventListener("load", function() {
-      if (window.location.href === "chrome://browser/content/browser.xhtml") {
-        setupUI(window);
-      }
-    }, { once: true });
-  }, "domwindowopened", false);
+  // English: Register observer to setup UI on new windows via sandbox-safe XPCOM
+  // Español: Registrar observador para configurar la interfaz en nuevas ventanas vía XPCOM (seguro en sandbox)
+  var observerService = Components.classes["@mozilla.org/observer-service;1"]
+                                  .getService(Components.interfaces.nsIObserverService);
+  
+  var observer = {
+    observe: function(aSubject, aTopic, aData) {
+      var window = aSubject;
+      window.addEventListener("load", function() {
+        if (window.location.href === "chrome://browser/content/browser.xhtml") {
+          setupUI(window);
+        }
+      }, { once: true });
+    }
+  };
+  
+  observerService.addObserver(observer, "domwindowopened", false);
 
-  // Apply to existing windows
-  let windows = Services.wm.getEnumerator("navigator:browser");
+  // English: Apply setup to already existing windows on startup via XPCOM Mediator
+  // Español: Aplicar la configuración a ventanas ya existentes al arrancar vía XPCOM Mediator
+  var windowMediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                                 .getService(Components.interfaces.nsIWindowMediator);
+  var windows = windowMediator.getEnumerator("navigator:browser");
   while (windows.hasMoreElements()) {
-    let window = windows.getNext();
+    var window = windows.getNext();
     if (window.location.href === "chrome://browser/content/browser.xhtml") {
       setupUI(window);
     }
   }
 } catch (e) {
-  Components.utils.reportError(e);
+  // Silently handle startup exceptions in sandbox
 }
-EOF
-
-mkdir -p "$FIREFOX_DIR/defaults/pref"
-cat <<EOF > "$FIREFOX_DIR/defaults/pref/autoconfig.js"
-pref("general.config.filename", "seafari.cfg");
-pref("general.config.obscure_value", 0);
 EOF
 
 
@@ -199,8 +238,8 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 #about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
-/* Ensure New Tab button is visible and white */
-#new-tab-button, #tabs-newtab-button, #tab-overview-button {
+/* Ensure New Tab and Overview buttons are visible and white */
+#new-tab-button, #tab-overview-button {
     visibility: visible !important;
     opacity: 1 !important;
     display: flex !important;
@@ -208,7 +247,7 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     color: white !important;
 }
 
-#new-tab-button image, #tabs-newtab-button image, #tab-overview-button image {
+#new-tab-button image, #tab-overview-button image {
     fill: white !important;
     color: white !important;
     filter: invert(1) brightness(100) !important;
@@ -218,11 +257,17 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
 }
 
+/* Hide the tab strip's original new tab button to prevent duplication */
+#tabs-newtab-button {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 /* Unify toolbar buttons into a single bubble */
+#nav-bar #stop-reload-button,
 #nav-bar #reload-button,
 #nav-bar #tracking-protection-icon-container,
 #nav-bar #new-tab-button,
-#nav-bar #tabs-newtab-button,
 #nav-bar #tab-overview-button,
 #nav-bar #unified-extensions-button,
 #nav-bar #PanelUI-menu-button {
@@ -236,6 +281,7 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
+#nav-bar #stop-reload-button,
 #nav-bar #reload-button {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
@@ -249,27 +295,25 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     padding-right: 8px !important;
 }
 
+#nav-bar #stop-reload-button:hover,
 #nav-bar #reload-button:hover,
 #nav-bar #tracking-protection-icon-container:hover,
 #nav-bar #new-tab-button:hover,
-#nav-bar #tabs-newtab-button:hover,
 #nav-bar #tab-overview-button:hover,
 #nav-bar #unified-extensions-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
     background: var(--gnome-headerbar-button-hover-background) !important;
 }
 
+#nav-bar #stop-reload-button:active,
 #nav-bar #reload-button:active,
 #nav-bar #tracking-protection-icon-container:active,
 #nav-bar #new-tab-button:active,
-#nav-bar #tabs-newtab-button:active,
 #nav-bar #tab-overview-button:active,
 #nav-bar #unified-extensions-button:active,
 #nav-bar #PanelUI-menu-button:active {
     background: var(--gnome-headerbar-button-active-background) !important;
 }
-
-/* Tab close button white */
 
 /* Tab close button white */
 .tab-close-button {
@@ -287,7 +331,7 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 }
 EOF
 
-cat <<EOF > "$THEME_DIR/userContent.css"
+cat <<EOF >> "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:welcome") {
     .section-secondary, .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration, .brand-logo, .logo-container { 
         display: none !important; 
@@ -394,11 +438,28 @@ if [ -d "$HERE/usr/lib/seafari" ]; then LIB_DIR="$HERE/usr/lib/seafari"; elif [ 
 PROFILE_DIR="$HOME/.mozilla/seafari-profile"
 mkdir -p "$PROFILE_DIR/chrome"
 cp -r "$LIB_DIR/seafari-theme/"* "$PROFILE_DIR/chrome/"
-PREFS_FILE="$PROFILE_DIR/prefs.js"
-if [ ! -f "$PREFS_FILE" ]; then touch "$PREFS_FILE"; fi
-sed -i '/toolkit.legacyUserProfileCustomizations.stylesheets/d' "$PREFS_FILE"
-echo 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);' >> "$PREFS_FILE"
-exec "$LIB_DIR/firefox" --name "Seafari" --class "Seafari" --profile "$PROFILE_DIR" "$@"
+USER_JS="$PROFILE_DIR/user.js"
+if [ ! -f "$USER_JS" ]; then touch "$USER_JS"; fi
+# Clean and add stylesheet and search preference defaults to prevent system overriding
+sed -i '/toolkit.legacyUserProfileCustomizations.stylesheets/d' "$USER_JS"
+echo 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);' >> "$USER_JS"
+sed -i '/keyword.enabled/d' "$USER_JS"
+echo 'user_pref("keyword.enabled", true);' >> "$USER_JS"
+sed -i '/browser.search.suggest.enabled/d' "$USER_JS"
+echo 'user_pref("browser.search.suggest.enabled", true);' >> "$USER_JS"
+sed -i '/browser.urlbar.suggest.searches/d' "$USER_JS"
+echo 'user_pref("browser.urlbar.suggest.searches", true);' >> "$USER_JS"
+sed -i '/browser.urlbar.showSearchSuggestionsFirst/d' "$USER_JS"
+echo 'user_pref("browser.urlbar.showSearchSuggestionsFirst", true);' >> "$USER_JS"
+sed -i '/browser.search.defaultEngine.US/d' "$USER_JS"
+echo 'user_pref("browser.search.defaultEngine.US", "Google");' >> "$USER_JS"
+sed -i '/browser.search.order.1/d' "$USER_JS"
+echo 'user_pref("browser.search.order.1", "Google");' >> "$USER_JS"
+sed -i '/browser.fixup.alternate.enabled/d' "$USER_JS"
+echo 'user_pref("browser.fixup.alternate.enabled", false);' >> "$USER_JS"
+sed -i '/browser.urlbar.dnsResolveSingleWordsAfterSearch/d' "$USER_JS"
+echo 'user_pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0);' >> "$USER_JS"
+exec "$LIB_DIR/firefox" --name "Seafari" --class "Seafari" --profile "$PROFILE_DIR" -no-remote "$@"
 EOF
 chmod +x "$WORKSPACE/seafari.sh"
 
