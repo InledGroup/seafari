@@ -1,11 +1,11 @@
 @namespace xul url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 /*
-This feature is included by default for Firefox 70+
+This feature is included by default for Seafari 70+
 */
 
 /**************************************************************************************
-*********************************** FIREFOX 68 ****************************************
+*********************************** SEAFARI 68 ****************************************
 **************************************************************************************/
 /* Set popover size and position */
 panel#urlbar-results { 
@@ -102,9 +102,9 @@ panel#urlbar-results.search-panel-one-offs-header {
 }
 
 /**************************************************************************************
-********************************** FIREFOX 60-67 **************************************
+********************************** SEAFARI 60-67 **************************************
 **************************************************************************************/
-/* TODO: Remove when FF =< 67 is deprecated */
+/* TODO: Remove when Seafari base =< 67 is deprecated */
 #PopupAutoCompleteRichResult {
 	margin-left: 0 !important;
 	margin-top: -7px;

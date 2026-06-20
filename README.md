@@ -1,6 +1,6 @@
 # 🧭 Seafari
 
-Seafari is a professional-grade, Safari-styled web browser for Linux, built on top of a highly optimized and patched Firefox binary. It combines the privacy and extensibility of Firefox with the elegant aesthetic and user experience of macOS Safari.
+Seafari is a professional-grade, Safari-styled web browser for Linux, built on top of a highly optimized and patched Seafari binary. It combines the privacy and extensibility of Seafari with the elegant aesthetic and user experience of macOS Safari.
 
 ![Seafari Logo](seafari.png)
 
@@ -9,7 +9,7 @@ Seafari is a professional-grade, Safari-styled web browser for Linux, built on t
 - **Safari Aesthetic:** Complete UI overhaul using the MacTahoe theme and custom CSS.
 - **Privacy First:** Pre-installed and force-enabled **uBlock Origin**.
 - **Dynamic Styling:** Pre-installed **Adaptive Tab Bar Colour** for a seamless look.
-- **Enterprise Ready:** Custom policies to disable telemetry, data collection, and unwanted Firefox features.
+- **Enterprise Ready:** Custom policies to disable telemetry, data collection, and unwanted Seafari features.
 - **Multi-Arch Support:** Available for both **AMD64 (x86_64)** and **ARM64 (aarch64)**.
 - **Multiple Formats:** Distributed as `.deb`, `.rpm`, and `AppImage`.
 
@@ -59,6 +59,6 @@ To build Seafari locally:
 
 ## 📄 License
 
-Seafari is distributed under the same terms as Mozilla Firefox. Theme components and branding are property of their respective owners.
+Seafari is distributed under the same terms as Mozilla Seafari. Theme components and branding are property of their respective owners.
 
 v1.1

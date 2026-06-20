@@ -7,8 +7,9 @@ appimagetool
 build_workspace/
 tmp_ja*/
 
-# Firefox temporary files
+# Seafari temporary files
 *.ja.bak
 
 # OS files
 .DS_Store
+build_cache_amd64/

@@ -2,7 +2,7 @@
 
 /* Variables that start with --gnome- are added by me and are assigned
  * to elements somewhere in this code. The rest of the variables are
- * built-in in Firefox, so you need to add an !important if you wanna
+ * built-in in Seafari, so you need to add an !important if you wanna
  * override them. */
 
 @media (prefers-color-scheme: dark) {
@@ -182,7 +182,7 @@
 	--gnome-private-inactive-tabbar-tab-hover-background: #242c3f; /* Hardcoded color */
 	--gnome-private-inactive-tabbar-tab-active-background: #272e41; /* Hardcoded color */
 
-	/* Text color for Firefox Logo in new private tab */
+	/* Text color for Seafari Logo in new private tab */
 	--gnome-private-wordmark: #FBFBFE;
 
 	/* New private tab background */

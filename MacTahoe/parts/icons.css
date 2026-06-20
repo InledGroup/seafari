@@ -78,7 +78,7 @@ link[href="chrome://global/skin/dropmarker.css"] + image {
 	background-image: url('chrome://global/skin/icons/autoscroll-horizontal.svg') !important;
 }
 
-/* Built-in firefox icons color */
+/* Built-in Seafari base icons color */
 .toolbarbutton-icon,
 .protections-popup-category-icon,
 .protections-popup-footer-icon {
@@ -761,7 +761,7 @@ toolbar:not([brighttext]) .webextension-browser-action:-moz-lwtheme {
 }
 }
 
-/* Firefox note extension */
+/* Seafari note extension */
 #notes_mozilla_com-BAP .toolbarbutton-icon,
 #sidebarswitcher_menu_notes_mozilla_com-sidebar-action,
 #sidebar-box[sidebarcommand="notes_mozilla_com-sidebar-action"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
@@ -776,7 +776,7 @@ toolbar:not([brighttext]) .webextension-browser-action:-moz-lwtheme {
 }
 }
 
-/* firefoxpwa */
+/* seafari-pwa / firefoxpwa */
 #pageAction-urlbar-firefoxpwa_filips_si {
 	list-style-image: url("../icons/page-action-install.svg") !important;
 }

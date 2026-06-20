@@ -443,7 +443,7 @@ tab[selected]:-moz-window-inactive .tab-label {
 	}
 }
 
-/* firefox-view-button */
+/* seafari-view-button / firefox-view-button */
 :root:not([privatebrowsingmode], [firefoxviewhidden]) :is(toolbarbutton, toolbarpaletteitem) + #tabbrowser-tabs,
 :root[privatebrowsingmode]:not([firefoxviewhidden]) :is(toolbarbutton:not(#firefox-view-button),
 	toolbarpaletteitem:not(#wrapper-firefox-view-button)) + #tabbrowser-tabs {

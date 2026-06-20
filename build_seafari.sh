@@ -53,15 +53,37 @@ else
     exit 1
 fi
 
-echo "Downloading fresh Firefox ($ARCH_TYPE) and Extensions..."
-wget -L -O "$WORKSPACE/firefox.tar.xz" "$FF_URL"
+# English: Cache the downloaded Seafari base tarball and extensions to speed up repeated builds
+# Español: Cachear el tarball de Seafari base descargado y las extensiones para acelerar compilaciones repetidas
+CACHE_DIR="$ROOT_DIR/build_cache_$ARCH_TYPE"
+mkdir -p "$CACHE_DIR"
+
+if [ ! -f "$CACHE_DIR/firefox.tar.xz" ]; then
+    echo "Downloading fresh Seafari base ($ARCH_TYPE)..."
+    wget -L -O "$CACHE_DIR/firefox.tar.xz" "$FF_URL"
+else
+    echo "Using cached Seafari base tarball from $CACHE_DIR/firefox.tar.xz"
+fi
+
+if [ ! -f "$CACHE_DIR/ublock_origin.xpi" ]; then
+    echo "Downloading uBlock Origin..."
+    wget -O "$CACHE_DIR/ublock_origin.xpi" "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+fi
+
+if [ ! -f "$CACHE_DIR/adaptive_tab_bar_colour.xpi" ]; then
+    echo "Downloading Adaptive Tab Bar Colour..."
+    wget -O "$CACHE_DIR/adaptive_tab_bar_colour.xpi" "https://addons.mozilla.org/firefox/downloads/file/4704834/adaptive_tab_bar_colour-3.3.2.xpi"
+fi
+
+cp "$CACHE_DIR/firefox.tar.xz" "$WORKSPACE/firefox.tar.xz"
+cp "$CACHE_DIR/ublock_origin.xpi" "$WORKSPACE/ublock_origin.xpi"
+cp "$CACHE_DIR/adaptive_tab_bar_colour.xpi" "$WORKSPACE/adaptive_tab_bar_colour.xpi"
+
+echo "Extracting Seafari base..."
 tar xf "$WORKSPACE/firefox.tar.xz" -C "$WORKSPACE"
 
 # Rename extracted folder if it's not named 'firefox'
 mv $WORKSPACE/firefox* $WORKSPACE/firefox 2>/dev/null || true
-
-wget -O "$WORKSPACE/ublock_origin.xpi" "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
-wget -O "$WORKSPACE/adaptive_tab_bar_colour.xpi" "https://addons.mozilla.org/firefox/downloads/file/4704834/adaptive_tab_bar_colour-3.3.2.xpi"
 
 if [ ! -f "seafari.png" ]; then
     echo "ERROR: seafari.png not found in root directory!"
@@ -264,56 +286,175 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     visibility: hidden !important;
 }
 
-/* Unify toolbar buttons into a single bubble */
-#nav-bar #stop-reload-button,
-#nav-bar #reload-button,
+/* --- Unified Left Button Group (Capsule/Bubble) --- */
+/* English: Style the entire left button group as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la izquierda como una única cápsula unificada */
+#nav-bar #fxa-toolbar-button,
 #nav-bar #tracking-protection-icon-container,
+#nav-bar #sidebar-button,
+#nav-bar #back-button,
+#nav-bar #forward-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    min-width: 36px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Hover/Active states for Left Group */
+#nav-bar #fxa-toolbar-button:hover,
+#nav-bar #tracking-protection-icon-container:hover,
+#nav-bar #sidebar-button:hover,
+#nav-bar #back-button:hover,
+#nav-bar #forward-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+#nav-bar #fxa-toolbar-button:active,
+#nav-bar #tracking-protection-icon-container:active,
+#nav-bar #sidebar-button:active,
+#nav-bar #back-button:active,
+#nav-bar #forward-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Dynamic Left Corner Rounding for Left Group */
+#nav-bar #fxa-toolbar-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button[hidden] ~ #back-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+
+/* Dynamic Right Corner Rounding for Left Group */
+#nav-bar #forward-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+#nav-bar #forward-button[hidden] ~ #back-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+#nav-bar #forward-button[hidden] ~ #back-button[hidden] ~ #sidebar-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+
+/* --- Unified Right Button Group (Capsule/Bubble) --- */
+/* English: Style the entire right button group (including reload, new tab, overview, extensions, menu) as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la derecha (incluyendo recarga, nueva pestaña, vista general, extensiones, menú) como una única cápsula unificada */
+#nav-bar #stop-reload-button,
 #nav-bar #new-tab-button,
 #nav-bar #tab-overview-button,
 #nav-bar #unified-extensions-button,
 #nav-bar #PanelUI-menu-button {
-    background: var(--gnome-headerbar-button-background) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    padding: 0 4px !important;
+    padding: 0 8px !important;
+    min-width: 36px !important;
+    min-height: 34px !important;
+    height: 34px !important;
     box-shadow: none !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border: none !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-#nav-bar #stop-reload-button,
-#nav-bar #reload-button {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    padding-left: 8px !important;
-    border-left: none !important;
+/* Ensure the reload/stop children buttons are transparent and fit inside the parent */
+#nav-bar #reload-button,
+#nav-bar #stop-button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
 }
 
-#nav-bar #PanelUI-menu-button {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 8px !important;
-}
-
+/* Hover/Active states for Right Group */
 #nav-bar #stop-reload-button:hover,
-#nav-bar #reload-button:hover,
-#nav-bar #tracking-protection-icon-container:hover,
 #nav-bar #new-tab-button:hover,
 #nav-bar #tab-overview-button:hover,
 #nav-bar #unified-extensions-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
-    background: var(--gnome-headerbar-button-hover-background) !important;
+    background: rgba(255, 255, 255, 0.16) !important;
 }
-
 #nav-bar #stop-reload-button:active,
-#nav-bar #reload-button:active,
-#nav-bar #tracking-protection-icon-container:active,
 #nav-bar #new-tab-button:active,
 #nav-bar #tab-overview-button:active,
 #nav-bar #unified-extensions-button:active,
 #nav-bar #PanelUI-menu-button:active {
-    background: var(--gnome-headerbar-button-active-background) !important;
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Dynamic Left Corner Rounding for Right Group */
+#nav-bar #stop-reload-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #stop-reload-button[hidden] ~ #new-tab-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #stop-reload-button[hidden] ~ #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+
+/* Dynamic Right Corner Rounding for Right Group */
+#nav-bar #PanelUI-menu-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+#nav-bar #PanelUI-menu-button[hidden] ~ #unified-extensions-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+
+/* Ensure the URL Bar has a small spacing and default right padding */
+#urlbar-input-container,
+.urlbar-input-container {
+    padding-right: 8px !important;
 }
 
 /* Tab close button white */
@@ -323,7 +464,7 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     filter: invert(1) brightness(100) !important;
 }
 
-/* Replace Firefox tab icon for New Tab */
+/* Replace Seafari tab icon for New Tab */
 .tab-icon-image[src="chrome://branding/content/icon32.png"],
 .tab-icon-image[src="chrome://browser/skin/newtab/favicon.png"],
 .tab-icon-image[src="page-icon:about:newtab"],
@@ -421,17 +562,123 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:") { .brand-logo, .logo { background: url("seafari.png") no-repeat center !important; background-size: contain !important; } }
 EOF
 
-echo "Binary Patching skipped to prevent ZIP corruption and fix Search Engines..."
-# English: We skip patching omni.ja directly via sed because it corrupts the ZIP structure,
-# breaking the built-in search engine configuration and preventing searches.
-# Español: Omitimos el parcheo de omni.ja directamente vía sed porque corrompe la estructura del ZIP,
-# rompiendo la configuración del motor de búsqueda integrado y evitando las búsquedas.
+echo "Binary Patching (Safe Zip Method)..."
+# English: We patch omni.ja safely by unzipping, updating branding files, sed'ing only text files, and re-zipping
+# Español: Parcheamos omni.ja de forma segura descomprimiendo, actualizando los archivos de branding, aplicando sed solo a archivos de texto y volviendo a comprimir
+patch_ja() {
+    local ja_file=$1
+    echo "Patching $ja_file safely..."
+    if [ ! -f "$ja_file" ]; then
+        echo "Warning: $ja_file not found, skipping."
+        return
+    fi
+    
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    
+    # English: Unzip the omni.ja file to a temporary directory (ignore non-fatal unzip warnings/errors)
+    # Español: Descomprimir el archivo omni.ja a un directorio temporal (ignorar advertencias/errores no fatales de unzip)
+    unzip -q "$ja_file" -d "$temp_dir" || true
+    
+    # English: Replace specific brand configurations to match Seafari and Inled Group in brand.properties (all locales)
+    # Español: Reemplazar configuraciones de marca específicas para coincidir con Seafari e Inled Group en brand.properties (todos los idiomas)
+    find "$temp_dir" -name "brand.properties" -exec sed -i -E '
+        s/^brandShortName[[:space:]]*=[[:space:]]*.*/brandShortName=Seafari/g;
+        s/^brandFullName[[:space:]]*=[[:space:]]*.*/brandFullName=Seafari Browser/g;
+        s/^vendorShortName[[:space:]]*=[[:space:]]*.*/vendorShortName=Inled Group/g
+    ' {} + 2>/dev/null || true
+
+    # English: Replace specific brand entity declarations to match Seafari and Inled Group in brand.dtd (all locales)
+    # Español: Reemplazar declaraciones de entidad de marca específicas para coincidir con Seafari e Inled Group en brand.dtd (todos los idiomas)
+    find "$temp_dir" -name "brand.dtd" -exec sed -i -E '
+        s/<!ENTITY[[:space:]]+brandShortName[[:space:]]+"[^"]*"[[:space:]]*>/<!ENTITY brandShortName        "Seafari">/g;
+        s/<!ENTITY[[:space:]]+brandFullName[[:space:]]+"[^"]*"[[:space:]]*>/<!ENTITY brandFullName         "Seafari Browser">/g;
+        s/<!ENTITY[[:space:]]+vendorShortName[[:space:]]+"[^"]*"[[:space:]]*>/<!ENTITY vendorShortName       "Inled Group">/g
+    ' {} + 2>/dev/null || true
+
+    # English: Replace specific brand configurations to match Seafari and Inled Group in brand.ftl (all locales)
+    # Español: Reemplazar configuraciones de marca específicas para coincidir con Seafari e Inled Group en brand.ftl (todos los idiomas)
+    find "$temp_dir" -name "brand.ftl" -exec sed -i -E '
+        s/^-brand-shorter-name[[:space:]]*=[[:space:]]*.*/-brand-shorter-name = Seafari/g;
+        s/^-brand-short-name[[:space:]]*=[[:space:]]*.*/-brand-short-name = Seafari/g;
+        s/^-brand-shortcut-name[[:space:]]*=[[:space:]]*.*/-brand-shortcut-name = Seafari/g;
+        s/^-brand-full-name[[:space:]]*=[[:space:]]*.*/-brand-full-name = Seafari Browser/g;
+        s/^-brand-product-name[[:space:]]*=[[:space:]]*.*/-brand-product-name = Seafari/g;
+        s/^-vendor-short-name[[:space:]]*=[[:space:]]*.*/-vendor-short-name = Inled Group/g
+    ' {} + 2>/dev/null || true
+
+    # English: Overwrite Firefox branding images and wordmarks with Seafari versions if branding directory exists
+    # Español: Sobrescribir las imágenes y marcas de texto de Firefox con las versiones de Seafari si existe el directorio de branding
+    local branding_dir="$temp_dir/chrome/browser/content/branding"
+    if [ -d "$branding_dir" ]; then
+        echo "Replacing Firefox branding images with Seafari..."
+        for icon in icon16.png icon32.png icon48.png icon64.png icon128.png about.png about-logo.png about-logo@2x.png about-logo-private.png about-logo-private@2x.png; do
+            if [ -f "$branding_dir/$icon" ]; then
+                cp "$ROOT_DIR/seafari.png" "$branding_dir/$icon"
+            fi
+        done
+        if [ -f "$branding_dir/about-logo.svg" ]; then
+            cat <<EOF > "$branding_dir/about-logo.svg"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <image href="icon128.png" x="0" y="0" width="128" height="128"/>
+</svg>
+EOF
+        fi
+        if [ -f "$branding_dir/firefox-wordmark.svg" ]; then
+            cat <<EOF > "$branding_dir/firefox-wordmark.svg"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 30" width="120" height="30">
+  <text x="0" y="22" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="white">Seafari</text>
+</svg>
+EOF
+        fi
+        if [ -f "$branding_dir/about-wordmark.svg" ]; then
+            cat <<EOF > "$branding_dir/about-wordmark.svg"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 30" width="120" height="30">
+  <text x="0" y="22" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="white">Seafari</text>
+</svg>
+EOF
+        fi
+    fi
+
+    # English: Replace standalone original branding with Seafari in text files (including .ftl Fluent files) only to prevent binary/path corruption
+    # Español: Reemplazar la marca original por Seafari solo como palabra independiente en archivos de texto (incluyendo archivos .ftl de Fluent) para evitar corrupción de binarios/rutas
+    find "$temp_dir" -type f \( -name "*.properties" -o -name "*.dtd" -o -name "*.ftl" -o -name "*.json" -o -name "*.js" -o -name "*.sys.mjs" -o -name "*.xhtml" -o -name "*.xml" -o -name "*.html" -o -name "*.css" \) -exec perl -pi -e 's|(?<!/)\bFirefox\b|Seafari|g' {} + 2>/dev/null || true
+    
+    # English: Re-compress the files back into the original omni.ja location
+    # Español: Volver a comprimir los archivos en la ubicación del omni.ja original
+    rm -f "$ja_file"
+    (cd "$temp_dir" && zip -q -r "$ROOT_DIR/$ja_file" .)
+    
+    rm -rf "$temp_dir"
+}
+
+patch_ja "$FIREFOX_DIR/omni.ja"
+patch_ja "$FIREFOX_DIR/browser/omni.ja"
+
+echo "Patching application.ini..."
+# English: Patch application.ini to configure the name, vendor, remoting name and ID for GNOME/Wayland desktop integration
+# Español: Parchear application.ini para configurar el nombre, proveedor, nombre de remoting e ID para la integración de escritorio con GNOME/Wayland
+patch_application_ini() {
+    local ini_path=$1
+    if [ -f "$ini_path" ]; then
+        echo "Patching $ini_path..."
+        sed -i 's/^Vendor=.*/Vendor=Inled Group/' "$ini_path"
+        sed -i 's/^Name=.*/Name=Seafari/' "$ini_path"
+        sed -i 's/^RemotingName=.*/RemotingName=seafari/' "$ini_path"
+        sed -i 's/^ID=.*/ID=seafari@inledgroup/' "$ini_path"
+        if ! grep -q "CodeName=" "$ini_path"; then
+            sed -i '/^\[App\]/a CodeName=Seafari' "$ini_path"
+        fi
+    fi
+}
+patch_application_ini "$FIREFOX_DIR/application.ini"
+patch_application_ini "$FIREFOX_DIR/browser/application.ini"
 
 echo "Creating Wrapper Script..."
 cat <<'EOF' > "$WORKSPACE/seafari.sh"
 #!/bin/bash
 HERE=$(dirname $(readlink -f $0))
-if [ -d "$HERE/usr/lib/seafari" ]; then LIB_DIR="$HERE/usr/lib/seafari"; elif [ -d "/usr/lib/seafari" ]; then LIB_DIR="/usr/lib/seafari"; else LIB_DIR="$HERE/firefox"; fi
+if [ -d "$HERE/firefox" ]; then LIB_DIR="$HERE/firefox"; elif [ -d "$HERE/usr/lib/seafari" ]; then LIB_DIR="$HERE/usr/lib/seafari"; elif [ -d "/usr/lib/seafari" ]; then LIB_DIR="/usr/lib/seafari"; else LIB_DIR="$HERE/firefox"; fi
 PROFILE_DIR="$HOME/.mozilla/seafari-profile"
 mkdir -p "$PROFILE_DIR/chrome"
 cp -r "$LIB_DIR/seafari-theme/"* "$PROFILE_DIR/chrome/"
@@ -456,7 +703,7 @@ sed -i '/browser.fixup.alternate.enabled/d' "$USER_JS"
 echo 'user_pref("browser.fixup.alternate.enabled", false);' >> "$USER_JS"
 sed -i '/browser.urlbar.dnsResolveSingleWordsAfterSearch/d' "$USER_JS"
 echo 'user_pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0);' >> "$USER_JS"
-exec "$LIB_DIR/firefox" --name "Seafari" --class "Seafari" --profile "$PROFILE_DIR" -no-remote "$@"
+exec "$LIB_DIR/firefox" --name "seafari" --class "seafari" --profile "$PROFILE_DIR" -no-remote "$@"
 EOF
 chmod +x "$WORKSPACE/seafari.sh"
 
@@ -474,7 +721,7 @@ Icon=seafari
 Terminal=false
 Type=Application
 Categories=Network;WebBrowser;
-StartupWMClass=Seafari
+StartupWMClass=seafari
 EOF
 cat <<EOF > "$DEB_ROOT/DEBIAN/control"
 Package: seafari

@@ -30,56 +30,175 @@
     visibility: hidden !important;
 }
 
-/* Unify toolbar buttons into a single bubble */
-#nav-bar #stop-reload-button,
-#nav-bar #reload-button,
+/* --- Unified Left Button Group (Capsule/Bubble) --- */
+/* English: Style the entire left button group as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la izquierda como una única cápsula unificada */
+#nav-bar #fxa-toolbar-button,
 #nav-bar #tracking-protection-icon-container,
+#nav-bar #sidebar-button,
+#nav-bar #back-button,
+#nav-bar #forward-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    min-width: 36px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Hover/Active states for Left Group */
+#nav-bar #fxa-toolbar-button:hover,
+#nav-bar #tracking-protection-icon-container:hover,
+#nav-bar #sidebar-button:hover,
+#nav-bar #back-button:hover,
+#nav-bar #forward-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+#nav-bar #fxa-toolbar-button:active,
+#nav-bar #tracking-protection-icon-container:active,
+#nav-bar #sidebar-button:active,
+#nav-bar #back-button:active,
+#nav-bar #forward-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Dynamic Left Corner Rounding for Left Group */
+#nav-bar #fxa-toolbar-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button[hidden] ~ #back-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+
+/* Dynamic Right Corner Rounding for Left Group */
+#nav-bar #forward-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+#nav-bar #forward-button[hidden] ~ #back-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+#nav-bar #forward-button[hidden] ~ #back-button[hidden] ~ #sidebar-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+
+/* --- Unified Right Button Group (Capsule/Bubble) --- */
+/* English: Style the entire right button group (including reload, new tab, overview, extensions, menu) as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la derecha (incluyendo recarga, nueva pestaña, vista general, extensiones, menú) como una única cápsula unificada */
+#nav-bar #stop-reload-button,
 #nav-bar #new-tab-button,
 #nav-bar #tab-overview-button,
 #nav-bar #unified-extensions-button,
 #nav-bar #PanelUI-menu-button {
-    background: var(--gnome-headerbar-button-background) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    padding: 0 4px !important;
+    padding: 0 8px !important;
+    min-width: 36px !important;
+    min-height: 34px !important;
+    height: 34px !important;
     box-shadow: none !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border: none !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-#nav-bar #stop-reload-button,
-#nav-bar #reload-button {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    padding-left: 8px !important;
-    border-left: none !important;
+/* Ensure the reload/stop children buttons are transparent and fit inside the parent */
+#nav-bar #reload-button,
+#nav-bar #stop-button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
 }
 
-#nav-bar #PanelUI-menu-button {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 8px !important;
-}
-
+/* Hover/Active states for Right Group */
 #nav-bar #stop-reload-button:hover,
-#nav-bar #reload-button:hover,
-#nav-bar #tracking-protection-icon-container:hover,
 #nav-bar #new-tab-button:hover,
 #nav-bar #tab-overview-button:hover,
 #nav-bar #unified-extensions-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
-    background: var(--gnome-headerbar-button-hover-background) !important;
+    background: rgba(255, 255, 255, 0.16) !important;
 }
-
 #nav-bar #stop-reload-button:active,
-#nav-bar #reload-button:active,
-#nav-bar #tracking-protection-icon-container:active,
 #nav-bar #new-tab-button:active,
 #nav-bar #tab-overview-button:active,
 #nav-bar #unified-extensions-button:active,
 #nav-bar #PanelUI-menu-button:active {
-    background: var(--gnome-headerbar-button-active-background) !important;
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Dynamic Left Corner Rounding for Right Group */
+#nav-bar #stop-reload-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #stop-reload-button[hidden] ~ #new-tab-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #stop-reload-button[hidden] ~ #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+
+/* Dynamic Right Corner Rounding for Right Group */
+#nav-bar #PanelUI-menu-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+#nav-bar #PanelUI-menu-button[hidden] ~ #unified-extensions-button:not([hidden]) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 12px !important;
+}
+
+/* Ensure the URL Bar has a small spacing and default right padding */
+#urlbar-input-container,
+.urlbar-input-container {
+    padding-right: 8px !important;
 }
 
 /* Tab close button white */
@@ -89,7 +208,7 @@
     filter: invert(1) brightness(100) !important;
 }
 
-/* Replace Firefox tab icon for New Tab */
+/* Replace Seafari tab icon for New Tab */
 .tab-icon-image[src="chrome://branding/content/icon32.png"],
 .tab-icon-image[src="chrome://browser/skin/newtab/favicon.png"],
 .tab-icon-image[src="page-icon:about:newtab"],

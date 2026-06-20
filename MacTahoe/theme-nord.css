@@ -26,7 +26,7 @@
 #customization-footer::before {
 	background: url("icons/icon.svg") no-repeat;
 	background-size: contain;
-	content: "Firefox MacTahoe theme";
+	content: "Seafari MacTahoe theme";
 	padding: 10px 10px 10px 50px;
 }
 
