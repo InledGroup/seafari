@@ -1,44 +1,150 @@
 @import "MacTahoe/theme.css";
-.toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
-.toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
-:root { --theme-primary-color: #007aff !important; --theme-primary-hover-color: #0063cc !important; --theme-primary-active-color: #004da6 !important; --gnome-toolbar-icon-fill: #ffffff !important; --gnome-toolbar-color: #ffffff !important; }
+
+:root {
+    --theme-primary-color: #0071e3 !important;
+    --theme-primary-hover-color: #005dc2 !important;
+    --theme-primary-active-color: #004da6 !important;
+    --gnome-toolbar-icon-fill: #2e2e2e !important;
+    --gnome-toolbar-color: #2e2e2e !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --gnome-toolbar-icon-fill: #ffffff !important;
+        --gnome-toolbar-color: #ffffff !important;
+    }
+    .toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
+    .toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
+}
+
+/* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
+/* Ocultar iconos no deseados (perfil de usuario, extensiones, escudo de protección de rastreo y barra lateral) */
+#fxa-toolbar-button,
+#unified-extensions-button,
+#tracking-protection-icon-container,
+#tracking-protection-icon-box,
+#tracking-protection-icon,
+#tracking-protection-icon-animatable-image,
+.tracking-protection-button,
+#sidebar-button,
+#developer-button,
+#nav-bar #fxa-toolbar-button,
+#nav-bar #unified-extensions-button,
+#nav-bar #tracking-protection-icon-container,
+#nav-bar #sidebar-button,
+#nav-bar #developer-button {
+    display: none !important;
+    visibility: collapse !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hide new tab button on tab strip to prevent duplication */
+/* Ocultar botón de nueva pestaña en la barra de pestañas para evitar duplicación */
+#tabs-newtab-button,
+.tabs-newtab-button {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 #about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
-/* Ensure New Tab and Overview buttons are visible and white */
+/* Ensure New Tab and Overview buttons are visible */
 #new-tab-button, #tab-overview-button {
     visibility: visible !important;
     opacity: 1 !important;
     display: flex !important;
-    fill: white !important;
-    color: white !important;
 }
 
-#new-tab-button image, #tab-overview-button image {
-    fill: white !important;
-    color: white !important;
-    filter: invert(1) brightness(100) !important;
+@media (prefers-color-scheme: dark) {
+    #new-tab-button, #tab-overview-button {
+        fill: white !important;
+        color: white !important;
+    }
+    #new-tab-button image, #tab-overview-button image {
+        fill: white !important;
+        color: white !important;
+        filter: invert(1) brightness(100) !important;
+    }
 }
 
 #tab-overview-button {
     list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
 }
 
-/* Hide the tab strip's original new tab button to prevent duplication */
-#tabs-newtab-button {
+/* Reload button style (inside URL bar, flat/transparent) */
+/* Estilo del botón de recarga (dentro de la barra de URL, plano/transparente) */
+#urlbar-input-container #stop-reload-button,
+#nav-bar #stop-reload-button {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    margin-right: 6px !important;
+    padding: 0 !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#urlbar-input-container #stop-reload-button > #reload-button,
+#urlbar-input-container #stop-reload-button > #stop-button,
+#nav-bar #stop-reload-button > #reload-button,
+#nav-bar #stop-reload-button > #stop-button {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure only one icon is visible (reload OR stop) depending on loading state */
+/* Asegurar que solo un icono sea visible (recarga O parada) según el estado de carga */
+#urlbar-input-container #stop-reload-button > #reload-button[hidden],
+#urlbar-input-container #stop-reload-button > #stop-button[hidden],
+#nav-bar #stop-reload-button > #reload-button[hidden],
+#nav-bar #stop-reload-button > #stop-button[hidden] {
     display: none !important;
-    visibility: hidden !important;
+}
+
+#urlbar-input-container #stop-reload-button > #reload-button:hover,
+#urlbar-input-container #stop-reload-button > #stop-button:hover,
+#nav-bar #stop-reload-button > #reload-button:hover,
+#nav-bar #stop-reload-button > #stop-button:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-radius: 4px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #urlbar-input-container #stop-reload-button > #reload-button:hover,
+    #urlbar-input-container #stop-reload-button > #stop-button:hover,
+    #nav-bar #stop-reload-button > #reload-button:hover,
+    #nav-bar #stop-reload-button > #stop-button:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
 }
 
 /* --- Unified Left Button Group (Capsule/Bubble) --- */
-/* English: Style the entire left button group as a single unified capsule */
-/* Español: Estilizar todo el grupo de botones de la izquierda como una única cápsula unificada */
-#nav-bar #fxa-toolbar-button,
-#nav-bar #tracking-protection-icon-container,
-#nav-bar #sidebar-button,
+/* English: Style the entire left button group (Back, Forward) as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la izquierda (Atrás, Adelante) como una única cápsula unificada */
 #nav-bar #back-button,
 #nav-bar #forward-button {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 8px !important;
@@ -47,48 +153,40 @@
     height: 34px !important;
     box-shadow: none !important;
     border: none !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
 /* Hover/Active states for Left Group */
-#nav-bar #fxa-toolbar-button:hover,
-#nav-bar #tracking-protection-icon-container:hover,
-#nav-bar #sidebar-button:hover,
 #nav-bar #back-button:hover,
 #nav-bar #forward-button:hover {
-    background: rgba(255, 255, 255, 0.16) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar #fxa-toolbar-button:active,
-#nav-bar #tracking-protection-icon-container:active,
-#nav-bar #sidebar-button:active,
 #nav-bar #back-button:active,
 #nav-bar #forward-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar #back-button,
+    #nav-bar #forward-button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    #nav-bar #back-button:hover,
+    #nav-bar #forward-button:hover {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+    #nav-bar #back-button:active,
+    #nav-bar #forward-button:active {
+        background: rgba(255, 255, 255, 0.24) !important;
+    }
 }
 
 /* Dynamic Left Corner Rounding for Left Group */
-#nav-bar #fxa-toolbar-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button[hidden] ~ #back-button:not([hidden]) {
+#nav-bar #back-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
@@ -106,21 +204,14 @@
     border-bottom-right-radius: 999px !important;
     padding-right: 12px !important;
 }
-#nav-bar #forward-button[hidden] ~ #back-button[hidden] ~ #sidebar-button:not([hidden]) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
-}
 
 /* --- Unified Right Button Group (Capsule/Bubble) --- */
-/* English: Style the entire right button group (including reload, new tab, overview, extensions, menu) as a single unified capsule */
-/* Español: Estilizar todo el grupo de botones de la derecha (incluyendo recarga, nueva pestaña, vista general, extensiones, menú) como una única cápsula unificada */
-#nav-bar #stop-reload-button,
+/* English: Style the entire right button group (New Tab, Overview, Menu) as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la derecha (Nueva pestaña, Overview, Menú) como una única cápsula unificada */
 #nav-bar #new-tab-button,
 #nav-bar #tab-overview-button,
-#nav-bar #unified-extensions-button,
 #nav-bar #PanelUI-menu-button {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 8px !important;
@@ -129,54 +220,51 @@
     height: 34px !important;
     box-shadow: none !important;
     border: none !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
-/* Ensure the reload/stop children buttons are transparent and fit inside the parent */
-#nav-bar #reload-button,
-#nav-bar #stop-button {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-}
-
 /* Hover/Active states for Right Group */
-#nav-bar #stop-reload-button:hover,
 #nav-bar #new-tab-button:hover,
 #nav-bar #tab-overview-button:hover,
-#nav-bar #unified-extensions-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
-    background: rgba(255, 255, 255, 0.16) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar #stop-reload-button:active,
 #nav-bar #new-tab-button:active,
 #nav-bar #tab-overview-button:active,
-#nav-bar #unified-extensions-button:active,
 #nav-bar #PanelUI-menu-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar #new-tab-button,
+    #nav-bar #tab-overview-button,
+    #nav-bar #PanelUI-menu-button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    #nav-bar #new-tab-button:hover,
+    #nav-bar #tab-overview-button:hover,
+    #nav-bar #PanelUI-menu-button:hover {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+    #nav-bar #new-tab-button:active,
+    #nav-bar #tab-overview-button:active,
+    #nav-bar #PanelUI-menu-button:active {
+        background: rgba(255, 255, 255, 0.24) !important;
+    }
 }
 
 /* Dynamic Left Corner Rounding for Right Group */
-#nav-bar #stop-reload-button:not([hidden]) {
+#nav-bar #new-tab-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
     padding-left: 12px !important;
 }
-#nav-bar #stop-reload-button[hidden] ~ #new-tab-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #stop-reload-button[hidden] ~ #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
+#nav-bar #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
@@ -189,11 +277,6 @@
     border-bottom-right-radius: 999px !important;
     padding-right: 12px !important;
 }
-#nav-bar #PanelUI-menu-button[hidden] ~ #unified-extensions-button:not([hidden]) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
-}
 
 /* Ensure the URL Bar has a small spacing and default right padding */
 #urlbar-input-container,
@@ -201,11 +284,13 @@
     padding-right: 8px !important;
 }
 
-/* Tab close button white */
-.tab-close-button {
-    fill: white !important;
-    color: white !important;
-    filter: invert(1) brightness(100) !important;
+/* Tab close button white in dark mode */
+@media (prefers-color-scheme: dark) {
+    .tab-close-button {
+        fill: white !important;
+        color: white !important;
+        filter: invert(1) brightness(100) !important;
+    }
 }
 
 /* Replace Seafari tab icon for New Tab */
@@ -215,3 +300,69 @@
 .tab-icon-image[src="page-icon:about:home"] {
     content: url("seafari.png") !important;
 }
+
+/* English: Flat blue style with rounded corners for chrome primary/dialog buttons */
+/* Español: Estilo azul plano con bordes redondeados para botones primarios/diálogos de chrome */
+button,
+.button,
+moz-button {
+    border-radius: 999px !important;
+    --button-border-radius: 999px !important;
+    --button-border-radius-hover: 999px !important;
+    --button-border-radius-active: 999px !important;
+    --button-border-radius-large: 999px !important;
+    --button-border-radius-medium: 999px !important;
+    --button-border-radius-small: 999px !important;
+    --button-background-color-primary: #0071e3 !important;
+    --button-background-color-primary-hover: #005dc2 !important;
+    --button-background-color-primary-active: #004da6 !important;
+    --button-text-color-primary: white !important;
+}
+
+button.main-button,
+button[type="submit"],
+.button-primary,
+button.button-primary,
+button.primary,
+button.dialog-button[default="true"],
+.dialog-button-box button[default="true"],
+#updateSettingsContainer button:not(moz-button),
+#aboutwelcome-onboarding button:not(moz-button) {
+    background-color: #0071e3 !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    cursor: pointer !important;
+}
+
+button.main-button:hover,
+button[type="submit"]:hover,
+.button-primary:hover,
+button.button-primary:hover,
+button.primary:hover,
+button.dialog-button[default="true"]:hover,
+.dialog-button-box button[default="true"]:hover,
+#updateSettingsContainer button:hover:not(moz-button),
+#aboutwelcome-onboarding button:hover:not(moz-button) {
+    background-color: #005dc2 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+button.main-button:active,
+button[type="submit"]:active,
+.button-primary:active,
+button.button-primary:active,
+button.primary:active,
+button.dialog-button[default="true"]:active,
+.dialog-button-box button[default="true"]:active,
+#updateSettingsContainer button:active:not(moz-button),
+#aboutwelcome-onboarding button:active:not(moz-button) {
+    background-color: #004da6 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+

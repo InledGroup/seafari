@@ -176,39 +176,85 @@ try {
     let navBar = document.getElementById("nav-bar-customization-target");
     if (!navBar) return;
 
-    // English: Obtain the necessary UI elements
-    // Español: Obtener los elementos de interfaz necesarios
-    let backBtn = document.getElementById("back-button");
-    let forwardBtn = document.getElementById("forward-button");
-    let urlbar = document.getElementById("urlbar-container");
-    let reloadBtn = document.getElementById("stop-reload-button") || document.getElementById("reload-button");
-    let newTabBtn = document.getElementById("new-tab-button") || document.getElementById("tabs-newtab-button");
-
-    // English: Create or get the Tab Overview button
-    // Español: Crear u obtener el botón de Tab Overview
-    let overviewBtn = document.getElementById("tab-overview-button");
-    if (!overviewBtn) {
-      overviewBtn = document.createXULElement("toolbarbutton");
-      overviewBtn.setAttribute("id", "tab-overview-button");
-      overviewBtn.setAttribute("class", "toolbarbutton-1 chrome64-button");
-      overviewBtn.setAttribute("label", "Tab Overview");
-      overviewBtn.setAttribute("tooltiptext", "Tab Overview");
-      overviewBtn.setAttribute("oncommand", "FirefoxViewHandler.openTab();");
+    // English: Ensure the new-tab-button is placed in the navigation toolbar
+    // Español: Asegurar que el botón de nueva pestaña esté colocado en la barra de navegación
+    let newTabBtn = document.getElementById("new-tab-button");
+    if (newTabBtn && newTabBtn.parentNode !== navBar) {
+      navBar.appendChild(newTabBtn);
     }
 
-    let extensionsBtn = document.getElementById("unified-extensions-button");
-    let menuBtn = document.getElementById("PanelUI-menu-button");
+    // English: Move the stop-reload-button inside the URL bar container
+    // Español: Mover el botón de parar/recargar dentro del contenedor de la barra de URL
+    let urlbarInputContainer = document.getElementById("urlbar-input-container");
+    let stopReloadBtn = document.getElementById("stop-reload-button");
+    if (urlbarInputContainer && stopReloadBtn && stopReloadBtn.parentNode !== urlbarInputContainer) {
+      urlbarInputContainer.appendChild(stopReloadBtn);
+    }
 
-    // English: Reorder elements to ensure macOS Safari layout: [Back] [Forward] [UrlBar] [Reload] [NewTab] [Overview] [Extensions] [Menu]
-    // Español: Reordenar elementos para asegurar la disposición de macOS Safari: [Atrás] [Adelante] [UrlBar] [Recargar] [NuevaPestaña] [Overview] [Extensiones] [Menú]
-    if (backBtn) navBar.appendChild(backBtn);
-    if (forwardBtn) navBar.appendChild(forwardBtn);
-    if (urlbar) navBar.appendChild(urlbar);
-    if (reloadBtn) navBar.appendChild(reloadBtn);
-    if (newTabBtn) navBar.appendChild(newTabBtn);
-    if (overviewBtn) navBar.appendChild(overviewBtn);
-    if (extensionsBtn) navBar.appendChild(extensionsBtn);
-    if (menuBtn) navBar.appendChild(menuBtn);
+    // English: Hide unwanted elements in JS for maximum reliability
+    // Español: Ocultar elementos no deseados en JS para máxima confiabilidad
+    let idsToHide = [
+      "fxa-toolbar-button",
+      "unified-extensions-button",
+      "tracking-protection-icon-container",
+      "sidebar-button",
+      "developer-button"
+    ];
+    idsToHide.forEach(id => {
+      let el = document.getElementById(id);
+      if (el) {
+        el.style.display = "none";
+        el.style.visibility = "collapse";
+      }
+    });
+
+    let leftIds = [
+      "back-button",
+      "forward-button"
+    ];
+    let rightIds = [
+      "new-tab-button",
+      "tab-overview-button",
+      "PanelUI-menu-button"
+    ];
+
+    // English: Get all current children
+    // Español: Obtener todos los hijos actuales
+    let children = Array.from(navBar.children);
+    
+    // English: Separate elements
+    // Español: Separar elementos
+    let leftNodes = [];
+    let urlbarNode = null;
+    let rightNodes = [];
+    let otherNodes = [];
+
+    children.forEach(node => {
+      let id = node.id;
+      if (leftIds.includes(id)) {
+        leftNodes.push(node);
+      } else if (id === "urlbar-container") {
+        urlbarNode = node;
+      } else if (rightIds.includes(id)) {
+        rightNodes.push(node);
+      } else {
+        if (!idsToHide.includes(id) && id !== "stop-reload-button") {
+          otherNodes.push(node);
+        }
+      }
+    });
+
+    // English: Sort to match desired layouts
+    // Español: Ordenar para que coincida con los diseños deseados
+    leftNodes.sort((a, b) => leftIds.indexOf(a.id) - leftIds.indexOf(b.id));
+    rightNodes.sort((a, b) => rightIds.indexOf(a.id) - rightIds.indexOf(b.id));
+
+    // English: Re-append in precise order: [Left Group] [UrlBar] [Other/Extensions] [Right Group]
+    // Español: Volver a añadir en orden preciso: [Grupo Izquierdo] [UrlBar] [Otros/Extensiones] [Grupo Derecho]
+    leftNodes.forEach(node => navBar.appendChild(node));
+    if (urlbarNode) navBar.appendChild(urlbarNode);
+    otherNodes.forEach(node => navBar.appendChild(node));
+    rightNodes.forEach(node => navBar.appendChild(node));
   }
 
   // English: Register observer to setup UI on new windows via sandbox-safe XPCOM
@@ -253,51 +299,154 @@ cp -r MacTahoe userChrome.css userContent.css customChrome.css "$THEME_DIR/"
 cp "seafari.png" "$THEME_DIR/seafari.png"
 
 echo "Applying UI FIXES..."
-cat <<EOF > "$THEME_DIR/customChrome.css"
+cat <<'EOF' > "$THEME_DIR/customChrome.css"
 @import "MacTahoe/theme.css";
-.toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
-.toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
-:root { --theme-primary-color: #007aff !important; --theme-primary-hover-color: #0063cc !important; --theme-primary-active-color: #004da6 !important; --gnome-toolbar-icon-fill: #ffffff !important; --gnome-toolbar-color: #ffffff !important; }
+
+:root {
+    --theme-primary-color: #0071e3 !important;
+    --theme-primary-hover-color: #005dc2 !important;
+    --theme-primary-active-color: #004da6 !important;
+    --gnome-toolbar-icon-fill: #2e2e2e !important;
+    --gnome-toolbar-color: #2e2e2e !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --gnome-toolbar-icon-fill: #ffffff !important;
+        --gnome-toolbar-color: #ffffff !important;
+    }
+    .toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
+    .toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
+}
+
+/* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
+/* Ocultar iconos no deseados (perfil de usuario, extensiones, escudo de protección de rastreo y barra lateral) */
+#fxa-toolbar-button,
+#unified-extensions-button,
+#tracking-protection-icon-container,
+#tracking-protection-icon-box,
+#tracking-protection-icon,
+#tracking-protection-icon-animatable-image,
+.tracking-protection-button,
+#sidebar-button,
+#developer-button,
+#nav-bar #fxa-toolbar-button,
+#nav-bar #unified-extensions-button,
+#nav-bar #tracking-protection-icon-container,
+#nav-bar #sidebar-button,
+#nav-bar #developer-button {
+    display: none !important;
+    visibility: collapse !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hide new tab button on tab strip to prevent duplication */
+/* Ocultar botón de nueva pestaña en la barra de pestañas para evitar duplicación */
+#tabs-newtab-button,
+.tabs-newtab-button {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 #about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
-/* Ensure New Tab and Overview buttons are visible and white */
+/* Ensure New Tab and Overview buttons are visible */
 #new-tab-button, #tab-overview-button {
     visibility: visible !important;
     opacity: 1 !important;
     display: flex !important;
-    fill: white !important;
-    color: white !important;
 }
 
-#new-tab-button image, #tab-overview-button image {
-    fill: white !important;
-    color: white !important;
-    filter: invert(1) brightness(100) !important;
+@media (prefers-color-scheme: dark) {
+    #new-tab-button, #tab-overview-button {
+        fill: white !important;
+        color: white !important;
+    }
+    #new-tab-button image, #tab-overview-button image {
+        fill: white !important;
+        color: white !important;
+        filter: invert(1) brightness(100) !important;
+    }
 }
 
 #tab-overview-button {
     list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
 }
 
-/* Hide the tab strip's original new tab button to prevent duplication */
-#tabs-newtab-button {
-    display: none !important;
-    visibility: hidden !important;
+/* Reload button style (inside URL bar, flat/transparent) */
+/* Estilo del botón de recarga (dentro de la barra de URL, plano/transparente) */
+#urlbar-input-container #stop-reload-button,
+#nav-bar #stop-reload-button {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    margin-right: 6px !important;
+    padding: 0 !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-#tracking-protection-icon-container {
+#urlbar-input-container #stop-reload-button > #reload-button,
+#urlbar-input-container #stop-reload-button > #stop-button,
+#nav-bar #stop-reload-button > #reload-button,
+#nav-bar #stop-reload-button > #stop-button {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure only one icon is visible (reload OR stop) depending on loading state */
+/* Asegurar que solo un icono sea visible (recarga O parada) según el estado de carga */
+#urlbar-input-container #stop-reload-button > #reload-button[hidden],
+#urlbar-input-container #stop-reload-button > #stop-button[hidden],
+#nav-bar #stop-reload-button > #reload-button[hidden],
+#nav-bar #stop-reload-button > #stop-button[hidden] {
     display: none !important;
+}
+
+#urlbar-input-container #stop-reload-button > #reload-button:hover,
+#urlbar-input-container #stop-reload-button > #stop-button:hover,
+#nav-bar #stop-reload-button > #reload-button:hover,
+#nav-bar #stop-reload-button > #stop-button:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-radius: 4px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #urlbar-input-container #stop-reload-button > #reload-button:hover,
+    #urlbar-input-container #stop-reload-button > #stop-button:hover,
+    #nav-bar #stop-reload-button > #reload-button:hover,
+    #nav-bar #stop-reload-button > #stop-button:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
 }
 
 /* --- Unified Left Button Group (Capsule/Bubble) --- */
-/* English: Style the entire left button group as a single unified capsule */
-/* Español: Estilizar todo el grupo de botones de la izquierda como una única cápsula unificada */
-#nav-bar #fxa-toolbar-button,
-#nav-bar #sidebar-button,
+/* English: Style the entire left button group (Back, Forward) as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la izquierda (Atrás, Adelante) como una única cápsula unificada */
 #nav-bar #back-button,
 #nav-bar #forward-button {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 8px !important;
@@ -306,40 +455,40 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     height: 34px !important;
     box-shadow: none !important;
     border: none !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
 /* Hover/Active states for Left Group */
-#nav-bar #fxa-toolbar-button:hover,
-#nav-bar #sidebar-button:hover,
 #nav-bar #back-button:hover,
 #nav-bar #forward-button:hover {
-    background: rgba(255, 255, 255, 0.16) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar #fxa-toolbar-button:active,
-#nav-bar #sidebar-button:active,
 #nav-bar #back-button:active,
 #nav-bar #forward-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar #back-button,
+    #nav-bar #forward-button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    #nav-bar #back-button:hover,
+    #nav-bar #forward-button:hover {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+    #nav-bar #back-button:active,
+    #nav-bar #forward-button:active {
+        background: rgba(255, 255, 255, 0.24) !important;
+    }
 }
 
 /* Dynamic Left Corner Rounding for Left Group */
-#nav-bar #fxa-toolbar-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #fxa-toolbar-button[hidden] ~ #sidebar-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #fxa-toolbar-button[hidden] ~ #sidebar-button[hidden] ~ #back-button:not([hidden]) {
+#nav-bar #back-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
@@ -357,7 +506,75 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     border-bottom-right-radius: 999px !important;
     padding-right: 12px !important;
 }
-#nav-bar #forward-button[hidden] ~ #back-button[hidden] ~ #sidebar-button:not([hidden]) {
+
+/* --- Unified Right Button Group (Capsule/Bubble) --- */
+/* English: Style the entire right button group (New Tab, Overview, Menu) as a single unified capsule */
+/* Español: Estilizar todo el grupo de botones de la derecha (Nueva pestaña, Overview, Menú) como una única cápsula unificada */
+#nav-bar #new-tab-button,
+#nav-bar #tab-overview-button,
+#nav-bar #PanelUI-menu-button {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    min-width: 36px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Hover/Active states for Right Group */
+#nav-bar #new-tab-button:hover,
+#nav-bar #tab-overview-button:hover,
+#nav-bar #PanelUI-menu-button:hover {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+#nav-bar #new-tab-button:active,
+#nav-bar #tab-overview-button:active,
+#nav-bar #PanelUI-menu-button:active {
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar #new-tab-button,
+    #nav-bar #tab-overview-button,
+    #nav-bar #PanelUI-menu-button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    #nav-bar #new-tab-button:hover,
+    #nav-bar #tab-overview-button:hover,
+    #nav-bar #PanelUI-menu-button:hover {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+    #nav-bar #new-tab-button:active,
+    #nav-bar #tab-overview-button:active,
+    #nav-bar #PanelUI-menu-button:active {
+        background: rgba(255, 255, 255, 0.24) !important;
+    }
+}
+
+/* Dynamic Left Corner Rounding for Right Group */
+#nav-bar #new-tab-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+#nav-bar #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
+    border-top-left-radius: 999px !important;
+    border-bottom-left-radius: 999px !important;
+    border-left: none !important;
+    padding-left: 12px !important;
+}
+
+/* Dynamic Right Corner Rounding for Right Group */
+#nav-bar #PanelUI-menu-button:not([hidden]) {
     border-top-right-radius: 999px !important;
     border-bottom-right-radius: 999px !important;
     padding-right: 12px !important;
@@ -369,11 +586,13 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     padding-right: 8px !important;
 }
 
-/* Tab close button white */
-.tab-close-button {
-    fill: white !important;
-    color: white !important;
-    filter: invert(1) brightness(100) !important;
+/* Tab close button white in dark mode */
+@media (prefers-color-scheme: dark) {
+    .tab-close-button {
+        fill: white !important;
+        color: white !important;
+        filter: invert(1) brightness(100) !important;
+    }
 }
 
 /* Replace Seafari tab icon for New Tab */
@@ -382,6 +601,70 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 .tab-icon-image[src="page-icon:about:newtab"],
 .tab-icon-image[src="page-icon:about:home"] {
     content: url("seafari.png") !important;
+}
+
+/* English: Flat blue style with rounded corners for chrome primary/dialog buttons */
+/* Español: Estilo azul plano con bordes redondeados para botones primarios/diálogos de chrome */
+button,
+.button,
+moz-button {
+    border-radius: 999px !important;
+    --button-border-radius: 999px !important;
+    --button-border-radius-hover: 999px !important;
+    --button-border-radius-active: 999px !important;
+    --button-border-radius-large: 999px !important;
+    --button-border-radius-medium: 999px !important;
+    --button-border-radius-small: 999px !important;
+    --button-background-color-primary: #0071e3 !important;
+    --button-background-color-primary-hover: #005dc2 !important;
+    --button-background-color-primary-active: #004da6 !important;
+    --button-text-color-primary: white !important;
+}
+
+button.main-button,
+button[type="submit"],
+.button-primary,
+button.button-primary,
+button.primary,
+button.dialog-button[default="true"],
+.dialog-button-box button[default="true"],
+#updateSettingsContainer button:not(moz-button),
+#aboutwelcome-onboarding button:not(moz-button) {
+    background-color: #0071e3 !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    cursor: pointer !important;
+}
+
+button.main-button:hover,
+button[type="submit"]:hover,
+.button-primary:hover,
+button.button-primary:hover,
+button.primary:hover,
+button.dialog-button[default="true"]:hover,
+.dialog-button-box button[default="true"]:hover,
+#updateSettingsContainer button:hover:not(moz-button),
+#aboutwelcome-onboarding button:hover:not(moz-button) {
+    background-color: #005dc2 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+button.main-button:active,
+button[type="submit"]:active,
+.button-primary:active,
+button.button-primary:active,
+button.primary:active,
+button.dialog-button[default="true"]:active,
+.dialog-button-box button[default="true"]:active,
+#updateSettingsContainer button:active:not(moz-button),
+#aboutwelcome-onboarding button:active:not(moz-button) {
+    background-color: #004da6 !important;
+    background-image: none !important;
+    box-shadow: none !important;
 }
 EOF
 
@@ -488,6 +771,93 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
         display: none !important;
     }
 }
+
+/* Apple Safari layout variables and overrides */
+:root {
+    --color-violet-90: #0071e3 !important;
+    --color-violet-80: #005dc2 !important;
+    --color-violet-70: #004da6 !important;
+    --color-violet-60: #0071e3 !important;
+    --button-background-color-primary: #0071e3 !important;
+    --button-background-color-primary-hover: #005dc2 !important;
+    --button-background-color-primary-active: #004da6 !important;
+    --in-content-primary-button-background: #0071e3 !important;
+    --in-content-primary-button-background-hover: #005dc2 !important;
+    --in-content-primary-button-background-active: #004da6 !important;
+    --newtab-primary-action-background: #0071e3 !important;
+    --theme-primary-color: #0071e3 !important;
+    --theme-primary-hover-color: #005dc2 !important;
+    --theme-primary-active-color: #004da6 !important;
+    --button-border-radius: 999px !important;
+}
+
+/* Style main-buttons globally to look like macOS Tahoe (Flat Blue) */
+button,
+.button,
+moz-button {
+    border-radius: 999px !important;
+    --button-border-radius: 999px !important;
+    --button-border-radius-hover: 999px !important;
+    --button-border-radius-active: 999px !important;
+    --button-border-radius-large: 999px !important;
+    --button-border-radius-medium: 999px !important;
+    --button-border-radius-small: 999px !important;
+    --button-background-color-primary: #0071e3 !important;
+    --button-background-color-primary-hover: #005dc2 !important;
+    --button-background-color-primary-active: #004da6 !important;
+    --button-text-color-primary: white !important;
+}
+
+button.main-button,
+button[type="submit"],
+.button-primary,
+button.button-primary,
+button.primary,
+button.dialog-button[default="true"],
+.dialog-button-box button[default="true"],
+#updateSettingsContainer button:not(moz-button),
+#aboutwelcome-onboarding button:not(moz-button) {
+    background-color: #0071e3 !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    cursor: pointer !important;
+}
+
+button.main-button:hover,
+button[type="submit"]:hover,
+.button-primary:hover,
+button.button-primary:hover,
+button.primary:hover,
+button.dialog-button[default="true"]:hover,
+.dialog-button-box button[default="true"]:hover,
+#updateSettingsContainer button:hover:not(moz-button),
+#aboutwelcome-onboarding button:hover:not(moz-button) {
+    background-color: #005dc2 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+button.main-button:active,
+button[type="submit"]:active,
+.button-primary:active,
+button.button-primary:active,
+button.primary:active,
+button.dialog-button[default="true"]:active,
+.dialog-button-box button[default="true"]:active,
+#updateSettingsContainer button:active:not(moz-button),
+#aboutwelcome-onboarding button:active:not(moz-button) {
+    background-color: #004da6 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+#category-more-from-mozilla,
+.category[name="more-from-mozilla"] {
+    display: none !important;
+}
 EOF
 
 echo "Binary Patching (Safe Zip Method)..."
@@ -566,6 +936,233 @@ EOF
 </svg>
 EOF
         fi
+    fi
+
+    # English: Make the fox-ai.svg preference icon transparent
+    # Español: Hacer transparente el icono de preferencias fox-ai.svg
+    local fox_ai_svg="$temp_dir/chrome/browser/skin/classic/browser/preferences/fox-ai.svg"
+    if [ -f "$fox_ai_svg" ]; then
+        echo "Making fox-ai.svg transparent..."
+        cat <<EOF > "$fox_ai_svg"
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"/>
+EOF
+    fi
+
+    # English: Make all illustrations transparent in any folder named 'illustrations'
+    # Español: Hacer transparentes todas las ilustraciones en cualquier carpeta llamada 'illustrations'
+    find "$temp_dir" -type d -name "illustrations" | while read -r ill_dir; do
+        echo "Found illustrations directory at: $ill_dir. Making all images transparent..."
+        find "$ill_dir" -type f | while read -r file; do
+            case "$file" in
+                *.svg)
+                    cat <<EOF > "$file"
+<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"/>
+EOF
+                    ;;
+                *.png)
+                    echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" | base64 -d > "$file"
+                    ;;
+                *)
+                    echo -n "" > "$file"
+                    ;;
+            esac
+        done
+    done
+
+    # English: Append Safari layout styles to global.css
+    # Español: Adjuntar estilos de diseño de Safari a global.css
+    local global_css="$temp_dir/chrome/toolkit/skin/classic/global/global.css"
+    if [ -f "$global_css" ]; then
+        echo "Appending Safari layout variables and styles to global.css..."
+        cat <<'EOF' >> "$global_css"
+
+/* Apple Safari layout variables and overrides */
+:root {
+    --color-violet-90: #0071e3 !important;
+    --color-violet-80: #005dc2 !important;
+    --color-violet-70: #004da6 !important;
+    --color-violet-60: #0071e3 !important;
+    --button-background-color-primary: #0071e3 !important;
+    --button-background-color-primary-hover: #005dc2 !important;
+    --button-background-color-primary-active: #004da6 !important;
+    --in-content-primary-button-background: #0071e3 !important;
+    --in-content-primary-button-background-hover: #005dc2 !important;
+    --in-content-primary-button-background-active: #004da6 !important;
+    --newtab-primary-action-background: #0071e3 !important;
+    --theme-primary-color: #0071e3 !important;
+    --theme-primary-hover-color: #005dc2 !important;
+    --theme-primary-active-color: #004da6 !important;
+    --button-border-radius: 999px !important;
+}
+
+/* Style main-buttons globally in global.css to look like macOS Tahoe (Flat Blue) */
+button,
+.button,
+moz-button {
+    border-radius: 999px !important;
+    --button-border-radius: 999px !important;
+    --button-border-radius-hover: 999px !important;
+    --button-border-radius-active: 999px !important;
+    --button-border-radius-large: 999px !important;
+    --button-border-radius-medium: 999px !important;
+    --button-border-radius-small: 999px !important;
+    --button-background-color-primary: #0071e3 !important;
+    --button-background-color-primary-hover: #005dc2 !important;
+    --button-background-color-primary-active: #004da6 !important;
+    --button-text-color-primary: white !important;
+}
+
+button.main-button,
+button[type="submit"],
+.button-primary,
+button.button-primary,
+button.primary,
+button.dialog-button[default="true"],
+.dialog-button-box button[default="true"],
+#updateSettingsContainer button:not(moz-button),
+#aboutwelcome-onboarding button:not(moz-button) {
+    background-color: #0071e3 !important;
+    background-image: none !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    cursor: pointer !important;
+}
+
+button.main-button:hover,
+button[type="submit"]:hover,
+.button-primary:hover,
+button.button-primary:hover,
+button.primary:hover,
+button.dialog-button[default="true"]:hover,
+.dialog-button-box button[default="true"]:hover,
+#updateSettingsContainer button:hover:not(moz-button),
+#aboutwelcome-onboarding button:hover:not(moz-button) {
+    background-color: #005dc2 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+button.main-button:active,
+button[type="submit"]:active,
+.button-primary:active,
+button.button-primary:active,
+button.primary:active,
+button.dialog-button[default="true"]:active,
+.dialog-button-box button[default="true"]:active,
+#updateSettingsContainer button:active:not(moz-button),
+#aboutwelcome-onboarding button:active:not(moz-button) {
+    background-color: #004da6 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+#category-more-from-mozilla,
+.category[name="more-from-mozilla"] {
+    display: none !important;
+}
+EOF
+    fi
+
+    # English: Append Safari layout styles to aboutNetError.css
+    # Español: Adjuntar estilos de diseño de Safari a aboutNetError.css
+    local net_error_css="$temp_dir/chrome/toolkit/skin/classic/global/aboutNetError.css"
+    if [ -f "$net_error_css" ]; then
+        echo "Appending Safari connection styles to aboutNetError.css..."
+        cat <<'EOF' >> "$net_error_css"
+
+/* Safari style for about:neterror */
+body {
+    background-color: #1a1a1a !important;
+    color: #e0e0e0 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+}
+
+#errorPageContainer {
+    max-width: 600px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.illustration,
+.error-illustration,
+#errorPageContainer::before,
+.title-icon {
+    display: none !important;
+}
+
+h1,
+.title {
+    font-size: 22px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    margin-bottom: 12px !important;
+    text-align: center !important;
+}
+
+@media (prefers-color-scheme: light) {
+    body {
+        background-color: #f5f5f7 !important;
+        color: #1d1d1f !important;
+    }
+    h1, .title {
+        color: #1d1d1f !important;
+    }
+    .description, p, #errorDescriptionContainer {
+        color: #86868b !important;
+    }
+}
+
+.description,
+p,
+#errorDescriptionContainer,
+#errorShortDescText {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #a1a1a6 !important;
+    text-align: center !important;
+    margin-bottom: 24px !important;
+    max-width: 480px !important;
+}
+
+#netErrorButtonContainer {
+    margin-top: 10px !important;
+}
+
+button,
+.button,
+#tryAgainButton {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 6px 16px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+}
+
+@media (prefers-color-scheme: light) {
+    button, .button, #tryAgainButton {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        color: #1d1d1f !important;
+    }
+}
+EOF
     fi
 
     # English: Replace standalone original branding with Seafari in text files (including .ftl Fluent files) only to prevent binary/path corruption
