@@ -1,10 +1,11 @@
-# 🧭 Seafari
+# Seafari
 
-Seafari is a professional-grade, Safari-styled web browser for Linux, built on top of a highly optimized and patched Seafari binary. It combines the privacy and extensibility of Seafari with the elegant aesthetic and user experience of macOS Safari.
+Seafari is a browser made on top of Mozilla Firefox. Gets daily updates from Mozilla source and is fully open-source.  
+Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.
 
 ![Seafari Logo](seafari.png)
 
-## ✨ Features
+##  Features
 
 - **Safari Aesthetic:** Complete UI overhaul using the MacTahoe theme and custom CSS.
 - **Privacy First:** Pre-installed and force-enabled **uBlock Origin**.
@@ -13,7 +14,7 @@ Seafari is a professional-grade, Safari-styled web browser for Linux, built on t
 - **Multi-Arch Support:** Available for both **AMD64 (x86_64)** and **ARM64 (aarch64)**.
 - **Multiple Formats:** Distributed as `.deb`, `.rpm`, and `AppImage`.
 
-## 🚀 Installation
+## Installation
 
 ### Debian / Ubuntu / Mint (Recommended)
 
@@ -43,7 +44,7 @@ chmod +x Seafari-x86_64.AppImage
 ./Seafari-x86_64.AppImage
 ```
 
-## 🛠️ Build from Source
+## Development
 
 To build Seafari locally:
 
@@ -54,11 +55,27 @@ To build Seafari locally:
    ```
 2. Run the build script (requires `dpkg-dev`, `binutils`, and `fpm` for RPM):
    ```bash
-   ./build_seafari.sh amd64  # or arm64
+   ./build_seafari.sh amd64 --skip-rpm
    ```
+`---skip-rpm` is optional, only is you want to generate a .deb and appimage faster.  
 
-## 📄 License
+3. Clean your system for unwanted old configs
+```bash
+rm -rf ~/.mozilla/seafari-profile
+```
+4. Run the Appimage
+```bash
+./Seafari-x86_64.AppImage
+```
 
-Seafari is distributed under the same terms as Mozilla Seafari. Theme components and branding are property of their respective owners.
+## License and acknowledgment
 
-v1.2
+Seafari is distributed under the same terms as Mozilla Firefox.  
+The code made by Inled is licensed under [MIT-INLED](https://license.inled.es) 
+The base theme is based on [Vinceliuice/MacTahoe GTK Theme](https://github.com/vinceliuice/MacTahoe-gtk-theme/tree/main/other/firefox).  
+
+## Legal  
+Seafari is a product of Inled Group, which is not affiliated with Mozilla or Apple.
+If you'd like to integrate Seafari into your distribution, we would greatly appreciate it, and it would be even better if you mentioned us.
+Feel free to contact us with any questions. We welcome pull requests and issues.
+v1.3
