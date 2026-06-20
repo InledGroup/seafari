@@ -28,8 +28,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Auto-increment Version
-        if: github.event_name == 'schedule' || github.event_name == 'repository_dispatch'
+      - name: Update Version and Commit
+        if: github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || contains(github.event.head_commit.message, '[RELEASE]')
         run: |
           # English: Configure Git for the automated bot commit
           # Español: Configurar Git para el commit automatizado del bot
@@ -47,19 +47,40 @@ jobs:
           MINOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f2)
           PATCH=$(echo "$CURRENT_VERSION" | cut -d'.' -f3)
           
-          # English: Force major and minor version to 1.1 if they are not already set to it
-          # Español: Forzar las versiones mayor y menor a 1.1 si aún no están configuradas así
-          if [ "$MAJOR" != "1" ] || [ "$MINOR" != "1" ]; then
-            MAJOR="1"
-            MINOR="1"
-            PATCH="0"
+          # English: Get current commit message
+          # Español: Obtener el mensaje de commit actual
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit Message: $COMMIT_MSG"
+          
+          IS_RELEASE_COMMIT=false
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # English: If commit specifies target version via [RELEASE][X.X]
+            # Español: Si el commit especifica la versión objetivo vía [RELEASE][X.X]
+            if [[ "$COMMIT_MSG" =~ \[RELEASE\]\[([0-9]+\.[0-9]+)\] ]]; then
+              VERSION_XX="${BASH_REMATCH[1]}"
+              MAJOR=$(echo "$VERSION_XX" | cut -d'.' -f1)
+              MINOR=$(echo "$VERSION_XX" | cut -d'.' -f2)
+              PATCH="0"
+              NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+              IS_RELEASE_COMMIT=true
+              echo "Release commit detected with target version: $NEW_VERSION"
+            # English: If commit contains [RELEASE] without a version, reset patch to 0
+            # Español: Si el commit contiene [RELEASE] sin una versión, reiniciar parche a 0
+            elif [[ "$COMMIT_MSG" == *"[RELEASE]"* ]]; then
+              PATCH="0"
+              NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+              IS_RELEASE_COMMIT=true
+              echo "General release commit detected. Resetting patch: $NEW_VERSION"
+            fi
           fi
           
-          # English: Increment the patch version number
-          # Español: Incrementar el número de la versión de parche
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-          echo "New Version: $NEW_VERSION"
+          if [ "$IS_RELEASE_COMMIT" = false ]; then
+            # English: Increment patch version for scheduled, dispatch, or manual runs
+            # Español: Incrementar la versión de parche para ejecuciones programadas, de despacho o manuales
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+            echo "Incrementing patch version: $NEW_VERSION"
+          fi
           
           # English: Update the version variable in build_seafari.sh
           # Español: Actualizar la variable de versión en build_seafari.sh
@@ -68,7 +89,7 @@ jobs:
           # English: Commit and push changes back to the main branch
           # Español: Hacer commit y push de los cambios de vuelta a la rama principal
           git add build_seafari.sh
-          git commit -m "Auto-increment version to $NEW_VERSION [skip ci]"
+          git commit -m "Update Seafari version to $NEW_VERSION [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${{ github.ref }}
 
       - name: Install dependencies
