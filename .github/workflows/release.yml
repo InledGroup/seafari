@@ -89,8 +89,14 @@ jobs:
           # English: Commit and push changes back to the main branch
           # Español: Hacer commit y push de los cambios de vuelta a la rama principal
           git add build_seafari.sh
-          git commit -m "Update Seafari version to $NEW_VERSION [skip ci]" || echo "No changes to commit"
-          git push origin HEAD:${{ github.ref }}
+          if git commit -m "Update Seafari version to $NEW_VERSION [skip ci]"; then
+            # English: Pull with rebase to integrate any concurrent changes on the remote branch
+            # Español: Hacer pull con rebase para integrar cualquier cambio concurrente en la rama remota
+            git pull --rebase origin ${{ github.ref_name }}
+            git push origin HEAD:${{ github.ref }}
+          else
+            echo "No changes to commit"
+          fi
 
       - name: Install dependencies
         run: |
