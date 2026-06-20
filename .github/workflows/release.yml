@@ -15,21 +15,19 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  prepare-release:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || contains(github.event.head_commit.message, '[RELEASE]')
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-      fail-fast: false
     outputs:
       version: ${{ steps.vars.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Update Version and Commit
-        if: github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || contains(github.event.head_commit.message, '[RELEASE]')
+        id: vars
         run: |
           # English: Configure Git for the automated bot commit
           # Español: Configurar Git para el commit automatizado del bot
@@ -97,6 +95,22 @@ jobs:
           else
             echo "No changes to commit"
           fi
+          
+          V=$(grep '^VERSION=' build_seafari.sh | cut -d'"' -f2)
+          echo "VERSION=$V" >> $GITHUB_OUTPUT
+
+  build-and-release:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+      fail-fast: false
+    env:
+      VERSION: ${{ needs.prepare-release.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -108,13 +122,6 @@ jobs:
         run: |
           chmod +x build_seafari.sh
           ./build_seafari.sh ${{ matrix.arch }}
-
-      - name: Get Version
-        id: vars
-        run: |
-          V=$(grep '^VERSION=' build_seafari.sh | cut -d'"' -f2)
-          echo "VERSION=$V" >> $GITHUB_OUTPUT
-          echo "VERSION=$V" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -134,13 +141,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-apt-update:
-    needs: build-and-release
+    needs: [prepare-release, build-and-release]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - name: Trigger APT Repo Update
         run: |
-          VERSION="${{ needs.build-and-release.outputs.version }}"
+          VERSION="${{ needs.prepare-release.outputs.version }}"
           
           for ARCH in amd64 arm64; do
             # English: Determine architecture naming conventions for the package formats
