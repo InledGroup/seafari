@@ -13,3 +13,6 @@ tmp_ja*/
 # OS files
 .DS_Store
 build_cache_amd64/
+
+# Cloned repositories
+apt/

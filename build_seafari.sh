@@ -286,11 +286,14 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     visibility: hidden !important;
 }
 
+#tracking-protection-icon-container {
+    display: none !important;
+}
+
 /* --- Unified Left Button Group (Capsule/Bubble) --- */
 /* English: Style the entire left button group as a single unified capsule */
 /* Español: Estilizar todo el grupo de botones de la izquierda como una única cápsula unificada */
 #nav-bar #fxa-toolbar-button,
-#nav-bar #tracking-protection-icon-container,
 #nav-bar #sidebar-button,
 #nav-bar #back-button,
 #nav-bar #forward-button {
@@ -311,14 +314,12 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
 
 /* Hover/Active states for Left Group */
 #nav-bar #fxa-toolbar-button:hover,
-#nav-bar #tracking-protection-icon-container:hover,
 #nav-bar #sidebar-button:hover,
 #nav-bar #back-button:hover,
 #nav-bar #forward-button:hover {
     background: rgba(255, 255, 255, 0.16) !important;
 }
 #nav-bar #fxa-toolbar-button:active,
-#nav-bar #tracking-protection-icon-container:active,
 #nav-bar #sidebar-button:active,
 #nav-bar #back-button:active,
 #nav-bar #forward-button:active {
@@ -332,19 +333,13 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     border-left: none !important;
     padding-left: 12px !important;
 }
-#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container:not([hidden]) {
+#nav-bar #fxa-toolbar-button[hidden] ~ #sidebar-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
     padding-left: 12px !important;
 }
-#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #fxa-toolbar-button[hidden] ~ #tracking-protection-icon-container[hidden] ~ #sidebar-button[hidden] ~ #back-button:not([hidden]) {
+#nav-bar #fxa-toolbar-button[hidden] ~ #sidebar-button[hidden] ~ #back-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
@@ -363,89 +358,6 @@ cat <<EOF > "$THEME_DIR/customChrome.css"
     padding-right: 12px !important;
 }
 #nav-bar #forward-button[hidden] ~ #back-button[hidden] ~ #sidebar-button:not([hidden]) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
-}
-
-/* --- Unified Right Button Group (Capsule/Bubble) --- */
-/* English: Style the entire right button group (including reload, new tab, overview, extensions, menu) as a single unified capsule */
-/* Español: Estilizar todo el grupo de botones de la derecha (incluyendo recarga, nueva pestaña, vista general, extensiones, menú) como una única cápsula unificada */
-#nav-bar #stop-reload-button,
-#nav-bar #new-tab-button,
-#nav-bar #tab-overview-button,
-#nav-bar #unified-extensions-button,
-#nav-bar #PanelUI-menu-button {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 8px !important;
-    min-width: 36px !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Ensure the reload/stop children buttons are transparent and fit inside the parent */
-#nav-bar #reload-button,
-#nav-bar #stop-button {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-}
-
-/* Hover/Active states for Right Group */
-#nav-bar #stop-reload-button:hover,
-#nav-bar #new-tab-button:hover,
-#nav-bar #tab-overview-button:hover,
-#nav-bar #unified-extensions-button:hover,
-#nav-bar #PanelUI-menu-button:hover {
-    background: rgba(255, 255, 255, 0.16) !important;
-}
-#nav-bar #stop-reload-button:active,
-#nav-bar #new-tab-button:active,
-#nav-bar #tab-overview-button:active,
-#nav-bar #unified-extensions-button:active,
-#nav-bar #PanelUI-menu-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
-}
-
-/* Dynamic Left Corner Rounding for Right Group */
-#nav-bar #stop-reload-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #stop-reload-button[hidden] ~ #new-tab-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #stop-reload-button[hidden] ~ #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-
-/* Dynamic Right Corner Rounding for Right Group */
-#nav-bar #PanelUI-menu-button:not([hidden]) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
-}
-#nav-bar #PanelUI-menu-button[hidden] ~ #unified-extensions-button:not([hidden]) {
     border-top-right-radius: 999px !important;
     border-bottom-right-radius: 999px !important;
     padding-right: 12px !important;
@@ -560,6 +472,22 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
     .highlights .card-context { display: none !important; }
 }
 @-moz-document url-prefix("about:") { .brand-logo, .logo { background: url("seafari.png") no-repeat center !important; background-size: contain !important; } }
+
+/* English: Hide enterprise policy / managed warnings and organization updates notice in preferences */
+/* Español: Ocultar advertencias de directiva empresarial / administración y aviso de actualizaciones de la organización en preferencias */
+@-moz-document url-prefix("about:preferences") {
+    #policies-container,
+    #policies-container-content,
+    .enterprise-controlled,
+    .managed-box,
+    #managed-box,
+    #updateSettingsContainer .box-container,
+    #updateApp .box-container,
+    .box-container:has(span[id="label"]),
+    .box-container:has(slot[name="actions-start"]) {
+        display: none !important;
+    }
+}
 EOF
 
 echo "Binary Patching (Safe Zip Method)..."
