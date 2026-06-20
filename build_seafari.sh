@@ -183,14 +183,6 @@ try {
       navBar.appendChild(newTabBtn);
     }
 
-    // English: Move the stop-reload-button inside the URL bar container
-    // Español: Mover el botón de parar/recargar dentro del contenedor de la barra de URL
-    let urlbarInputContainer = document.getElementById("urlbar-input-container");
-    let stopReloadBtn = document.getElementById("stop-reload-button");
-    if (urlbarInputContainer && stopReloadBtn && stopReloadBtn.parentNode !== urlbarInputContainer) {
-      urlbarInputContainer.appendChild(stopReloadBtn);
-    }
-
     // English: Hide unwanted elements in JS for maximum reliability
     // Español: Ocultar elementos no deseados en JS para máxima confiabilidad
     let idsToHide = [
@@ -226,6 +218,7 @@ try {
     // Español: Separar elementos
     let leftNodes = [];
     let urlbarNode = null;
+    let reloadNode = null;
     let rightNodes = [];
     let otherNodes = [];
 
@@ -235,10 +228,12 @@ try {
         leftNodes.push(node);
       } else if (id === "urlbar-container") {
         urlbarNode = node;
+      } else if (id === "stop-reload-button") {
+        reloadNode = node;
       } else if (rightIds.includes(id)) {
         rightNodes.push(node);
       } else {
-        if (!idsToHide.includes(id) && id !== "stop-reload-button") {
+        if (!idsToHide.includes(id)) {
           otherNodes.push(node);
         }
       }
@@ -249,10 +244,11 @@ try {
     leftNodes.sort((a, b) => leftIds.indexOf(a.id) - leftIds.indexOf(b.id));
     rightNodes.sort((a, b) => rightIds.indexOf(a.id) - rightIds.indexOf(b.id));
 
-    // English: Re-append in precise order: [Left Group] [UrlBar] [Other/Extensions] [Right Group]
-    // Español: Volver a añadir en orden preciso: [Grupo Izquierdo] [UrlBar] [Otros/Extensiones] [Grupo Derecho]
+    // English: Re-append in precise order: [Left Group] [UrlBar] [Stop/Reload] [Other/Extensions] [Right Group]
+    // Español: Volver a añadir en orden preciso: [Grupo Izquierdo] [UrlBar] [Parar/Recargar] [Otros/Extensiones] [Grupo Derecho]
     leftNodes.forEach(node => navBar.appendChild(node));
     if (urlbarNode) navBar.appendChild(urlbarNode);
+    if (reloadNode) navBar.appendChild(reloadNode);
     otherNodes.forEach(node => navBar.appendChild(node));
     rightNodes.forEach(node => navBar.appendChild(node));
   }
@@ -376,69 +372,23 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
 }
 
-/* Reload button style (inside URL bar, flat/transparent) */
-/* Estilo del botón de recarga (dentro de la barra de URL, plano/transparente) */
-#urlbar-input-container #stop-reload-button,
+/* Reload button style (next to URL bar, matching other buttons) */
+/* Estilo del botón de recarga (al lado de la barra de URL, a juego con el resto) */
 #nav-bar #stop-reload-button {
-    background: transparent !important;
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    margin-right: 6px !important;
+    margin: 0 4px !important;
     padding: 0 !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-    width: 24px !important;
-    height: 24px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
 }
 
-#urlbar-input-container #stop-reload-button > #reload-button,
-#urlbar-input-container #stop-reload-button > #stop-button,
 #nav-bar #stop-reload-button > #reload-button,
 #nav-bar #stop-reload-button > #stop-button {
-    background: transparent !important;
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
     margin: 0 !important;
-    padding: 0 !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-    width: 24px !important;
-    height: 24px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
 }
 
 /* Ensure only one icon is visible (reload OR stop) depending on loading state */
 /* Asegurar que solo un icono sea visible (recarga O parada) según el estado de carga */
-#urlbar-input-container #stop-reload-button > #reload-button[hidden],
-#urlbar-input-container #stop-reload-button > #stop-button[hidden],
 #nav-bar #stop-reload-button > #reload-button[hidden],
 #nav-bar #stop-reload-button > #stop-button[hidden] {
     display: none !important;
-}
-
-#urlbar-input-container #stop-reload-button > #reload-button:hover,
-#urlbar-input-container #stop-reload-button > #stop-button:hover,
-#nav-bar #stop-reload-button > #reload-button:hover,
-#nav-bar #stop-reload-button > #stop-button:hover {
-    background: rgba(0, 0, 0, 0.08) !important;
-    border-radius: 4px !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #urlbar-input-container #stop-reload-button > #reload-button:hover,
-    #urlbar-input-container #stop-reload-button > #stop-button:hover,
-    #nav-bar #stop-reload-button > #reload-button:hover,
-    #nav-bar #stop-reload-button > #stop-button:hover {
-        background: rgba(255, 255, 255, 0.15) !important;
-    }
 }
 
 /* --- Unified Left Button Group (Capsule/Bubble) --- */
