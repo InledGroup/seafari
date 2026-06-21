@@ -4,17 +4,44 @@
     --theme-primary-color: #0071e3 !important;
     --theme-primary-hover-color: #005dc2 !important;
     --theme-primary-active-color: #004da6 !important;
-    --gnome-toolbar-icon-fill: #2e2e2e !important;
-    --gnome-toolbar-color: #2e2e2e !important;
+    --gnome-toolbar-icon-fill: var(--toolbar-color, #2e2e2e) !important;
+    --gnome-toolbar-color: var(--toolbar-color, #2e2e2e) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --gnome-toolbar-icon-fill: #ffffff !important;
-        --gnome-toolbar-color: #ffffff !important;
+        --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
+        --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
     }
-    .toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
-    .toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
+}
+
+:root[brighttext] {
+    --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
+    --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
+}
+
+.toolbarbutton-icon:not(.webextension-action), 
+.urlbar-icon, 
+.identity-icon, 
+#identity-icon, 
+.button-icon:not(.webextension-action), 
+.menu-iconic-icon { 
+    fill: var(--gnome-toolbar-icon-fill) !important; 
+    color: var(--gnome-toolbar-color) !important; 
+}
+
+@media (prefers-color-scheme: dark) {
+    .toolbar-primary image, 
+    .urlbar-icon image, 
+    #nav-bar toolbarbutton:not(.webextension-action) image { 
+        filter: invert(1) brightness(100) !important; 
+    }
+}
+
+:root[brighttext] .toolbar-primary image, 
+:root[brighttext] .urlbar-icon image, 
+:root[brighttext] #nav-bar toolbarbutton:not(.webextension-action) image { 
+    filter: invert(1) brightness(100) !important; 
 }
 
 /* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
@@ -60,14 +87,20 @@
 
 @media (prefers-color-scheme: dark) {
     #new-tab-button, #tab-overview-button {
-        fill: white !important;
-        color: white !important;
+        fill: var(--gnome-toolbar-icon-fill) !important;
+        color: var(--gnome-toolbar-color) !important;
     }
     #new-tab-button image, #tab-overview-button image {
-        fill: white !important;
-        color: white !important;
+        fill: var(--gnome-toolbar-icon-fill) !important;
+        color: var(--gnome-toolbar-color) !important;
         filter: invert(1) brightness(100) !important;
     }
+}
+
+:root[brighttext] #new-tab-button image, :root[brighttext] #tab-overview-button image {
+    fill: var(--gnome-toolbar-icon-fill) !important;
+    color: var(--gnome-toolbar-color) !important;
+    filter: invert(1) brightness(100) !important;
 }
 
 #tab-overview-button {
@@ -137,6 +170,20 @@
     #nav-bar #forward-button:active {
         background: rgba(255, 255, 255, 0.24) !important;
     }
+}
+
+:root[brighttext] #nav-bar #back-button,
+:root[brighttext] #nav-bar #forward-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+:root[brighttext] #nav-bar #back-button:hover,
+:root[brighttext] #nav-bar #forward-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+:root[brighttext] #nav-bar #back-button:active,
+:root[brighttext] #nav-bar #forward-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
 }
 
 /* Dynamic Left Corner Rounding for Left Group */
@@ -211,6 +258,23 @@
     }
 }
 
+:root[brighttext] #nav-bar #new-tab-button,
+:root[brighttext] #nav-bar #tab-overview-button,
+:root[brighttext] #nav-bar #PanelUI-menu-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+:root[brighttext] #nav-bar #new-tab-button:hover,
+:root[brighttext] #nav-bar #tab-overview-button:hover,
+:root[brighttext] #nav-bar #PanelUI-menu-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+:root[brighttext] #nav-bar #new-tab-button:active,
+:root[brighttext] #nav-bar #tab-overview-button:active,
+:root[brighttext] #nav-bar #PanelUI-menu-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
 /* Dynamic Left Corner Rounding for Right Group */
 #nav-bar #new-tab-button:not([hidden]) {
     border-top-left-radius: 999px !important;
@@ -241,10 +305,14 @@
 /* Tab close button white in dark mode */
 @media (prefers-color-scheme: dark) {
     .tab-close-button {
-        fill: white !important;
-        color: white !important;
+        fill: var(--gnome-toolbar-icon-fill) !important;
+        color: var(--gnome-toolbar-color) !important;
         filter: invert(1) brightness(100) !important;
     }
+}
+
+:root[brighttext] .tab-close-button {
+    filter: invert(1) brightness(100) !important;
 }
 
 /* Replace Seafari tab icon for New Tab */

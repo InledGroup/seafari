@@ -109,8 +109,7 @@ cat <<EOF > "$DIST_DIR/policies.json"
         "install_url": "file://$EXT_DIR/uBlock0@raymondhill.net.xpi"
       },
       "ATBC@EasonWong": {
-        "installation_mode": "force_installed",
-        "install_url": "file://$EXT_DIR/ATBC@EasonWong.xpi"
+        "installation_mode": "blocked"
       }
     },
     "Preferences": {
@@ -213,7 +212,7 @@ try {
     // English: Get all current children
     // Español: Obtener todos los hijos actuales
     let children = Array.from(navBar.children);
-    
+
     // English: Separate elements
     // Español: Separar elementos
     let leftNodes = [];
@@ -257,7 +256,7 @@ try {
   // Español: Registrar observador para configurar la interfaz en nuevas ventanas vía XPCOM (seguro en sandbox)
   var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                   .getService(Components.interfaces.nsIObserverService);
-  
+
   var observer = {
     observe: function(aSubject, aTopic, aData) {
       var window = aSubject;
@@ -268,7 +267,7 @@ try {
       }, { once: true });
     }
   };
-  
+
   observerService.addObserver(observer, "domwindowopened", false);
 
   // English: Apply setup to already existing windows on startup via XPCOM Mediator
@@ -302,17 +301,44 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     --theme-primary-color: #0071e3 !important;
     --theme-primary-hover-color: #005dc2 !important;
     --theme-primary-active-color: #004da6 !important;
-    --gnome-toolbar-icon-fill: #2e2e2e !important;
-    --gnome-toolbar-color: #2e2e2e !important;
+    --gnome-toolbar-icon-fill: var(--toolbar-color, #2e2e2e) !important;
+    --gnome-toolbar-color: var(--toolbar-color, #2e2e2e) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --gnome-toolbar-icon-fill: #ffffff !important;
-        --gnome-toolbar-color: #ffffff !important;
+        --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
+        --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
     }
-    .toolbarbutton-icon, .urlbar-icon, .identity-icon, #identity-icon, .button-icon, .menu-iconic-icon, image { fill: white !important; color: white !important; }
-    .toolbar-primary image, .urlbar-icon image, #nav-bar image { filter: invert(1) brightness(100) !important; }
+}
+
+:root[brighttext] {
+    --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
+    --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
+}
+
+.toolbarbutton-icon:not(.webextension-action), 
+.urlbar-icon, 
+.identity-icon, 
+#identity-icon, 
+.button-icon:not(.webextension-action), 
+.menu-iconic-icon { 
+    fill: var(--gnome-toolbar-icon-fill) !important; 
+    color: var(--gnome-toolbar-color) !important; 
+}
+
+@media (prefers-color-scheme: dark) {
+    .toolbar-primary image, 
+    .urlbar-icon image, 
+    #nav-bar toolbarbutton:not(.webextension-action) image { 
+        filter: invert(1) brightness(100) !important; 
+    }
+}
+
+:root[brighttext] .toolbar-primary image, 
+:root[brighttext] .urlbar-icon image, 
+:root[brighttext] #nav-bar toolbarbutton:not(.webextension-action) image { 
+    filter: invert(1) brightness(100) !important; 
 }
 
 /* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
@@ -358,14 +384,20 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
 
 @media (prefers-color-scheme: dark) {
     #new-tab-button, #tab-overview-button {
-        fill: white !important;
-        color: white !important;
+        fill: var(--gnome-toolbar-icon-fill) !important;
+        color: var(--gnome-toolbar-color) !important;
     }
     #new-tab-button image, #tab-overview-button image {
-        fill: white !important;
-        color: white !important;
+        fill: var(--gnome-toolbar-icon-fill) !important;
+        color: var(--gnome-toolbar-color) !important;
         filter: invert(1) brightness(100) !important;
     }
+}
+
+:root[brighttext] #new-tab-button image, :root[brighttext] #tab-overview-button image {
+    fill: var(--gnome-toolbar-icon-fill) !important;
+    color: var(--gnome-toolbar-color) !important;
+    filter: invert(1) brightness(100) !important;
 }
 
 #tab-overview-button {
@@ -435,6 +467,20 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     #nav-bar #forward-button:active {
         background: rgba(255, 255, 255, 0.24) !important;
     }
+}
+
+:root[brighttext] #nav-bar #back-button,
+:root[brighttext] #nav-bar #forward-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+:root[brighttext] #nav-bar #back-button:hover,
+:root[brighttext] #nav-bar #forward-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+:root[brighttext] #nav-bar #back-button:active,
+:root[brighttext] #nav-bar #forward-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
 }
 
 /* Dynamic Left Corner Rounding for Left Group */
@@ -509,6 +555,23 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     }
 }
 
+:root[brighttext] #nav-bar #new-tab-button,
+:root[brighttext] #nav-bar #tab-overview-button,
+:root[brighttext] #nav-bar #PanelUI-menu-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+:root[brighttext] #nav-bar #new-tab-button:hover,
+:root[brighttext] #nav-bar #tab-overview-button:hover,
+:root[brighttext] #nav-bar #PanelUI-menu-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+:root[brighttext] #nav-bar #new-tab-button:active,
+:root[brighttext] #nav-bar #tab-overview-button:active,
+:root[brighttext] #nav-bar #PanelUI-menu-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
 /* Dynamic Left Corner Rounding for Right Group */
 #nav-bar #new-tab-button:not([hidden]) {
     border-top-left-radius: 999px !important;
@@ -539,10 +602,14 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
 /* Tab close button white in dark mode */
 @media (prefers-color-scheme: dark) {
     .tab-close-button {
-        fill: white !important;
-        color: white !important;
+        fill: var(--gnome-toolbar-icon-fill) !important;
+        color: var(--gnome-toolbar-color) !important;
         filter: invert(1) brightness(100) !important;
     }
+}
+
+:root[brighttext] .tab-close-button {
+    filter: invert(1) brightness(100) !important;
 }
 
 /* Replace Seafari tab icon for New Tab */
@@ -620,8 +687,8 @@ EOF
 
 cat <<EOF >> "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:welcome") {
-    .section-secondary, .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration, .brand-logo, .logo-container { 
-        display: none !important; 
+    .section-secondary, .hero-image, .onboarding-hero-image, .page-header-image, .welcome-image, .fox-image, .illustration, .brand-logo, .logo-container {
+        display: none !important;
     }
     .onboardingContainer {
         background: #1a1a1a !important;
@@ -658,7 +725,7 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
     body { background-color: #1a1a1a !important; }
     .activity-stream { background: transparent !important; }
     .search-wrapper, .wordmark { display: none !important; }
-    
+
     .logo-and-wordmark {
         display: flex !important;
         justify-content: center !important;
@@ -676,17 +743,17 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
     /* Titles */
     .section-title span { visibility: hidden !important; }
     .section-title span::before { visibility: visible !important; font-weight: 600 !important; font-size: 24px !important; color: white !important; }
-    
+
     .top-sites .section-title span::before { content: "Favorites" !important; }
     .highlights .section-title span::before { content: "Frequently Visited" !important; }
 
     /* Top Sites (Favorites) */
-    .top-site-outer .tile { 
-        background-color: rgba(255, 255, 255, 0.1) !important; 
-        border-radius: 12px !important; 
-        backdrop-filter: blur(10px) !important; 
-        width: 70px !important; 
-        height: 70px !important; 
+    .top-site-outer .tile {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(10px) !important;
+        width: 70px !important;
+        height: 70px !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
     }
     .top-site-outer .title { color: white !important; font-weight: 500 !important; margin-top: 8px !important; }
@@ -820,14 +887,14 @@ patch_ja() {
         echo "Warning: $ja_file not found, skipping."
         return
     fi
-    
+
     local temp_dir
     temp_dir=$(mktemp -d)
-    
+
     # English: Unzip the omni.ja file to a temporary directory (ignore non-fatal unzip warnings/errors)
     # Español: Descomprimir el archivo omni.ja a un directorio temporal (ignorar advertencias/errores no fatales de unzip)
     unzip -q "$ja_file" -d "$temp_dir" || true
-    
+
     # English: Replace specific brand configurations to match Seafari and Inled Group in brand.properties (all locales)
     # Español: Reemplazar configuraciones de marca específicas para coincidir con Seafari e Inled Group en brand.properties (todos los idiomas)
     find "$temp_dir" -name "brand.properties" -exec sed -i -E '
@@ -1064,7 +1131,7 @@ h1,
 }
 
 @media (prefers-color-scheme: light) {
-    body {
+    body {  <span class="warning-highlight">Important:</span> Currently, Seafari requires your operating system to be in <strong>Dark Mode</strong> (it does not render correctly in Light Mode).
         background-color: #f5f5f7 !important;
         color: #1d1d1f !important;
     }
@@ -1118,12 +1185,12 @@ EOF
     # English: Replace standalone original branding with Seafari in text files (including .ftl Fluent files) only to prevent binary/path corruption
     # Español: Reemplazar la marca original por Seafari solo como palabra independiente en archivos de texto (incluyendo archivos .ftl de Fluent) para evitar corrupción de binarios/rutas
     find "$temp_dir" -type f \( -name "*.properties" -o -name "*.dtd" -o -name "*.ftl" -o -name "*.json" -o -name "*.js" -o -name "*.sys.mjs" -o -name "*.xhtml" -o -name "*.xml" -o -name "*.html" -o -name "*.css" \) -exec perl -pi -e 's|(?<!/)\bFirefox\b|Seafari|g' {} + 2>/dev/null || true
-    
+
     # English: Re-compress the files back into the original omni.ja location
     # Español: Volver a comprimir los archivos en la ubicación del omni.ja original
     rm -f "$ja_file"
     (cd "$temp_dir" && zip -q -r "$ROOT_DIR/$ja_file" .)
-    
+
     rm -rf "$temp_dir"
 }
 
@@ -1220,7 +1287,7 @@ if command -v fpm &> /dev/null; then
         "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
         "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
         "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png || true
-    
+
     # Arch Linux (pacman) Packaging
     fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
         -p "seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst" \
@@ -1241,7 +1308,7 @@ if [ "$ARCH_TYPE" == "amd64" ]; then
     APPIMAGE_TOOL_URL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
     wget -O appimagetool "$APPIMAGE_TOOL_URL"
     chmod +x appimagetool
-    
+
     APPDIR="$WORKSPACE/Seafari.AppDir"
     mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib/seafari"
     cp -r "$FIREFOX_DIR/"* "$APPDIR/usr/lib/seafari/"
@@ -1250,7 +1317,7 @@ if [ "$ARCH_TYPE" == "amd64" ]; then
     cp "seafari.png" "$APPDIR/seafari.png"
     cp "$DEB_ROOT/usr/share/applications/seafari.desktop" "$APPDIR/"
     ln -sf seafari.png "$APPDIR/.DirIcon"
-    
+
     ARCH="x86_64" ./appimagetool --appimage-extract-and-run "$APPDIR" "Seafari-x86_64.AppImage"
 else
     echo "Skipping AppImage for $ARCH_TYPE (AMD64 only)."
