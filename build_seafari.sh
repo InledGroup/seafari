@@ -790,90 +790,92 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
 }
 
 /* Apple Safari layout variables and overrides */
-:root {
-    --color-violet-90: #0071e3 !important;
-    --color-violet-80: #005dc2 !important;
-    --color-violet-70: #004da6 !important;
-    --color-violet-60: #0071e3 !important;
-    --button-background-color-primary: #0071e3 !important;
-    --button-background-color-primary-hover: #005dc2 !important;
-    --button-background-color-primary-active: #004da6 !important;
-    --in-content-primary-button-background: #0071e3 !important;
-    --in-content-primary-button-background-hover: #005dc2 !important;
-    --in-content-primary-button-background-active: #004da6 !important;
-    --newtab-primary-action-background: #0071e3 !important;
-    --theme-primary-color: #0071e3 !important;
-    --theme-primary-hover-color: #005dc2 !important;
-    --theme-primary-active-color: #004da6 !important;
-    --button-border-radius: 999px !important;
-}
+@-moz-document url-prefix("about:"), url-prefix("chrome://"), url-prefix("resource://") {
+    :root {
+        --color-violet-90: #0071e3 !important;
+        --color-violet-80: #005dc2 !important;
+        --color-violet-70: #004da6 !important;
+        --color-violet-60: #0071e3 !important;
+        --button-background-color-primary: #0071e3 !important;
+        --button-background-color-primary-hover: #005dc2 !important;
+        --button-background-color-primary-active: #004da6 !important;
+        --in-content-primary-button-background: #0071e3 !important;
+        --in-content-primary-button-background-hover: #005dc2 !important;
+        --in-content-primary-button-background-active: #004da6 !important;
+        --newtab-primary-action-background: #0071e3 !important;
+        --theme-primary-color: #0071e3 !important;
+        --theme-primary-hover-color: #005dc2 !important;
+        --theme-primary-active-color: #004da6 !important;
+        --button-border-radius: 999px !important;
+    }
 
-/* Style main-buttons globally to look like macOS Tahoe (Flat Blue) */
-button,
-.button,
-moz-button {
-    border-radius: 999px !important;
-    --button-border-radius: 999px !important;
-    --button-border-radius-hover: 999px !important;
-    --button-border-radius-active: 999px !important;
-    --button-border-radius-large: 999px !important;
-    --button-border-radius-medium: 999px !important;
-    --button-border-radius-small: 999px !important;
-    --button-background-color-primary: #0071e3 !important;
-    --button-background-color-primary-hover: #005dc2 !important;
-    --button-background-color-primary-active: #004da6 !important;
-    --button-text-color-primary: white !important;
-}
+    /* Style main-buttons globally to look like macOS Tahoe (Flat Blue) */
+    button,
+    .button,
+    moz-button {
+        border-radius: 999px !important;
+        --button-border-radius: 999px !important;
+        --button-border-radius-hover: 999px !important;
+        --button-border-radius-active: 999px !important;
+        --button-border-radius-large: 999px !important;
+        --button-border-radius-medium: 999px !important;
+        --button-border-radius-small: 999px !important;
+        --button-background-color-primary: #0071e3 !important;
+        --button-background-color-primary-hover: #005dc2 !important;
+        --button-background-color-primary-active: #004da6 !important;
+        --button-text-color-primary: white !important;
+    }
 
-button.main-button,
-button[type="submit"],
-.button-primary,
-button.button-primary,
-button.primary,
-button.dialog-button[default="true"],
-.dialog-button-box button[default="true"],
-#updateSettingsContainer button:not(moz-button),
-#aboutwelcome-onboarding button:not(moz-button) {
-    background-color: #0071e3 !important;
-    background-image: none !important;
-    border: none !important;
-    color: white !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    cursor: pointer !important;
-}
+    button.main-button,
+    button[type="submit"],
+    .button-primary,
+    button.button-primary,
+    button.primary,
+    button.dialog-button[default="true"],
+    .dialog-button-box button[default="true"],
+    #updateSettingsContainer button:not(moz-button),
+    #aboutwelcome-onboarding button:not(moz-button) {
+        background-color: #0071e3 !important;
+        background-image: none !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        cursor: pointer !important;
+    }
 
-button.main-button:hover,
-button[type="submit"]:hover,
-.button-primary:hover,
-button.button-primary:hover,
-button.primary:hover,
-button.dialog-button[default="true"]:hover,
-.dialog-button-box button[default="true"]:hover,
-#updateSettingsContainer button:hover:not(moz-button),
-#aboutwelcome-onboarding button:hover:not(moz-button) {
-    background-color: #005dc2 !important;
-    background-image: none !important;
-    box-shadow: none !important;
-}
+    button.main-button:hover,
+    button[type="submit"]:hover,
+    .button-primary:hover,
+    button.button-primary:hover,
+    button.primary:hover,
+    button.dialog-button[default="true"]:hover,
+    .dialog-button-box button[default="true"]:hover,
+    #updateSettingsContainer button:hover:not(moz-button),
+    #aboutwelcome-onboarding button:hover:not(moz-button) {
+        background-color: #005dc2 !important;
+        background-image: none !important;
+        box-shadow: none !important;
+    }
 
-button.main-button:active,
-button[type="submit"]:active,
-.button-primary:active,
-button.button-primary:active,
-button.primary:active,
-button.dialog-button[default="true"]:active,
-.dialog-button-box button[default="true"]:active,
-#updateSettingsContainer button:active:not(moz-button),
-#aboutwelcome-onboarding button:active:not(moz-button) {
-    background-color: #004da6 !important;
-    background-image: none !important;
-    box-shadow: none !important;
-}
+    button.main-button:active,
+    button[type="submit"]:active,
+    .button-primary:active,
+    button.button-primary:active,
+    button.primary:active,
+    button.dialog-button[default="true"]:active,
+    .dialog-button-box button[default="true"]:active,
+    #updateSettingsContainer button:active:not(moz-button),
+    #aboutwelcome-onboarding button:active:not(moz-button) {
+        background-color: #004da6 !important;
+        background-image: none !important;
+        box-shadow: none !important;
+    }
 
-#category-more-from-mozilla,
-.category[name="more-from-mozilla"] {
-    display: none !important;
+    #category-more-from-mozilla,
+    .category[name="more-from-mozilla"] {
+        display: none !important;
+    }
 }
 EOF
 

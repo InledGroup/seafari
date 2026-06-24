@@ -8,132 +8,136 @@
 
 /* English: Hide all default Seafari foxes and decorative illustrations in error and system pages */
 /* Español: Ocultar todos los zorros por defecto de Seafari e ilustraciones decorativas en páginas de error y sistema */
-.illustration, 
-.error-illustration, 
-.fox-image, 
-.onboarding-hero-image,
-.hero-image,
-#errorPageContainer .illustration,
-#errorPageContainer .error-illustration,
-.illustration-container {
-    display: none !important;
-}
+/* English: Hide all default Seafari foxes and decorative illustrations in error and system pages */
+/* Español: Ocultar todos los zorros por defecto de Seafari e ilustraciones decorativas en páginas de error y sistema */
+@-moz-document url-prefix("about:"), url-prefix("chrome://"), url-prefix("resource://") {
+    .illustration, 
+    .error-illustration, 
+    .fox-image, 
+    .onboarding-hero-image,
+    .hero-image,
+    #errorPageContainer .illustration,
+    #errorPageContainer .error-illustration,
+    .illustration-container {
+        display: none !important;
+    }
 
-/* English: Replace Seafari branding logos with Seafari logo globally in internal pages */
-/* Español: Reemplazar los logos de marca de Seafari por el logo de Seafari globalmente en páginas internas */
-.brand-logo,
-.firefox-logo,
-.logo-container img,
-.logo-container svg,
-.logo img,
-.logo svg,
-#about-logo,
-.about-logo,
-#about-logo-container img,
-#about-logo-container svg,
-.brand-logo-container img,
-.brand-logo-container svg {
-    content: url("seafari.png") !important;
-    width: 90px !important;
-    height: 90px !important;
-    display: block !important;
-    margin: 0 auto !important;
-}
+    /* English: Replace Seafari branding logos with Seafari logo globally in internal pages */
+    /* Español: Reemplazar los logos de marca de Seafari por el logo de Seafari globalmente en páginas internas */
+    .brand-logo,
+    .firefox-logo,
+    .logo-container img,
+    .logo-container svg,
+    .logo img,
+    .logo svg,
+    #about-logo,
+    .about-logo,
+    #about-logo-container img,
+    #about-logo-container svg,
+    .brand-logo-container img,
+    .brand-logo-container svg {
+        content: url("seafari.png") !important;
+        width: 90px !important;
+        height: 90px !important;
+        display: block !important;
+        margin: 0 auto !important;
+    }
 
-/* English: Fix for background-based branding logos */
-/* Español: Corrección para logos de marca basados en fondo de imagen */
-.brand-logo,
-.firefox-logo,
-#about-logo,
-.about-logo {
-    background-image: url("seafari.png") !important;
-    background-size: contain !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-}
+    /* English: Fix for background-based branding logos */
+    /* Español: Corrección para logos de marca basados en fondo de imagen */
+    .brand-logo,
+    .firefox-logo,
+    #about-logo,
+    .about-logo {
+        background-image: url("seafari.png") !important;
+        background-size: contain !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+    }
 
-/* English: Apple Safari layout variables and overrides for content pages */
-/* Español: Variables de diseño de Apple Safari y anulaciones para páginas de contenido */
-:root {
-    --color-violet-90: #0071e3 !important;
-    --color-violet-80: #005dc2 !important;
-    --color-violet-70: #004da6 !important;
-    --color-violet-60: #0071e3 !important;
-    --button-background-color-primary: #0071e3 !important;
-    --button-background-color-primary-hover: #005dc2 !important;
-    --button-background-color-primary-active: #004da6 !important;
-    --in-content-primary-button-background: #0071e3 !important;
-    --in-content-primary-button-background-hover: #005dc2 !important;
-    --in-content-primary-button-background-active: #004da6 !important;
-    --newtab-primary-action-background: #0071e3 !important;
-    --theme-primary-color: #0071e3 !important;
-    --theme-primary-hover-color: #005dc2 !important;
-    --theme-primary-active-color: #004da6 !important;
-    --button-border-radius: 999px !important;
-}
+    /* English: Apple Safari layout variables and overrides for content pages */
+    /* Español: Variables de diseño de Apple Safari y anulaciones para páginas de contenido */
+    :root {
+        --color-violet-90: #0071e3 !important;
+        --color-violet-80: #005dc2 !important;
+        --color-violet-70: #004da6 !important;
+        --color-violet-60: #0071e3 !important;
+        --button-background-color-primary: #0071e3 !important;
+        --button-background-color-primary-hover: #005dc2 !important;
+        --button-background-color-primary-active: #004da6 !important;
+        --in-content-primary-button-background: #0071e3 !important;
+        --in-content-primary-button-background-hover: #005dc2 !important;
+        --in-content-primary-button-background-active: #004da6 !important;
+        --newtab-primary-action-background: #0071e3 !important;
+        --theme-primary-color: #0071e3 !important;
+        --theme-primary-hover-color: #005dc2 !important;
+        --theme-primary-active-color: #004da6 !important;
+        --button-border-radius: 999px !important;
+    }
 
-/* English: Style primary and dialog buttons to look like Apple Tahoe Flat Blue */
-/* Español: Estilo para botones primarios y de diálogo para parecerse a Apple Tahoe Flat Blue */
-button,
-.button,
-moz-button {
-    border-radius: 999px !important;
-    --button-border-radius: 999px !important;
-    --button-border-radius-hover: 999px !important;
-    --button-border-radius-active: 999px !important;
-    --button-border-radius-large: 999px !important;
-    --button-border-radius-medium: 999px !important;
-    --button-border-radius-small: 999px !important;
-    --button-background-color-primary: #0071e3 !important;
-    --button-background-color-primary-hover: #005dc2 !important;
-    --button-background-color-primary-active: #004da6 !important;
-    --button-text-color-primary: white !important;
-}
+    /* English: Style primary and dialog buttons to look like Apple Tahoe Flat Blue */
+    /* Español: Estilo para botones primarios y de diálogo para parecerse a Apple Tahoe Flat Blue */
+    button,
+    .button,
+    moz-button {
+        border-radius: 999px !important;
+        --button-border-radius: 999px !important;
+        --button-border-radius-hover: 999px !important;
+        --button-border-radius-active: 999px !important;
+        --button-border-radius-large: 999px !important;
+        --button-border-radius-medium: 999px !important;
+        --button-border-radius-small: 999px !important;
+        --button-background-color-primary: #0071e3 !important;
+        --button-background-color-primary-hover: #005dc2 !important;
+        --button-background-color-primary-active: #004da6 !important;
+        --button-text-color-primary: white !important;
+    }
 
-button.main-button,
-button[type="submit"],
-.button-primary,
-button.button-primary,
-button.primary,
-button.dialog-button[default="true"],
-.dialog-button-box button[default="true"],
-#updateSettingsContainer button:not(moz-button),
-#aboutwelcome-onboarding button:not(moz-button) {
-    background-color: #0071e3 !important;
-    background-image: none !important;
-    border: none !important;
-    color: white !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    cursor: pointer !important;
-}
+    button.main-button,
+    button[type="submit"],
+    .button-primary,
+    button.button-primary,
+    button.primary,
+    button.dialog-button[default="true"],
+    .dialog-button-box button[default="true"],
+    #updateSettingsContainer button:not(moz-button),
+    #aboutwelcome-onboarding button:not(moz-button) {
+        background-color: #0071e3 !important;
+        background-image: none !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        cursor: pointer !important;
+    }
 
-button.main-button:hover,
-button[type="submit"]:hover,
-.button-primary:hover,
-button.button-primary:hover,
-button.primary:hover,
-button.dialog-button[default="true"]:hover,
-.dialog-button-box button[default="true"]:hover,
-#updateSettingsContainer button:hover:not(moz-button),
-#aboutwelcome-onboarding button:hover:not(moz-button) {
-    background-color: #005dc2 !important;
-    background-image: none !important;
-    box-shadow: none !important;
-}
+    button.main-button:hover,
+    button[type="submit"]:hover,
+    .button-primary:hover,
+    button.button-primary:hover,
+    button.primary:hover,
+    button.dialog-button[default="true"]:hover,
+    .dialog-button-box button[default="true"]:hover,
+    #updateSettingsContainer button:hover:not(moz-button),
+    #aboutwelcome-onboarding button:hover:not(moz-button) {
+        background-color: #005dc2 !important;
+        background-image: none !important;
+        box-shadow: none !important;
+    }
 
-button.main-button:active,
-button[type="submit"]:active,
-.button-primary:active,
-button.button-primary:active,
-button.primary:active,
-button.dialog-button[default="true"]:active,
-.dialog-button-box button[default="true"]:active,
-#updateSettingsContainer button:active:not(moz-button),
-#aboutwelcome-onboarding button:active:not(moz-button) {
-    background-color: #004da6 !important;
-    background-image: none !important;
-    box-shadow: none !important;
+    button.main-button:active,
+    button[type="submit"]:active,
+    .button-primary:active,
+    button.button-primary:active,
+    button.primary:active,
+    button.dialog-button[default="true"]:active,
+    .dialog-button-box button[default="true"]:active,
+    #updateSettingsContainer button:active:not(moz-button),
+    #aboutwelcome-onboarding button:active:not(moz-button) {
+        background-color: #004da6 !important;
+        background-image: none !important;
+        box-shadow: none !important;
+    }
 }
 
 
