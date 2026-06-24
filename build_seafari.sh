@@ -893,12 +893,12 @@ patch_ja() {
     local temp_dir
     temp_dir=$(mktemp -d)
 
-    # English: Extract the omni.ja file to a temporary directory. Prefer python3 zipfile to handle Firefox's optimized zip format safely, falling back to unzip.
-    # Español: Extraer el archivo omni.ja a un directorio temporal. Preferir python3 zipfile para manejar de forma segura el formato zip optimizado de Firefox, usando unzip como respaldo.
-    if command -v python3 >/dev/null 2>&1; then
-        python3 -c "import zipfile; z = zipfile.ZipFile('$ja_file'); z.extractall('$temp_dir')"
-    else
-        unzip -q "$ja_file" -d "$temp_dir" || true
+    # English: Extract the omni.ja file to a temporary directory using unzip. Ignore warnings (unzip exits with 1 or 2 for extra bytes) but verify files were actually extracted.
+    # Español: Extraer el archivo omni.ja a un directorio temporal usando unzip. Ignorar advertencias (unzip sale con 1 o 2 por bytes extra) pero verificar que los archivos realmente se hayan extraído.
+    unzip -q "$ja_file" -d "$temp_dir" || true
+    if [ -z "$(ls -A "$temp_dir")" ]; then
+        echo "Error: Extraction of $ja_file failed, temporary directory is empty."
+        exit 1
     fi
 
     # English: Replace specific brand configurations to match Seafari and Inled Group in brand.properties (all locales)
