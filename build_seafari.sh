@@ -21,7 +21,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 # English: Package version (automatically incremented by CI for automated builds)
 # Español: Versión del paquete (incrementada automáticamente por el CI para compilaciones automáticas)
-VERSION="1.4.3"
+VERSION="1.5.0"
 
 WORKSPACE="build_workspace"
 rm -rf "$WORKSPACE"
