@@ -893,11 +893,9 @@ patch_ja() {
     local temp_dir
     temp_dir=$(mktemp -d)
 
-    # English: Extract the omni.ja file to a temporary directory. Prefer bsdtar or python3 zipfile to handle Firefox's optimized zip format safely, falling back to unzip.
-    # Español: Extraer el archivo omni.ja a un directorio temporal. Preferir bsdtar o python3 zipfile para manejar de forma segura el formato zip optimizado de Firefox, usando unzip como respaldo.
-    if command -v bsdtar >/dev/null 2>&1; then
-        bsdtar -xf "$ja_file" -C "$temp_dir" 2>/dev/null || true
-    elif command -v python3 >/dev/null 2>&1; then
+    # English: Extract the omni.ja file to a temporary directory. Prefer python3 zipfile to handle Firefox's optimized zip format safely, falling back to unzip.
+    # Español: Extraer el archivo omni.ja a un directorio temporal. Preferir python3 zipfile para manejar de forma segura el formato zip optimizado de Firefox, usando unzip como respaldo.
+    if command -v python3 >/dev/null 2>&1; then
         python3 -c "import zipfile; z = zipfile.ZipFile('$ja_file'); z.extractall('$temp_dir')"
     else
         unzip -q "$ja_file" -d "$temp_dir" || true
