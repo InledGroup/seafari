@@ -173,21 +173,23 @@ jobs:
             # Español: Construir el payload del cliente de manera dinámica según qué artefactos se hayan subido correctamente
             PAYLOAD_ITEMS=()
 
-            if curl --output /dev/null --silent --head --fail "$DEB_URL"; then
+            # English: Verify asset existence using GitHub token and follow redirects (essential for private repositories and CDN redirections)
+            # Español: Verificar la existencia del artefacto usando el token de GitHub y seguir redirecciones (esencial para repositorios privados y redirecciones de CDN)
+            if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$DEB_URL"; then
               echo "  .deb artifact found!"
               PAYLOAD_ITEMS+=("\"deb_url\": \"$DEB_URL\"")
             else
               echo "  WARNING: .deb artifact not found at $DEB_URL"
             fi
 
-            if curl --output /dev/null --silent --head --fail "$RPM_URL"; then
+            if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$RPM_URL"; then
               echo "  .rpm artifact found!"
               PAYLOAD_ITEMS+=("\"rpm_url\": \"$RPM_URL\"")
             else
               echo "  WARNING: .rpm artifact not found at $RPM_URL"
             fi
 
-            if curl --output /dev/null --silent --head --fail "$PKG_URL"; then
+            if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$PKG_URL"; then
               echo "  .pkg.tar.zst artifact found!"
               PAYLOAD_ITEMS+=("\"pkg_url\": \"$PKG_URL\"")
             else
