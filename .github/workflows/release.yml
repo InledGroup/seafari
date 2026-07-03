@@ -148,54 +148,59 @@ jobs:
             PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
 
             echo "Checking artifacts for $ARCH..."
-            # English: Wait a few seconds to let GitHub Releases complete the upload process
-            # Español: Esperar unos segundos para permitir que GitHub Releases complete el proceso de subida
-            sleep 5
+            # English: Retry up to 12 times (60s total) to let GitHub process asset uploads
+            # Español: Reintentar hasta 12 veces (60s total) para que GitHub procese las subidas
+            MAX_RETRIES=12
+            RETRY_DELAY=5
+            for ((i=1; i<=MAX_RETRIES; i++)); do
+              PAYLOAD_ITEMS=()
 
-            # English: Build client payload dynamically based on which artifacts are successfully uploaded
-            # Español: Construir el payload del cliente de manera dinámica según qué artefactos se hayan subido correctamente
-            PAYLOAD_ITEMS=()
+              # English: Verify asset existence using GitHub token and follow redirects (essential for private repositories and CDN redirections)
+              # Español: Verificar la existencia del artefacto usando el token de GitHub y seguir redirecciones (esencial para repositorios privados y redirecciones de CDN)
+              if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$DEB_URL"; then
+                echo "  .deb artifact found!"
+                PAYLOAD_ITEMS+=("\"deb_url\": \"$DEB_URL\"")
+              else
+                echo "  WARNING: .deb artifact not found at $DEB_URL"
+              fi
 
-            # English: Verify asset existence using GitHub token and follow redirects (essential for private repositories and CDN redirections)
-            # Español: Verificar la existencia del artefacto usando el token de GitHub y seguir redirecciones (esencial para repositorios privados y redirecciones de CDN)
-            if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$DEB_URL"; then
-              echo "  .deb artifact found!"
-              PAYLOAD_ITEMS+=("\"deb_url\": \"$DEB_URL\"")
-            else
-              echo "  WARNING: .deb artifact not found at $DEB_URL"
-            fi
+              if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$RPM_URL"; then
+                echo "  .rpm artifact found!"
+                PAYLOAD_ITEMS+=("\"rpm_url\": \"$RPM_URL\"")
+              else
+                echo "  WARNING: .rpm artifact not found at $RPM_URL"
+              fi
 
-            if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$RPM_URL"; then
-              echo "  .rpm artifact found!"
-              PAYLOAD_ITEMS+=("\"rpm_url\": \"$RPM_URL\"")
-            else
-              echo "  WARNING: .rpm artifact not found at $RPM_URL"
-            fi
+              if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$PKG_URL"; then
+                echo "  .pkg.tar.zst artifact found!"
+                PAYLOAD_ITEMS+=("\"pkg_url\": \"$PKG_URL\"")
+              else
+                echo "  WARNING: .pkg.tar.zst artifact not found at $PKG_URL"
+              fi
 
-            if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$PKG_URL"; then
-              echo "  .pkg.tar.zst artifact found!"
-              PAYLOAD_ITEMS+=("\"pkg_url\": \"$PKG_URL\"")
-            else
-              echo "  WARNING: .pkg.tar.zst artifact not found at $PKG_URL"
-            fi
+              # English: If at least one package is found, trigger the repository update
+              # Español: Si se encuentra al menos un paquete, disparar la actualización del repositorio
+              if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
+                # English: Join the payload elements with commas
+                # Español: Unir los elementos del payload con comas
+                IFS=,
+                CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
+                unset IFS
 
-            # English: If at least one package is found, trigger the repository update
-            # Español: Si se encuentra al menos un paquete, disparar la actualización del repositorio
-            if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
-              # English: Join the payload elements with commas
-              # Español: Unir los elementos del payload con comas
-              IFS=,
-              CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
-              unset IFS
+                echo "Triggering update for $ARCH with payload: $CLIENT_PAYLOAD"
+                curl -X POST \
+                  -H "Accept: application/vnd.github.v3+json" \
+                  -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
+                  https://api.github.com/repos/InledGroup/apt/dispatches \
+                  -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
+                break
+              fi
 
-              echo "Triggering update for $ARCH with payload: $CLIENT_PAYLOAD"
-              curl -X POST \
-                -H "Accept: application/vnd.github.v3+json" \
-                -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
-                https://api.github.com/repos/InledGroup/apt/dispatches \
-                -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
-            else
-              echo "WARNING: No artifacts found for $ARCH. Skipping update trigger."
-            fi
-          done
+              if [ "$i" -lt "$MAX_RETRIES" ]; then
+                echo "Retrying in ${RETRY_DELAY}s... (attempt $i/$MAX_RETRIES)"
+                sleep "$RETRY_DELAY"
+              else
+                echo "WARNING: No artifacts found for $ARCH after $MAX_RETRIES attempts. Skipping update trigger."
+              fi
+            done
 
