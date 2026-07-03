@@ -124,7 +124,7 @@ jobs:
       - name: Build Seafari
         run: |
           chmod +x build_seafari.sh
-          ./build_seafari.sh --version ${{ env.VERSION }} ${{ matrix.arch }}
+          ./build_seafari.sh --version "$VERSION" ${{ matrix.arch }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
