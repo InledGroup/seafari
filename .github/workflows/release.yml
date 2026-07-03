@@ -26,18 +26,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Update Version and Commit
+      - name: Determine Release Version
         id: vars
         run: |
-          # English: Configure Git for the automated bot commit
-          # Español: Configurar Git para el commit automatizado del bot
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # English: Extract current version from build_seafari.sh
-          # Español: Extraer la versión actual de build_seafari.sh
-          CURRENT_VERSION=$(grep '^VERSION=' build_seafari.sh | cut -d'"' -f2)
-          echo "Current Version: $CURRENT_VERSION"
+          # English: Get the latest version from git tags (e.g. v1.2.3)
+          # Español: Obtener la última versión desde los tags de git (ej. v1.2.3)
+          LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$LATEST_TAG" ]; then
+            CURRENT_VERSION="0.0.0"
+          else
+            CURRENT_VERSION="${LATEST_TAG#v}"
+          fi
+          echo "Latest tag version: $CURRENT_VERSION"
           
           # English: Parse version components
           # Español: Parsear los componentes de la versión
@@ -80,24 +80,7 @@ jobs:
             echo "Incrementing patch version: $NEW_VERSION"
           fi
           
-          # English: Update the version variable in build_seafari.sh
-          # Español: Actualizar la variable de versión en build_seafari.sh
-          sed -i "s/^VERSION=\"[^\"]*\"/VERSION=\"$NEW_VERSION\"/" build_seafari.sh
-          
-          # English: Commit and push changes back to the main branch
-          # Español: Hacer commit y push de los cambios de vuelta a la rama principal
-          git add build_seafari.sh
-          if git commit -m "Update Seafari version to $NEW_VERSION [skip ci]"; then
-            # English: Pull with rebase to integrate any concurrent changes on the remote branch
-            # Español: Hacer pull con rebase para integrar cualquier cambio concurrente en la rama remota
-            git pull --rebase origin ${{ github.ref_name }}
-            git push origin HEAD:${{ github.ref }}
-          else
-            echo "No changes to commit"
-          fi
-          
-          V=$(grep '^VERSION=' build_seafari.sh | cut -d'"' -f2)
-          echo "VERSION=$V" >> $GITHUB_OUTPUT
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
   build-and-release:
     needs: prepare-release
@@ -109,11 +92,8 @@ jobs:
     env:
       VERSION: ${{ needs.prepare-release.outputs.version }}
     steps:
-      - name: Checkout code (fetch latest head after prepare-release bump)
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.ref }}
 
       - name: Install dependencies
         run: |
