@@ -109,8 +109,11 @@ jobs:
     env:
       VERSION: ${{ needs.prepare-release.outputs.version }}
     steps:
-      - name: Checkout code
+      - name: Checkout code (fetch latest head after prepare-release bump)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
 
       - name: Install dependencies
         run: |
@@ -121,7 +124,7 @@ jobs:
       - name: Build Seafari
         run: |
           chmod +x build_seafari.sh
-          ./build_seafari.sh ${{ matrix.arch }}
+          ./build_seafari.sh --version ${{ env.VERSION }} ${{ matrix.arch }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

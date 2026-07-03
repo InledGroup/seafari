@@ -6,23 +6,20 @@ ARCH_TYPE="amd64"
 SKIP_RPM="false"
 
 # Parse arguments
-if [[ "$#" -gt 0 && ! "$1" =~ ^-- ]]; then
-    ARCH_TYPE="$1"
-    shift
-fi
-
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        --version) VERSION="$2"; shift ;;
         --arch) ARCH_TYPE="$2"; shift ;;
         --skip-rpm) SKIP_RPM="true" ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        *) ARCH_TYPE="$1";;
     esac
     shift
 done
-# English: Package version (automatically incremented by CI for automated builds)
-# Español: Versión del paquete (incrementada automáticamente por el CI para compilaciones automáticas)
-VERSION="1.6.2"
 
+if [ -z "${VERSION:-}" ]; then
+    echo "ERROR: VERSION is required. Use --version <x.y.z>"
+    exit 1
+fi
 WORKSPACE="build_workspace"
 rm -rf "$WORKSPACE"
 mkdir -p "$WORKSPACE"
