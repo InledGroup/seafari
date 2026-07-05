@@ -203,4 +203,6 @@ jobs:
                 echo "WARNING: No artifacts found for $ARCH after $MAX_RETRIES attempts. Skipping update trigger."
               fi
             done
+          done
+
 
