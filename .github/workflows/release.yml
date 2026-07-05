@@ -133,10 +133,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.prepare-release.outputs.version }}"
-          
+
+          # English: Build the list of expected artifacts for all architectures
+          # Español: Construir la lista de artefactos esperados para todas las arquitecturas
+          declare -A EXPECTED_URLS
           for ARCH in amd64 arm64; do
-            # English: Determine architecture naming conventions for the package formats
-            # Español: Determinar las convenciones de nomenclatura de arquitectura para los formatos de paquete
             if [ "$ARCH" = "amd64" ]; then
               DEB_ARCH="amd64"
               RPM_ARCH="x86_64"
@@ -145,72 +146,61 @@ jobs:
               RPM_ARCH="aarch64"
             fi
 
-            DEB_NAME="seafari_${VERSION}_${DEB_ARCH}.deb"
-            RPM_NAME="seafari-${VERSION}-1.${RPM_ARCH}.rpm"
-            PKG_NAME="seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+            EXPECTED_URLS["deb_${ARCH}"]="seafari_${VERSION}_${DEB_ARCH}.deb"
+            EXPECTED_URLS["rpm_${ARCH}"]="seafari-${VERSION}-1.${RPM_ARCH}.rpm"
+            EXPECTED_URLS["pkg_${ARCH}"]="seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+          done
 
-            DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${DEB_NAME}"
-            RPM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${RPM_NAME}"
-            PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${PKG_NAME}"
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}"
 
-            echo "Checking artifacts for $ARCH..."
-            # English: Retry up to 12 times (60s total) to let GitHub process asset uploads
-            # Español: Reintentar hasta 12 veces (60s total) para que GitHub procese las subidas
-            MAX_RETRIES=12
-            RETRY_DELAY=5
-            for ((i=1; i<=MAX_RETRIES; i++)); do
-              PAYLOAD_ITEMS=()
+          echo "Waiting for all artifacts across all architectures..."
+          # English: Retry up to 12 times (60s total) to let GitHub process asset uploads
+          # Español: Reintentar hasta 12 veces (60s total) para que GitHub procese las subidas
+          MAX_RETRIES=12
+          RETRY_DELAY=5
+          for ((i=1; i<=MAX_RETRIES; i++)); do
+            PAYLOAD_ITEMS=()
 
-              # English: Get list of uploaded assets from GitHub release
-              # Español: Obtener la lista de artefactos subidos de la release de GitHub
-              UPLOADED_ASSETS=$(gh release view "v${VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null || true)
+            # English: Get list of uploaded assets from GitHub release (single API call)
+            # Español: Obtener la lista de artefactos subidos de la release de GitHub (una sola llamada a la API)
+            UPLOADED_ASSETS=$(gh release view "v${VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null || true)
 
-              if echo "$UPLOADED_ASSETS" | grep -Fqx "$DEB_NAME"; then
-                echo "  .deb artifact found!"
-                PAYLOAD_ITEMS+=("\"deb_url\": \"$DEB_URL\"")
+            for KEY in "${!EXPECTED_URLS[@]}"; do
+              FILE_NAME="${EXPECTED_URLS[$KEY]}"
+              if echo "$UPLOADED_ASSETS" | grep -Fqx "$FILE_NAME"; then
+                echo "  Found: $FILE_NAME"
+                # English: Determine the payload key name (deb_url, rpm_url, pkg_url) per arch
+                # Español: Determinar el nombre de la clave del payload (deb_url, rpm_url, pkg_url) por arquitectura
+                TYPE=$(echo "$KEY" | cut -d_ -f1)
+                ARCH_SUFFIX=$(echo "$KEY" | cut -d_ -f2)
+                PAYLOAD_ITEMS+=("\"${TYPE}_${ARCH_SUFFIX}_url\": \"${BASE_URL}/${FILE_NAME}\"")
               else
-                echo "  WARNING: .deb artifact not found: $DEB_NAME"
-              fi
-
-              if echo "$UPLOADED_ASSETS" | grep -Fqx "$RPM_NAME"; then
-                echo "  .rpm artifact found!"
-                PAYLOAD_ITEMS+=("\"rpm_url\": \"$RPM_URL\"")
-              else
-                echo "  WARNING: .rpm artifact not found: $RPM_NAME"
-              fi
-
-              if echo "$UPLOADED_ASSETS" | grep -Fqx "$PKG_NAME"; then
-                echo "  .pkg.tar.zst artifact found!"
-                PAYLOAD_ITEMS+=("\"pkg_url\": \"$PKG_URL\"")
-              else
-                echo "  WARNING: .pkg.tar.zst artifact not found: $PKG_NAME"
-              fi
-
-              # English: If at least one package is found, trigger the repository update
-              # Español: Si se encuentra al menos un paquete, disparar la actualización del repositorio
-              if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
-                # English: Join the payload elements with commas
-                # Español: Unir los elementos del payload con comas
-                IFS=,
-                CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
-                unset IFS
-
-                echo "Triggering update for $ARCH with payload: $CLIENT_PAYLOAD"
-                curl -X POST \
-                  -H "Accept: application/vnd.github.v3+json" \
-                  -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
-                  https://api.github.com/repos/InledGroup/apt/dispatches \
-                  -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
-                break
-              fi
-
-              if [ "$i" -lt "$MAX_RETRIES" ]; then
-                echo "Retrying in ${RETRY_DELAY}s... (attempt $i/$MAX_RETRIES)"
-                sleep "$RETRY_DELAY"
-              else
-                echo "WARNING: No artifacts found for $ARCH after $MAX_RETRIES attempts. Skipping update trigger."
+                echo "  WARNING: Not found yet: $FILE_NAME"
               fi
             done
+
+            # English: If at least one package is found, trigger a single repository update with all found artifacts
+            # Español: Si se encuentra al menos un paquete, disparar una única actualización del repositorio con todos los artefactos encontrados
+            if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
+              IFS=,
+              CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
+              unset IFS
+
+              echo "Triggering single APT repo update with payload: $CLIENT_PAYLOAD"
+              curl -X POST \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
+                https://api.github.com/repos/InledGroup/apt/dispatches \
+                -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
+              break
+            fi
+
+            if [ "$i" -lt "$MAX_RETRIES" ]; then
+              echo "Retrying in ${RETRY_DELAY}s... (attempt $i/$MAX_RETRIES)"
+              sleep "$RETRY_DELAY"
+            else
+              echo "WARNING: No artifacts found after $MAX_RETRIES attempts. Skipping update trigger."
+            fi
           done
 
 
