@@ -129,6 +129,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger APT Repo Update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.prepare-release.outputs.version }}"
           
@@ -143,9 +145,13 @@ jobs:
               RPM_ARCH="aarch64"
             fi
 
-            DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari_${VERSION}_${DEB_ARCH}.deb"
-            RPM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari-${VERSION}-1.${RPM_ARCH}.rpm"
-            PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+            DEB_NAME="seafari_${VERSION}_${DEB_ARCH}.deb"
+            RPM_NAME="seafari-${VERSION}-1.${RPM_ARCH}.rpm"
+            PKG_NAME="seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+
+            DEB_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${DEB_NAME}"
+            RPM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${RPM_NAME}"
+            PKG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${PKG_NAME}"
 
             echo "Checking artifacts for $ARCH..."
             # English: Retry up to 12 times (60s total) to let GitHub process asset uploads
@@ -155,27 +161,29 @@ jobs:
             for ((i=1; i<=MAX_RETRIES; i++)); do
               PAYLOAD_ITEMS=()
 
-              # English: Verify asset existence using GitHub token and follow redirects (essential for private repositories and CDN redirections)
-              # Español: Verificar la existencia del artefacto usando el token de GitHub y seguir redirecciones (esencial para repositorios privados y redirecciones de CDN)
-              if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$DEB_URL"; then
+              # English: Get list of uploaded assets from GitHub release
+              # Español: Obtener la lista de artefactos subidos de la release de GitHub
+              UPLOADED_ASSETS=$(gh release view "v${VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null || true)
+
+              if echo "$UPLOADED_ASSETS" | grep -Fqx "$DEB_NAME"; then
                 echo "  .deb artifact found!"
                 PAYLOAD_ITEMS+=("\"deb_url\": \"$DEB_URL\"")
               else
-                echo "  WARNING: .deb artifact not found at $DEB_URL"
+                echo "  WARNING: .deb artifact not found: $DEB_NAME"
               fi
 
-              if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$RPM_URL"; then
+              if echo "$UPLOADED_ASSETS" | grep -Fqx "$RPM_NAME"; then
                 echo "  .rpm artifact found!"
                 PAYLOAD_ITEMS+=("\"rpm_url\": \"$RPM_URL\"")
               else
-                echo "  WARNING: .rpm artifact not found at $RPM_URL"
+                echo "  WARNING: .rpm artifact not found: $RPM_NAME"
               fi
 
-              if curl --output /dev/null --silent --head --fail -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$PKG_URL"; then
+              if echo "$UPLOADED_ASSETS" | grep -Fqx "$PKG_NAME"; then
                 echo "  .pkg.tar.zst artifact found!"
                 PAYLOAD_ITEMS+=("\"pkg_url\": \"$PKG_URL\"")
               else
-                echo "  WARNING: .pkg.tar.zst artifact not found at $PKG_URL"
+                echo "  WARNING: .pkg.tar.zst artifact not found: $PKG_NAME"
               fi
 
               # English: If at least one package is found, trigger the repository update
