@@ -118,9 +118,11 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
       if (message && message.action === "getUblockStats") {
         var totalBlocked = 0;
         try {
-          var ub = typeof µBlock !== 'undefined' ? µBlock : (typeof uBlock0 !== 'undefined' ? uBlock0 : (typeof uBlock !== 'undefined' ? uBlock : null));
+          var ub = typeof µBlock !== 'undefined' ? µBlock : (typeof µb !== 'undefined' ? µb : (typeof uBlock0 !== 'undefined' ? uBlock0 : (typeof uBlock !== 'undefined' ? uBlock : null)));
           if (ub) {
-            if (ub.stats && typeof ub.stats.blocked === "number") {
+            if (ub.requestStats && typeof ub.requestStats.blockedCount === "number") {
+              totalBlocked = ub.requestStats.blockedCount;
+            } else if (ub.stats && typeof ub.stats.blocked === "number") {
               totalBlocked = ub.stats.blocked;
             } else if (ub.localSettings && typeof ub.localSettings.blockedRequestCount === "number") {
               totalBlocked = ub.localSettings.blockedRequestCount;
