@@ -400,6 +400,21 @@ button.dialog-button[default="true"]:active,
    Specificity must beat: #nav-bar toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button) { ... }
    ============================================================ */
 
+/* Ensure flex layout on the nav bar container so flex:1 works */
+#nav-bar-customization-target {
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Layout: urlbar pill fills remaining space, right pills align right */
+#seafari-pill-urlbar {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+#seafari-pill-extensions {
+    margin-left: auto !important;
+}
+
 /* The pill wrapper itself */
 #nav-bar hbox[seafari-pill] {
     display: inline-flex !important;
@@ -431,10 +446,42 @@ button.dialog-button[default="true"]:active,
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
 }
 
+/* Urlbar container inside pill: kill MacTahoe's individual pill shape */
+#nav-bar hbox[seafari-pill] #urlbar-container,
+#nav-bar hbox[seafari-pill] #urlbar,
+#nav-bar hbox[seafari-pill] #urlbar-input-container,
+#nav-bar hbox[seafari-pill] .urlbar-input-container,
+#nav-bar hbox[seafari-pill] #searchbar {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    height: 34px !important;
+    max-height: 34px !important;
+    transition: none !important;
+}
+
+/* Stop/reload button inside pill: kill MacTahoe's individual pill shape */
+#nav-bar hbox[seafari-pill] #stop-reload-button,
+#nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button,
+#nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+}
+
 /* Buttons INSIDE the pill: transparent, no individual effects.
+   Uses DESCENDANT selector (not child) to catch buttons inside toolbaritem wrappers (uBlock, etc.)
    Selector specificity: 2-4-2 — beats MacTahoe's 2-3-1. */
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
-#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
+#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
 #nav-bar hbox[seafari-pill] > *:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button) {
     -moz-appearance: none !important;
     appearance: none !important;
@@ -458,10 +505,10 @@ button.dialog-button[default="true"]:active,
 }
 
 /* Reset pseudo-elements that themes use for button backgrounds */
-#nav-bar hbox[seafari-pill] > toolbarbutton::before,
-#nav-bar hbox[seafari-pill] > toolbarbutton::after,
-#nav-bar hbox[seafari-pill] > toolbaritem::before,
-#nav-bar hbox[seafari-pill] > toolbaritem::after {
+#nav-bar hbox[seafari-pill] toolbarbutton::before,
+#nav-bar hbox[seafari-pill] toolbarbutton::after,
+#nav-bar hbox[seafari-pill] toolbaritem::before,
+#nav-bar hbox[seafari-pill] toolbaritem::after {
     display: none !important;
     content: none !important;
     background: none !important;
@@ -471,60 +518,60 @@ button.dialog-button[default="true"]:active,
 }
 
 /* Hover — specificity 2-7-2, beats MacTahoe's 2-6-1 */
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
     background: rgba(0, 0, 0, 0.08) !important;
     box-shadow: none !important;
 }
 
 /* Active / open / checked — specificity 3-4-2, beats MacTahoe's 3-3-1 */
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
     background: rgba(0, 0, 0, 0.14) !important;
     box-shadow: none !important;
 }
 
 /* Disabled — specificity 2-4-2 */
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button)[disabled] {
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button)[disabled] {
     background: transparent !important;
     box-shadow: none !important;
 }
 
 /* Inactive window — specificity 2-4-3 */
-#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):-moz-window-inactive {
+#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):-moz-window-inactive {
     background: transparent !important;
     box-shadow: none !important;
 }
 
 @media (prefers-color-scheme: dark) {
-    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
         background: rgba(255, 255, 255, 0.12) !important;
     }
-    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
         background: rgba(255, 255, 255, 0.20) !important;
     }
 }
 
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
     background: rgba(255, 255, 255, 0.12) !important;
 }
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
     background: rgba(255, 255, 255, 0.20) !important;
 }
 
