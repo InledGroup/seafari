@@ -6,15 +6,28 @@ ARCH_TYPE="amd64"
 SKIP_RPM="false"
 
 # Parse arguments
+SAFARI_UA="false"
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --version) VERSION="$2"; shift ;;
         --arch) ARCH_TYPE="$2"; shift ;;
         --skip-rpm) SKIP_RPM="true" ;;
+        --safari-ua) SAFARI_UA="true" ;;
         *) ARCH_TYPE="$1";;
     esac
     shift
 done
+
+UA_LINE=""
+if [ "$SAFARI_UA" == "true" ]; then
+    UA_LINE='pref("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15");
+  pref("general.useragent.vendor", "Apple Computer, Inc.");
+  pref("general.useragent.vendorSub", "");
+  pref("general.platform.override", "MacIntel");
+  pref("general.oscpu.override", "Intel Mac OS X 10.15.7");
+  pref("general.appname.override", "Netscape");
+  pref("general.appversion.override", "5.0 (Macintosh)");'
+fi
 
 if [ -z "${VERSION:-}" ]; then
     echo "ERROR: VERSION is required. Use --version <x.y.z>"
@@ -181,6 +194,7 @@ try {
   pref("browser.search.order.1", "Google");
   pref("browser.fixup.alternate.enabled", false);
   pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0);
+  $UA_LINE
 } catch (e) {
   // Silently ignore if preference engine is not fully loaded
 }
@@ -215,31 +229,88 @@ try {
     }
   }
 
+  function log(msg) {
+    try {
+      Services.console.logStringMessage("[Seafari Config] " + msg);
+    } catch(e) {}
+  }
+
   function getUBlockStats() {
     var totalBlocked = 0;
     try {
       var { ExtensionParent } = ChromeUtils.importESModule("resource://gre/modules/ExtensionParent.sys.mjs");
       var extension = ExtensionParent.GlobalManager.getExtension("uBlock0@raymondhill.net");
-      if (extension && extension.views) {
+      if (!extension) {
+        log("uBlock Origin extension NOT found");
+        return 0;
+      }
+      log("uBlock found, uuid=" + extension.uuid);
+
+      // Method 1: backgroundContext (Firefox 109+)
+      var bgCtx = extension.backgroundContext;
+      if (bgCtx && bgCtx.contentWindow) {
+        var w = bgCtx.contentWindow;
+        var ub = w.µBlock || w.uBlock0 || w.uBlock;
+        if (ub && ub.localSettings) {
+          totalBlocked = ub.localSettings.blockedRequestCount || 0;
+          log("Method1 (backgroundContext) blockedRequestCount=" + totalBlocked);
+          return totalBlocked;
+        }
+        log("Method1: bgCtx.contentWindow found but µBlock object missing");
+      }
+
+      // Method 2: iterate extension.views Set
+      if (extension.views && extension.views.size > 0) {
+        log("Method2: views.size=" + extension.views.size);
         for (var view of extension.views) {
           if (view.viewType === "background" && view.contentWindow) {
-            var bgWindow = view.contentWindow;
-            var uBlockObj = bgWindow.µBlock || bgWindow.μBlock || bgWindow.uBlock;
-            if (uBlockObj && uBlockObj.localSettings) {
-              totalBlocked = uBlockObj.localSettings.blockedRequestCount || 0;
+            var bgWin = view.contentWindow;
+            var ub2 = bgWin.µBlock || bgWin.uBlock0 || bgWin.uBlock;
+            if (ub2 && ub2.localSettings) {
+              totalBlocked = ub2.localSettings.blockedRequestCount || 0;
+              log("Method2 (views) blockedRequestCount=" + totalBlocked);
+              return totalBlocked;
             }
+            // Try wrappedJSObject
+            if (bgWin.wrappedJSObject) {
+              var w2 = bgWin.wrappedJSObject;
+              var ub3 = w2.µBlock || w2.uBlock0 || w2.uBlock;
+              if (ub3 && ub3.localSettings) {
+                totalBlocked = ub3.localSettings.blockedRequestCount || 0;
+                log("Method2b (views+wrappedJSObject) blockedRequestCount=" + totalBlocked);
+                return totalBlocked;
+              }
+            }
+            log("Method2: background view found but µBlock missing, keys=" + Object.keys(bgWin).slice(0,10).join(","));
           }
         }
+      } else {
+        log("Method2: extension.views empty or undefined");
       }
-    } catch(uErr) {}
+
+      // Method 3: get stats from Firefox tracking protection as fallback
+      try {
+        var tpService = Components.classes["@mozilla.org/netwerk/protocol/http;1"];
+        log("Method3: TrackingProtection fallback not implemented, returning 0");
+      } catch(e3) {}
+
+    } catch(uErr) {
+      log("getUBlockStats error: " + uErr);
+    }
+    log("getUBlockStats returning " + totalBlocked);
     return totalBlocked;
   }
 
   function injectDataIntoNTP(doc) {
     try {
+      log("injectDataIntoNTP called for " + doc.location.href);
       var contentWindow = doc.defaultView;
-      if (!contentWindow) return;
+      if (!contentWindow) {
+        log("contentWindow is null");
+        return;
+      }
       var historyData = getHistory();
+      log("Successfully retrieved history items count: " + historyData.length);
       var totalBlocked = getUBlockStats();
 
       var privacyData = {
@@ -255,11 +326,15 @@ try {
 
       contentWindow.wrappedJSObject.realHistoryData = Components.utils.cloneInto(historyData, contentWindow);
       contentWindow.wrappedJSObject.realPrivacyStats = Components.utils.cloneInto(privacyData, contentWindow);
+      log("Injected data variables into NTP contentWindow");
 
       var evt = doc.createEvent("CustomEvent");
       evt.initCustomEvent("SeafariDataReady", true, true, null);
       doc.dispatchEvent(evt);
-    } catch(e) {}
+      log("Dispatched SeafariDataReady custom event");
+    } catch(e) {
+      log("Error in injectDataIntoNTP: " + e);
+    }
   }
 
   function setupUI(window) {
@@ -304,83 +379,111 @@ try {
       navBar.appendChild(overviewBtn);
     }
 
-    // English: Ensure the new-tab-button is placed in the navigation toolbar
-    // Español: Asegurar que el botón de nueva pestaña esté colocado en la barra de navegación
-    var newTabBtn = document.getElementById("new-tab-button");
-    if (newTabBtn && newTabBtn.parentNode !== navBar) {
-      navBar.appendChild(newTabBtn);
-    }
-
-    // English: Hide unwanted elements in JS for maximum reliability
-    // Español: Ocultar elementos no deseados en JS para máxima confiabilidad
-    var idsToHide = [
-      "sidebar-button",
-      "developer-button"
-    ];
+    // IDs to fully hide
+    var idsToHide = ["sidebar-button", "developer-button"];
     idsToHide.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) {
-        el.style.display = "none";
-        el.style.visibility = "collapse";
+        el.style.setProperty("display", "none", "important");
+        el.style.setProperty("visibility", "collapse", "important");
       }
     });
 
-    var leftIds = [
-      "back-button",
-      "forward-button"
-    ];
-    
-    // Sort unified-extensions-button and others before the capsule
-    var rightIds = [
-      "fxa-toolbar-button",
-      "tracking-protection-icon-container",
-      "unified-extensions-button",
-      "new-tab-button",
-      "tab-overview-button",
-      "PanelUI-menu-button"
-    ];
+    // --- Collect nodes by looking up IDs directly ---
+    // This works regardless of which parent they currently live in.
+    var leftIds   = ["back-button", "forward-button"];
+    // Extensions group (one pill)
+    var extensionIds = ["fxa-toolbar-button", "tracking-protection-icon-container", "unified-extensions-button",
+                        "downloads-button", "whats-new-menu-button"];
+    // NTP / overview / menu group (separate pill)
+    var menuIds  = ["new-tab-button", "tab-overview-button", "PanelUI-menu-button"];
+    var otherIds  = [];
 
-    // English: Get all current children
-    // Español: Obtener todos los hijos actuales
-    var children = Array.from(navBar.children);
+    function getById(id) { return document.getElementById(id); }
 
-    // English: Separate elements
-    // Español: Separar elementos
-    var leftNodes = [];
-    var urlbarNode = null;
-    var reloadNode = null;
-    var rightNodes = [];
-    var otherNodes = [];
+    var leftNodes      = leftIds.map(getById).filter(Boolean);
+    var extensionNodes = extensionIds.map(getById).filter(Boolean);
+    var menuNodes      = menuIds.map(getById).filter(Boolean);
 
-    children.forEach(function(node) {
-      var id = node.id;
-      if (leftIds.includes(id)) {
-        leftNodes.push(node);
-      } else if (id === "urlbar-container") {
-        urlbarNode = node;
-      } else if (id === "stop-reload-button") {
-        reloadNode = node;
-      } else if (rightIds.includes(id)) {
-        rightNodes.push(node);
-      } else {
-        if (!idsToHide.includes(id)) {
-          otherNodes.push(node);
-        }
+    var urlbarNode  = getById("urlbar-container");
+    var reloadNode  = getById("stop-reload-button");
+
+    // Helper: apply inline !important styles via CSSOM — beats ANY stylesheet including GNOME theme
+
+    function forceStyle(el, prop, val) {
+      try { el.style.setProperty(prop, val, "important"); } catch(e) {}
+    }
+
+    // Helper: create a pill wrapper hbox with inline glass styles,
+    // and reset each child button's individual appearance via inline styles
+    function makePill(document, id, nodes) {
+      if (!nodes || nodes.length === 0) return null;
+      var pill = document.createXULElement
+        ? document.createXULElement("hbox")
+        : document.createElement("hbox");
+      pill.id = id;
+      pill.setAttribute("seafari-pill", "true");
+
+      // Pill wrapper: liquid glass via inline !important styles
+      forceStyle(pill, "display", "inline-flex");
+      forceStyle(pill, "flex-direction", "row");
+      forceStyle(pill, "align-items", "center");
+      forceStyle(pill, "padding", "0");
+      forceStyle(pill, "margin", "2px 4px");
+      forceStyle(pill, "height", "34px");
+      forceStyle(pill, "border-radius", "999px");
+      forceStyle(pill, "background", "rgba(0,0,0,0.06)");
+      forceStyle(pill, "border", "1px solid rgba(0,0,0,0.10)");
+      forceStyle(pill, "box-shadow", "inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.08)");
+      forceStyle(pill, "overflow", "hidden");   // clip child hovers to pill shape
+      forceStyle(pill, "flex-shrink", "0");
+
+      nodes.forEach(function(node) {
+        pill.appendChild(node);
+
+        // Kill all individual-button appearance via inline !important
+        forceStyle(node, "-moz-appearance", "none");
+        forceStyle(node, "appearance", "none");
+        forceStyle(node, "background", "transparent");
+        forceStyle(node, "background-image", "none");
+        forceStyle(node, "border", "none");
+        forceStyle(node, "border-radius", "0");
+        forceStyle(node, "box-shadow", "none");
+        forceStyle(node, "outline", "none");
+        forceStyle(node, "margin", "0");
+        forceStyle(node, "padding", "0 8px");
+        forceStyle(node, "min-width", "34px");
+        forceStyle(node, "min-height", "34px");
+        forceStyle(node, "height", "34px");
+        forceStyle(node, "display", "inline-flex");
+        forceStyle(node, "align-items", "center");
+        forceStyle(node, "justify-content", "center");
+        forceStyle(node, "flex-shrink", "0");
+      });
+      return pill;
+    }
+
+    // Remove any old pill wrappers from a previous setupUI call
+    ["seafari-pill-left", "seafari-pill-mid", "seafari-pill-right", "seafari-pill-extensions", "seafari-pill-menu"].forEach(function(pid) {
+      var old = navBar.querySelector ? navBar.querySelector("#" + pid) : document.getElementById(pid);
+      if (old && old.parentNode === navBar) {
+        while (old.firstChild) navBar.appendChild(old.firstChild);
+        old.parentNode.removeChild(old);
       }
     });
 
-    // English: Sort to match desired layouts
-    // Español: Ordenar para que coincida con los diseños deseados
-    leftNodes.sort(function(a, b) { return leftIds.indexOf(a.id) - leftIds.indexOf(b.id); });
-    rightNodes.sort(function(a, b) { return rightIds.indexOf(a.id) - rightIds.indexOf(b.id); });
+    // English: Re-append in precise order with pill wrappers
+    // Español: Volver a añadir en orden preciso con wrappers de cápsula
+    // Layout: [Left pill] [UrlBar] [Reload] [Extensions pill] [Menu pill]
+    var pillLeft      = makePill(document, "seafari-pill-left",      leftNodes);
+    var pillExtensions = makePill(document, "seafari-pill-extensions", extensionNodes);
+    var pillMenu      = makePill(document, "seafari-pill-menu",      menuNodes);
 
-    // English: Re-append in precise order: [Left Group] [UrlBar] [Other/Extensions] [Stop/Reload] [Right Group (capsule)]
-    // Español: Volver a añadir en orden preciso: [Grupo Izquierdo] [UrlBar] [Otros/Extensiones] [Parar/Recargar] [Grupo Derecho (cápsula)]
-    leftNodes.forEach(function(node) { navBar.appendChild(node); });
-    if (urlbarNode) navBar.appendChild(urlbarNode);
-    if (reloadNode) navBar.appendChild(reloadNode);
-    otherNodes.forEach(function(node) { navBar.appendChild(node); });
-    rightNodes.forEach(function(node) { navBar.appendChild(node); });
+    if (pillLeft)        navBar.appendChild(pillLeft);
+    if (urlbarNode)      navBar.appendChild(urlbarNode);
+    if (reloadNode)      navBar.appendChild(reloadNode);
+    if (pillExtensions)  navBar.appendChild(pillExtensions);
+    if (pillMenu)        navBar.appendChild(pillMenu);
 
     // English: Bind Tab Overview button to open the WebExtension page
     // Español: Vincular el botón de vista general de pestañas para abrir la página de la WebExtension
@@ -457,19 +560,29 @@ try {
           (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_IS_DOCUMENT)) {
         try {
           var doc = aBrowser.contentDocument;
-          if (doc && doc.location && (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home")) {
-            injectDataIntoNTP(doc);
+          if (doc && doc.location) {
+            log("progressListener onStateChange (STATE_STOP) for URL: " + doc.location.href);
+            if (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home") {
+              injectDataIntoNTP(doc);
+            }
           }
-        } catch(e) {}
+        } catch(e) {
+          log("Error in progressListener onStateChange: " + e);
+        }
       }
     },
     onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation, aFlags) {
       try {
         var doc = aBrowser.contentDocument;
-        if (doc && doc.location && (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home")) {
-          injectDataIntoNTP(doc);
+        if (doc && doc.location) {
+          log("progressListener onLocationChange for URL: " + doc.location.href);
+          if (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home") {
+            injectDataIntoNTP(doc);
+          }
         }
-      } catch(e) {}
+      } catch(e) {
+        log("Error in progressListener onLocationChange: " + e);
+      }
     }
   };
 
@@ -621,7 +734,7 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     list-style-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") !important;
 }
 
-/* Reload button style - docked inside the right end of the URL bar */
+/* Reload button style */
 #urlbar-container:not(#hack) {
     margin-right: 0 !important;
     padding-right: 0 !important;
@@ -637,183 +750,147 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     margin: 0 !important;
 }
 
-/* --- Unified Left Button Group (Liquid Glass Capsule/Bubble) --- */
-#nav-bar toolbarbutton#back-button:not(#hack),
-#nav-bar toolbarbutton#forward-button:not(#hack) {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+/* ============================================================
+   LIQUID GLASS PILL WRAPPERS
+   The hbox[seafari-pill] wrapper is what shows the glass pill.
+   Buttons INSIDE the wrapper are transparent and square.
+   Specificity must beat: #nav-bar toolbarbutton:not(...) { ... }
+   ============================================================ */
+
+/* The pill wrapper itself */
+#nav-bar hbox[seafari-pill] {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 2px 4px !important;
+    height: 34px !important;
+    border-radius: 999px !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(0, 0, 0, 0.10) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.07) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    overflow: visible !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar hbox[seafari-pill] {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
+    }
+}
+
+:root[brighttext] #nav-bar hbox[seafari-pill] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
+}
+
+/* Buttons INSIDE the pill: transparent, no individual effects.
+   Selector specificity: 2-4-2 — beats MacTahoe's 2-3-1. */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
+#nav-bar hbox[seafari-pill] > *:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button) {
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
     border-radius: 0 !important;
+    --button-border-radius: 0px !important;
+    --toolbarbutton-border-radius: 0px !important;
+    box-shadow: none !important;
+    outline: none !important;
     margin: 0 !important;
-    padding: 0 10px !important;
-    min-width: 38px !important;
+    padding: 0 6px !important;
+    min-width: 34px !important;
     min-height: 34px !important;
     height: 34px !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
-    border-left: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
 }
 
-#nav-bar toolbarbutton#back-button:hover:not(#hack),
-#nav-bar toolbarbutton#forward-button:hover:not(#hack) {
-    background: rgba(0, 0, 0, 0.1) !important;
-}
-#nav-bar toolbarbutton#back-button:active:not(#hack),
-#nav-bar toolbarbutton#forward-button:active:not(#hack) {
-    background: rgba(0, 0, 0, 0.15) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#back-button:not(#hack),
-    #nav-bar toolbarbutton#forward-button:not(#hack) {
-        background: rgba(255, 255, 255, 0.07) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-        border-left: none !important;
-    }
-    #nav-bar toolbarbutton#back-button:hover:not(#hack),
-    #nav-bar toolbarbutton#forward-button:hover:not(#hack) {
-        background: rgba(255, 255, 255, 0.15) !important;
-    }
-    #nav-bar toolbarbutton#back-button:active:not(#hack),
-    #nav-bar toolbarbutton#forward-button:active:not(#hack) {
-        background: rgba(255, 255, 255, 0.22) !important;
-    }
-}
-
-:root[brighttext] #nav-bar toolbarbutton#back-button:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#forward-button:not(#hack) {
-    background: rgba(255, 255, 255, 0.07) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-    border-left: none !important;
-}
-:root[brighttext] #nav-bar toolbarbutton#back-button:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#forward-button:hover:not(#hack) {
-    background: rgba(255, 255, 255, 0.16) !important;
-}
-:root[brighttext] #nav-bar toolbarbutton#back-button:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#forward-button:active:not(#hack) {
-    background: rgba(255, 255, 255, 0.22) !important;
-}
-
-/* Boundaries for Left Group */
-#nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    padding-left: 14px !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
-        border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-    }
-}
-:root[brighttext] #nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
-    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-#nav-bar toolbarbutton#forward-button:not([hidden]):not(#hack) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 14px !important;
-}
-#nav-bar toolbarbutton#forward-button[hidden] ~ toolbarbutton#back-button:not([hidden]):not(#hack) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 14px !important;
-}
-
-/* --- Unified Right Button Group (Liquid Glass Capsule/Bubble: New Tab, Overview, Menu) --- */
-#nav-bar toolbarbutton#new-tab-button:not(#hack),
-#nav-bar toolbarbutton#tab-overview-button:not(#hack),
-#nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+/* Reset pseudo-elements that themes use for button backgrounds */
+#nav-bar hbox[seafari-pill] > toolbarbutton::before,
+#nav-bar hbox[seafari-pill] > toolbarbutton::after,
+#nav-bar hbox[seafari-pill] > toolbaritem::before,
+#nav-bar hbox[seafari-pill] > toolbaritem::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    border: none !important;
     border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 10px !important;
-    min-width: 38px !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
-    border-left: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    box-shadow: none !important;
 }
-#nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
-#nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
-#nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
-    background: rgba(0, 0, 0, 0.1) !important;
+
+/* Hover — specificity 2-7-2, beats MacTahoe's 2-6-1 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: none !important;
 }
-#nav-bar toolbarbutton#new-tab-button:active:not(#hack),
-#nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
-#nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
-    background: rgba(0, 0, 0, 0.15) !important;
+
+/* Active / open / checked — specificity 3-4-2, beats MacTahoe's 3-3-1 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+    background: rgba(0, 0, 0, 0.14) !important;
+    box-shadow: none !important;
+}
+
+/* Disabled — specificity 2-4-2 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button)[disabled] {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Inactive window — specificity 2-4-3 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):-moz-window-inactive {
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 @media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#new-tab-button:not(#hack),
-    #nav-bar toolbarbutton#tab-overview-button:not(#hack),
-    #nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
-        background: rgba(255, 255, 255, 0.07) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-        border-left: none !important;
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+        background: rgba(255, 255, 255, 0.12) !important;
     }
-    #nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
-    #nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
-    #nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
-        background: rgba(255, 255, 255, 0.15) !important;
-    }
-    #nav-bar toolbarbutton#new-tab-button:active:not(#hack),
-    #nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
-    #nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
-        background: rgba(255, 255, 255, 0.22) !important;
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+        background: rgba(255, 255, 255, 0.20) !important;
     }
 }
 
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
-    background: rgba(255, 255, 255, 0.07) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-    border-left: none !important;
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+    background: rgba(255, 255, 255, 0.12) !important;
 }
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
-    background: rgba(255, 255, 255, 0.16) !important;
-}
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
-    background: rgba(255, 255, 255, 0.22) !important;
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+    background: rgba(255, 255, 255, 0.20) !important;
 }
 
-/* Rounded corners for the capsule boundaries */
-#nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-    padding-left: 14px !important;
+/* First and last buttons inside pill get rounded ends */
+#nav-bar hbox[seafari-pill] > *:first-child {
+    padding-left: 10px !important;
 }
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
-        border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-    }
-}
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
-    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-#nav-bar toolbarbutton#PanelUI-menu-button:not([hidden]):not(#hack) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 14px !important;
+#nav-bar hbox[seafari-pill] > *:last-child {
+    padding-right: 10px !important;
 }
 
 /* Ensure the URL Bar has a small spacing and default right padding */

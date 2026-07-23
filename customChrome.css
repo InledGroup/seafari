@@ -1,5 +1,3 @@
-@import "MacTahoe/theme.css";
-
 :root {
     --theme-primary-color: #0071e3 !important;
     --theme-primary-hover-color: #005dc2 !important;
@@ -44,9 +42,8 @@
     filter: invert(1) brightness(100) !important; 
 }
 
-/* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
-/* Ocultar iconos no deseados (perfil de usuario, extensiones, escudo de protección de rastreo y barra lateral) */
-#fxa-toolbar-button,
+/* Hide unwanted icons (tracking protection shield and sidebar) */
+/* Ocultar iconos no deseados (escudo de protección de rastreo y barra lateral) */
 #tracking-protection-icon-container,
 #tracking-protection-icon-box,
 #tracking-protection-icon,
@@ -54,7 +51,6 @@
 .tracking-protection-button,
 #sidebar-button,
 #developer-button,
-#nav-bar #fxa-toolbar-button,
 #nav-bar #tracking-protection-icon-container,
 #nav-bar #sidebar-button,
 #nav-bar #developer-button {
@@ -147,73 +143,17 @@
     background: rgba(0, 0, 0, 0.15) !important;
 }
 
-@media (prefers-color-scheme: dark) {
     #nav-bar toolbarbutton#back-button:not(#hack),
     #nav-bar toolbarbutton#forward-button:not(#hack) {
-        background: rgba(255, 255, 255, 0.07) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-        border-left: none !important;
-    }
-    #nav-bar toolbarbutton#back-button:hover:not(#hack),
-    #nav-bar toolbarbutton#forward-button:hover:not(#hack) {
-        background: rgba(255, 255, 255, 0.15) !important;
-    }
-    #nav-bar toolbarbutton#back-button:active:not(#hack),
-    #nav-bar toolbarbutton#forward-button:active:not(#hack) {
-        background: rgba(255, 255, 255, 0.22) !important;
+        border-radius: 0 !important;
     }
 }
 
-:root[brighttext] #nav-bar toolbarbutton#back-button:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#forward-button:not(#hack) {
-    background: rgba(255, 255, 255, 0.07) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-    border-left: none !important;
-}
-:root[brighttext] #nav-bar toolbarbutton#back-button:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#forward-button:hover:not(#hack) {
-    background: rgba(255, 255, 255, 0.16) !important;
-}
-:root[brighttext] #nav-bar toolbarbutton#back-button:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#forward-button:active:not(#hack) {
-    background: rgba(255, 255, 255, 0.22) !important;
-}
-
-/* Boundaries for Left Group */
-#nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    padding-left: 14px !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
-        border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-    }
-}
-:root[brighttext] #nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
-    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-#nav-bar toolbarbutton#forward-button:not([hidden]):not(#hack) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 14px !important;
-}
-#nav-bar toolbarbutton#forward-button[hidden] ~ toolbarbutton#back-button:not([hidden]):not(#hack) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 14px !important;
-}
-
-/* --- Unified Right Button Group (Liquid Glass Capsule/Bubble: New Tab, Overview, Menu) --- */
-#nav-bar toolbarbutton#new-tab-button:not(#hack),
-#nav-bar toolbarbutton#tab-overview-button:not(#hack),
-#nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
+/* --- Liquid Glass Capsules General Style --- */
+#nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
     background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 10px !important;
@@ -221,82 +161,146 @@
     min-height: 34px !important;
     height: 34px !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
-    border-left: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
-#nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
-#nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
-#nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
+
+#nav-bar toolbarbutton[seafari-capsule-left]:hover:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid]:hover:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right]:hover:not(#hack) {
     background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar toolbarbutton#new-tab-button:active:not(#hack),
-#nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
-#nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
+
+#nav-bar toolbarbutton[seafari-capsule-left]:active:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid]:active:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right]:active:not(#hack) {
     background: rgba(0, 0, 0, 0.15) !important;
 }
 
+/* Dark Mode Liquid Glass */
 @media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#new-tab-button:not(#hack),
-    #nav-bar toolbarbutton#tab-overview-button:not(#hack),
-    #nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
+    #nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
         background: rgba(255, 255, 255, 0.07) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-        border-left: none !important;
     }
-    #nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
-    #nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
-    #nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
+    #nav-bar toolbarbutton[seafari-capsule-left]:hover:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid]:hover:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right]:hover:not(#hack) {
         background: rgba(255, 255, 255, 0.15) !important;
     }
-    #nav-bar toolbarbutton#new-tab-button:active:not(#hack),
-    #nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
-    #nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
+    #nav-bar toolbarbutton[seafari-capsule-left]:active:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid]:active:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right]:active:not(#hack) {
         background: rgba(255, 255, 255, 0.22) !important;
     }
 }
 
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
     background: rgba(255, 255, 255, 0.07) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-    border-left: none !important;
 }
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left]:hover:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid]:hover:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right]:hover:not(#hack) {
     background: rgba(255, 255, 255, 0.16) !important;
 }
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left]:active:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid]:active:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right]:active:not(#hack) {
     background: rgba(255, 255, 255, 0.22) !important;
 }
 
-/* Rounded corners for the capsule boundaries */
-#nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
+/* Border positioning (no internal divider lines) */
+/* Light Mode Borders */
+#nav-bar toolbarbutton[seafari-capsule-left="left"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid="left"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack) {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-right: none !important;
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
     padding-left: 14px !important;
 }
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
-        border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-    }
+#nav-bar toolbarbutton[seafari-capsule-left="middle"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid="middle"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right="middle"]:not(#hack) {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-left: none !important;
+    border-right: none !important;
 }
-:root[brighttext] #nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
-    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-#nav-bar toolbarbutton#PanelUI-menu-button:not([hidden]):not(#hack) {
+#nav-bar toolbarbutton[seafari-capsule-left="right"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid="right"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack) {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-left: none !important;
     border-top-right-radius: 999px !important;
     border-bottom-right-radius: 999px !important;
     padding-right: 14px !important;
+}
+#nav-bar toolbarbutton[seafari-capsule-left="single"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid="single"]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right="single"]:not(#hack) {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 999px !important;
+    padding: 0 14px !important;
+}
+
+/* Dark Mode Borders */
+@media (prefers-color-scheme: dark) {
+    #nav-bar toolbarbutton[seafari-capsule-left="left"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid="left"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack) {
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-right: none !important;
+    }
+    #nav-bar toolbarbutton[seafari-capsule-left="middle"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid="middle"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right="middle"]:not(#hack) {
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+    #nav-bar toolbarbutton[seafari-capsule-left="right"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid="right"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack) {
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-left: none !important;
+    }
+    #nav-bar toolbarbutton[seafari-capsule-left="single"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-mid="single"]:not(#hack),
+    #nav-bar toolbarbutton[seafari-capsule-right="single"]:not(#hack) {
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+}
+
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="left"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="left"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack) {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-right: none !important;
+}
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="middle"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="middle"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="middle"]:not(#hack) {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="right"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="right"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack) {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-left: none !important;
+}
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="single"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="single"]:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="single"]:not(#hack) {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Ensure the URL Bar has a small spacing and default right padding */
@@ -390,4 +394,145 @@ button.dialog-button[default="true"]:active,
     box-shadow: none !important;
 }
 
+/* ============================================================
+   LIQUID GLASS PILL WRAPPERS
+   Override MacTahoe's individual button styles for buttons inside pills.
+   Specificity must beat: #nav-bar toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button) { ... }
+   ============================================================ */
+
+/* The pill wrapper itself */
+#nav-bar hbox[seafari-pill] {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 2px 4px !important;
+    height: 34px !important;
+    border-radius: 999px !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(0, 0, 0, 0.10) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.07) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    overflow: visible !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar hbox[seafari-pill] {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
+    }
+}
+
+:root[brighttext] #nav-bar hbox[seafari-pill] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
+}
+
+/* Buttons INSIDE the pill: transparent, no individual effects.
+   Selector specificity: 2-4-2 — beats MacTahoe's 2-3-1. */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
+#nav-bar hbox[seafari-pill] > *:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button) {
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    --button-border-radius: 0px !important;
+    --toolbarbutton-border-radius: 0px !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+/* Reset pseudo-elements that themes use for button backgrounds */
+#nav-bar hbox[seafari-pill] > toolbarbutton::before,
+#nav-bar hbox[seafari-pill] > toolbarbutton::after,
+#nav-bar hbox[seafari-pill] > toolbaritem::before,
+#nav-bar hbox[seafari-pill] > toolbaritem::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Hover — specificity 2-7-2, beats MacTahoe's 2-6-1 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: none !important;
+}
+
+/* Active / open / checked — specificity 3-4-2, beats MacTahoe's 3-3-1 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+#nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+    background: rgba(0, 0, 0, 0.14) !important;
+    box-shadow: none !important;
+}
+
+/* Disabled — specificity 2-4-2 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button)[disabled] {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Inactive window — specificity 2-4-3 */
+#nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):-moz-window-inactive {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+    #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+    #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+        background: rgba(255, 255, 255, 0.20) !important;
+    }
+}
+
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
+:root[brighttext] #nav-bar hbox[seafari-pill] > toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
+    background: rgba(255, 255, 255, 0.20) !important;
+}
+
+/* First and last buttons inside pill get rounded ends */
+#nav-bar hbox[seafari-pill] > *:first-child {
+    padding-left: 10px !important;
+}
+#nav-bar hbox[seafari-pill] > *:last-child {
+    padding-right: 10px !important;
+}
 
