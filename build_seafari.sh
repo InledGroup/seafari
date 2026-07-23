@@ -391,7 +391,7 @@ try {
 
     // Remove any old pill wrappers from a previous setupUI call
     // IMPORTANT: unwrap FIRST so all children are direct children of navBar
-    ["seafari-pill-left", "seafari-pill-mid", "seafari-pill-right", "seafari-pill-extensions", "seafari-pill-menu"].forEach(function(pid) {
+    ["seafari-pill-left", "seafari-pill-mid", "seafari-pill-right", "seafari-pill-extensions", "seafari-pill-menu", "seafari-pill-urlbar"].forEach(function(pid) {
       var old = navBar.querySelector ? navBar.querySelector("#" + pid) : document.getElementById(pid);
       if (old && old.parentNode === navBar) {
         while (old.firstChild) navBar.appendChild(old.firstChild);
@@ -496,16 +496,21 @@ try {
 
     // English: Re-append in precise order with pill wrappers
     // Español: Volver a añadir en orden preciso con wrappers de cápsula
-    // Layout: [Left pill] [UrlBar] [Reload] [Extensions pill] [Menu pill]
+    // Layout: [Left pill] [UrlBar+Reload pill] [Extensions pill] [Menu pill]
     var pillLeft      = makePill(document, "seafari-pill-left",      leftNodes);
     var pillExtensions = makePill(document, "seafari-pill-extensions", extensionNodes);
     var pillMenu      = makePill(document, "seafari-pill-menu",      menuNodes);
 
-    if (pillLeft)        navBar.appendChild(pillLeft);
+    // UrlBar + Reload share one pill
+    var urlbarNodes = [];
     var urlbarEl = document.getElementById("urlbar-container");
     var reloadEl = document.getElementById("stop-reload-button");
-    if (urlbarEl)        navBar.appendChild(urlbarEl);
-    if (reloadEl)        navBar.appendChild(reloadEl);
+    if (urlbarEl) urlbarNodes.push(urlbarEl);
+    if (reloadEl) urlbarNodes.push(reloadEl);
+    var pillUrlbar = makePill(document, "seafari-pill-urlbar", urlbarNodes);
+
+    if (pillLeft)        navBar.appendChild(pillLeft);
+    if (pillUrlbar)      navBar.appendChild(pillUrlbar);
     if (pillExtensions)  navBar.appendChild(pillExtensions);
     if (pillMenu)        navBar.appendChild(pillMenu);
 
