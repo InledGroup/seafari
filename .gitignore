@@ -16,3 +16,11 @@ build_cache_amd64/
 
 # Cloned repositories
 apt/
+
+# Temporary diagnostic files
+Settings.xhtml
+Settings_files/
+seafari-debug.log
+diagnose.js
+test_extraction.js
+*.log
