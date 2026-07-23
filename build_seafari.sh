@@ -389,27 +389,58 @@ try {
       }
     });
 
-    // --- Collect nodes by looking up IDs directly ---
-    // This works regardless of which parent they currently live in.
-    var leftIds   = ["back-button", "forward-button"];
-    // Extensions group (one pill)
-    var extensionIds = ["fxa-toolbar-button", "tracking-protection-icon-container", "unified-extensions-button",
-                        "downloads-button", "whats-new-menu-button"];
-    // NTP / overview / menu group (separate pill)
-    var menuIds  = ["new-tab-button", "tab-overview-button", "PanelUI-menu-button"];
-    var otherIds  = [];
+    // Remove any old pill wrappers from a previous setupUI call
+    // IMPORTANT: unwrap FIRST so all children are direct children of navBar
+    ["seafari-pill-left", "seafari-pill-mid", "seafari-pill-right", "seafari-pill-extensions", "seafari-pill-menu"].forEach(function(pid) {
+      var old = navBar.querySelector ? navBar.querySelector("#" + pid) : document.getElementById(pid);
+      if (old && old.parentNode === navBar) {
+        while (old.firstChild) navBar.appendChild(old.firstChild);
+        old.parentNode.removeChild(old);
+      }
+    });
 
-    function getById(id) { return document.getElementById(id); }
+    // --- Dynamic node collection ---
+    // Known buttons → specific pills by ID lookup (they may live in any parent).
+    // Remaining direct children → extensions pill (dynamic/unknown buttons).
+    var leftNodes      = [];
+    var extensionNodes = [];
+    var menuNodes      = [];
 
-    var leftNodes      = leftIds.map(getById).filter(Boolean);
-    var extensionNodes = extensionIds.map(getById).filter(Boolean);
-    var menuNodes      = menuIds.map(getById).filter(Boolean);
+    var knownLeftIds = ["back-button", "forward-button"];
+    var knownMenuIds = ["new-tab-button", "tab-overview-button", "PanelUI-menu-button"];
+    var knownSkipIds = ["urlbar-container", "stop-reload-button",
+                        "sidebar-button", "developer-button"];
 
-    var urlbarNode  = getById("urlbar-container");
-    var reloadNode  = getById("stop-reload-button");
+    var knownAll = {};
+    knownLeftIds.forEach(function(id) { knownAll[id] = true; });
+    knownMenuIds.forEach(function(id) { knownAll[id] = true; });
+    knownSkipIds.forEach(function(id) { knownAll[id] = true; });
+
+    function findNode(id) {
+      var el = document.getElementById(id);
+      return el || null;
+    }
+
+    knownLeftIds.forEach(function(id) {
+      var node = findNode(id);
+      if (node) leftNodes.push(node);
+    });
+    knownMenuIds.forEach(function(id) {
+      var node = findNode(id);
+      if (node) menuNodes.push(node);
+    });
+
+    Array.from(navBar.children).forEach(function(node) {
+      var id = node.id || "";
+      if (knownSkipIds.indexOf(id) !== -1) return;
+      if (id.indexOf("seafari-pill") === 0) return;
+      if (knownLeftIds.indexOf(id) !== -1) { leftNodes.push(node); return; }
+      if (knownMenuIds.indexOf(id) !== -1) { menuNodes.push(node); return; }
+      if (knownAll[id]) return;
+      extensionNodes.push(node);
+    });
 
     // Helper: apply inline !important styles via CSSOM — beats ANY stylesheet including GNOME theme
-
     function forceStyle(el, prop, val) {
       try { el.style.setProperty(prop, val, "important"); } catch(e) {}
     }
@@ -435,7 +466,7 @@ try {
       forceStyle(pill, "background", "rgba(0,0,0,0.06)");
       forceStyle(pill, "border", "1px solid rgba(0,0,0,0.10)");
       forceStyle(pill, "box-shadow", "inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.08)");
-      forceStyle(pill, "overflow", "hidden");   // clip child hovers to pill shape
+      forceStyle(pill, "overflow", "hidden");
       forceStyle(pill, "flex-shrink", "0");
 
       nodes.forEach(function(node) {
@@ -463,15 +494,6 @@ try {
       return pill;
     }
 
-    // Remove any old pill wrappers from a previous setupUI call
-    ["seafari-pill-left", "seafari-pill-mid", "seafari-pill-right", "seafari-pill-extensions", "seafari-pill-menu"].forEach(function(pid) {
-      var old = navBar.querySelector ? navBar.querySelector("#" + pid) : document.getElementById(pid);
-      if (old && old.parentNode === navBar) {
-        while (old.firstChild) navBar.appendChild(old.firstChild);
-        old.parentNode.removeChild(old);
-      }
-    });
-
     // English: Re-append in precise order with pill wrappers
     // Español: Volver a añadir en orden preciso con wrappers de cápsula
     // Layout: [Left pill] [UrlBar] [Reload] [Extensions pill] [Menu pill]
@@ -480,8 +502,10 @@ try {
     var pillMenu      = makePill(document, "seafari-pill-menu",      menuNodes);
 
     if (pillLeft)        navBar.appendChild(pillLeft);
-    if (urlbarNode)      navBar.appendChild(urlbarNode);
-    if (reloadNode)      navBar.appendChild(reloadNode);
+    var urlbarEl = document.getElementById("urlbar-container");
+    var reloadEl = document.getElementById("stop-reload-button");
+    if (urlbarEl)        navBar.appendChild(urlbarEl);
+    if (reloadEl)        navBar.appendChild(reloadEl);
     if (pillExtensions)  navBar.appendChild(pillExtensions);
     if (pillMenu)        navBar.appendChild(pillMenu);
 
