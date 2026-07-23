@@ -456,9 +456,8 @@ try {
       pill.setAttribute("seafari-pill", "true");
 
       // Pill wrapper: liquid glass via inline !important styles
-      forceStyle(pill, "display", "inline-flex");
-      forceStyle(pill, "flex-direction", "row");
-      forceStyle(pill, "align-items", "center");
+      forceStyle(pill, "display", "-moz-box");
+      forceStyle(pill, "-moz-box-align", "center");
       forceStyle(pill, "padding", "0");
       forceStyle(pill, "margin", "2px 4px");
       forceStyle(pill, "height", "34px");
@@ -486,9 +485,9 @@ try {
         forceStyle(node, "min-width", "34px");
         forceStyle(node, "min-height", "34px");
         forceStyle(node, "height", "34px");
-        forceStyle(node, "display", "inline-flex");
-        forceStyle(node, "align-items", "center");
-        forceStyle(node, "justify-content", "center");
+        forceStyle(node, "display", "-moz-box");
+        forceStyle(node, "-moz-box-align", "center");
+        forceStyle(node, "-moz-box-pack", "center");
         forceStyle(node, "flex-shrink", "0");
       });
       return pill;
@@ -513,6 +512,25 @@ try {
     if (pillUrlbar)      navBar.appendChild(pillUrlbar);
     if (pillExtensions)  navBar.appendChild(pillExtensions);
     if (pillMenu)        navBar.appendChild(pillMenu);
+
+    // XUL flex: CSS flex:1 doesn't work reliably on XUL -moz-box elements.
+    // Set the XUL flex attribute directly so the urlbar pill fills remaining space.
+    if (pillUrlbar) {
+      pillUrlbar.setAttribute("flex", "1");
+      forceStyle(pillUrlbar, "-moz-box-flex", "1");
+    }
+    if (pillExtensions) {
+      pillExtensions.setAttribute("flex", "0");
+      forceStyle(pillExtensions, "-moz-box-flex", "0");
+    }
+    if (pillMenu) {
+      pillMenu.setAttribute("flex", "0");
+      forceStyle(pillMenu, "-moz-box-flex", "0");
+    }
+    if (pillLeft) {
+      pillLeft.setAttribute("flex", "0");
+      forceStyle(pillLeft, "-moz-box-flex", "0");
+    }
 
     // English: Bind Tab Overview button to open the WebExtension page
     // Español: Vincular el botón de vista general de pestañas para abrir la página de la WebExtension
@@ -548,6 +566,17 @@ try {
           }
         }, true);
         window._seafariRequestListenerAdded = true;
+      }
+    }
+
+    // Re-run pill setup after toolbar customization so new buttons land inside pills
+    if (!window._seafariAfterCustomizationAdded) {
+      var navBarEl = document.getElementById("nav-bar");
+      if (navBarEl) {
+        navBarEl.addEventListener("aftercustomization", function() {
+          setupUI(window);
+        });
+        window._seafariAfterCustomizationAdded = true;
       }
     }
   }
@@ -786,26 +815,15 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
    Specificity must beat: #nav-bar toolbarbutton:not(...) { ... }
    ============================================================ */
 
-/* Ensure flex layout on the nav bar container so flex:1 works */
-#nav-bar-customization-target {
-    display: flex !important;
-    align-items: center !important;
-}
-
-/* Layout: urlbar pill fills remaining space, right pills align right */
+/* Layout: urlbar pill fills remaining space via XUL flex attribute (set in JS) */
 #seafari-pill-urlbar {
-    flex: 1 !important;
     min-width: 0 !important;
 }
-#seafari-pill-extensions {
-    margin-left: auto !important;
-}
 
-/* The pill wrapper itself */
+/* The pill wrapper itself — keep XUL -moz-box display so flex attribute works */
 #nav-bar hbox[seafari-pill] {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
+    display: -moz-box !important;
+    -moz-box-align: center !important;
     padding: 0 !important;
     margin: 2px 4px !important;
     height: 34px !important;
@@ -850,17 +868,39 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     transition: none !important;
 }
 
-/* Stop/reload button inside pill: kill MacTahoe's individual pill shape */
+/* Stop/reload button inside pill: kill MacTahoe's combined-buttons pill shape */
 #nav-bar hbox[seafari-pill] #stop-reload-button,
+#nav-bar hbox[seafari-pill] #stop-reload-button.toolbaritem-combined-buttons,
 #nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button,
 #nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button {
+    -moz-appearance: none !important;
+    appearance: none !important;
     background: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     border: none !important;
     margin: 0 !important;
-    padding: 0 6px !important;
+    padding: 0 4px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 34px !important;
+    --button-border-radius: 0px !important;
+    --toolbarbutton-border-radius: 0px !important;
+    transition: none !important;
+}
+#nav-bar hbox[seafari-pill] #stop-reload-button::before,
+#nav-bar hbox[seafari-pill] #stop-reload-button::after,
+#nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button::before,
+#nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button::after,
+#nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button::before,
+#nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 /* Buttons INSIDE the pill: transparent, no individual effects.
@@ -884,10 +924,17 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     min-width: 34px !important;
     min-height: 34px !important;
     height: 34px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: -moz-box !important;
+    -moz-box-align: center !important;
+    -moz-box-pack: center !important;
     flex-shrink: 0 !important;
+}
+
+/* Collapsed buttons MUST stay hidden — overrides the display above */
+#nav-bar hbox[seafari-pill] [collapsed="true"],
+#nav-bar hbox[seafari-pill] toolbarbutton[collapsed="true"],
+#nav-bar hbox[seafari-pill] toolbaritem[collapsed="true"] {
+    display: none !important;
 }
 
 /* Reset pseudo-elements */
