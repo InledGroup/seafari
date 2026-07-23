@@ -59,7 +59,9 @@ The base theme is based on [Vinceliuice/MacTahoe GTK Theme](https://github.com/v
 Seafari is a product of Inled Group, which is not affiliated with Mozilla or Apple.
 If you'd like to integrate Seafari into your distribution, we would greatly appreciate it, and it would be even better if you mentioned us.
 Feel free to contact us with any questions. We welcome pull requests and issues.
-v1.11
 
 ## Contribute!  
 Contributions and issues are welcome! You will become a contributor and we will give you appropriate credit for each post. Read more at[https://help.inled.es/help/contribute-to-inled-projects/](https://help.inled.es/help/contribute-to-inled-projects/)
+
+---
+v2
