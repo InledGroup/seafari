@@ -48,6 +48,9 @@ rm -rf ~/.mozilla/seafari-profile
 ```bash
 ./Seafari-x86_64.AppImage
 ```
+## Auto publish system  
+Write [RELEASE] on commit for acumulative release.
+Write [RELEASE][number.number] for version increasing.
 
 ## License and acknowledgment
 
