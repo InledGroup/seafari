@@ -4,6 +4,7 @@ Seafari is a browser made on top of Mozilla Firefox. Gets daily updates from Moz
 Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.
 
 ![Seafari Logo](seafari.png)
+![Seafari demo](demo.png)
 
 ##  It's different
 You're probably wondering why create a new browser when you can start from Gnome's Epiphany browser. The problem is that Epiphany does not support extensions and is blocked by some search engines.  
