@@ -1536,6 +1536,13 @@
       }
     });
 
+    function requestSeafariData() {
+      document.dispatchEvent(new CustomEvent("SeafariRequestData", { bubbles: true, composed: true }));
+    }
+    // Request immediately on load and every 2 seconds thereafter
+    requestSeafariData();
+    setInterval(requestSeafariData, 2000);
+
     // Start UI
     loadState();
     initUI();

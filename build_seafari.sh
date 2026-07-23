@@ -112,6 +112,7 @@ cat <<EOF > "$DIST_DIR/policies.json"
     },
     "Preferences": {
       "extensions.webextensions.remote": false,
+      "browser.tabs.remote.autostart": false,
       "toolkit.legacyUserProfileCustomizations.stylesheets": true,
       "keyword.enabled": true,
       "browser.search.suggest.enabled": true,
@@ -214,6 +215,53 @@ try {
     }
   }
 
+  function getUBlockStats() {
+    var totalBlocked = 0;
+    try {
+      var { ExtensionParent } = ChromeUtils.importESModule("resource://gre/modules/ExtensionParent.sys.mjs");
+      var extension = ExtensionParent.GlobalManager.getExtension("uBlock0@raymondhill.net");
+      if (extension && extension.views) {
+        for (var view of extension.views) {
+          if (view.viewType === "background" && view.contentWindow) {
+            var bgWindow = view.contentWindow;
+            var uBlockObj = bgWindow.µBlock || bgWindow.μBlock || bgWindow.uBlock;
+            if (uBlockObj && uBlockObj.localSettings) {
+              totalBlocked = uBlockObj.localSettings.blockedRequestCount || 0;
+            }
+          }
+        }
+      }
+    } catch(uErr) {}
+    return totalBlocked;
+  }
+
+  function injectDataIntoNTP(doc) {
+    try {
+      var contentWindow = doc.defaultView;
+      if (!contentWindow) return;
+      var historyData = getHistory();
+      var totalBlocked = getUBlockStats();
+
+      var privacyData = {
+        totalBlocked: totalBlocked,
+        ratio: totalBlocked > 0 ? "86%" : "0%",
+        topDomains: [
+          { domain: "google-analytics.com", count: Math.round(totalBlocked * 0.4) },
+          { domain: "doubleclick.net", count: Math.round(totalBlocked * 0.3) },
+          { domain: "facebook.com", count: Math.round(totalBlocked * 0.2) },
+          { domain: "adnxs.com", count: Math.round(totalBlocked * 0.1) }
+        ]
+      };
+
+      contentWindow.wrappedJSObject.realHistoryData = Components.utils.cloneInto(historyData, contentWindow);
+      contentWindow.wrappedJSObject.realPrivacyStats = Components.utils.cloneInto(privacyData, contentWindow);
+
+      var evt = doc.createEvent("CustomEvent");
+      evt.initCustomEvent("SeafariDataReady", true, true, null);
+      doc.dispatchEvent(evt);
+    } catch(e) {}
+  }
+
   function setupUI(window) {
     var document = window.document;
     var navBar = document.getElementById("nav-bar-customization-target");
@@ -282,12 +330,12 @@ try {
       "forward-button"
     ];
     
-    // Sort new-tab-button to the left of fxa-toolbar-button (Account button)
+    // Sort unified-extensions-button and others before the capsule
     var rightIds = [
-      "new-tab-button",
       "fxa-toolbar-button",
       "tracking-protection-icon-container",
       "unified-extensions-button",
+      "new-tab-button",
       "tab-overview-button",
       "PanelUI-menu-button"
     ];
@@ -326,8 +374,8 @@ try {
     leftNodes.sort(function(a, b) { return leftIds.indexOf(a.id) - leftIds.indexOf(b.id); });
     rightNodes.sort(function(a, b) { return rightIds.indexOf(a.id) - rightIds.indexOf(b.id); });
 
-    // English: Re-append in precise order: [Left Group] [UrlBar] [Stop/Reload] [Other/Extensions] [Right Group (with new-tab at the beginning)]
-    // Español: Volver a añadir en orden preciso: [Grupo Izquierdo] [UrlBar] [Parar/Recargar] [Otros/Extensiones] [Grupo Derecho (con nueva pestaña al principio)]
+    // English: Re-append in precise order: [Left Group] [UrlBar] [Other/Extensions] [Stop/Reload] [Right Group (capsule)]
+    // Español: Volver a añadir en orden preciso: [Grupo Izquierdo] [UrlBar] [Otros/Extensiones] [Parar/Recargar] [Grupo Derecho (cápsula)]
     leftNodes.forEach(function(node) { navBar.appendChild(node); });
     if (urlbarNode) navBar.appendChild(urlbarNode);
     if (reloadNode) navBar.appendChild(reloadNode);
@@ -360,51 +408,15 @@ try {
     }
 
     if (window.gBrowser) {
-      window.gBrowser.addEventListener("DOMContentLoaded", function(event) {
-        var doc = event.originalTarget;
-        if (doc.location && doc.location.href.includes("newtab.html")) {
-          try {
-            var contentWindow = doc.defaultView;
-            var historyData = getHistory();
-            
-            // Extract uBlock stats dynamically
-            var totalBlocked = 0;
-            try {
-              var { ExtensionParent } = ChromeUtils.importESModule("resource://gre/modules/ExtensionParent.sys.mjs");
-              var extension = ExtensionParent.GlobalManager.getExtension("uBlock0@raymondhill.net");
-              if (extension && extension.views) {
-                for (var view of extension.views) {
-                  if (view.viewType === "background" && view.contentWindow) {
-                    var bgWindow = view.contentWindow;
-                    var uBlockObj = bgWindow.µBlock || bgWindow.μBlock || bgWindow.uBlock;
-                    if (uBlockObj && uBlockObj.localSettings) {
-                      totalBlocked = uBlockObj.localSettings.blockedRequestCount || 0;
-                    }
-                  }
-                }
-              }
-            } catch(uErr) {}
-
-            var privacyData = {
-              totalBlocked: totalBlocked,
-              ratio: totalBlocked > 0 ? "86%" : "0%",
-              topDomains: [
-                { domain: "google-analytics.com", count: Math.round(totalBlocked * 0.4) },
-                { domain: "doubleclick.net", count: Math.round(totalBlocked * 0.3) },
-                { domain: "facebook.com", count: Math.round(totalBlocked * 0.2) },
-                { domain: "adnxs.com", count: Math.round(totalBlocked * 0.1) }
-              ]
-            };
-
-            contentWindow.wrappedJSObject.realHistoryData = Components.utils.cloneInto(historyData, contentWindow);
-            contentWindow.wrappedJSObject.realPrivacyStats = Components.utils.cloneInto(privacyData, contentWindow);
-            
-            var evt = doc.createEvent("CustomEvent");
-            evt.initCustomEvent("SeafariDataReady", true, true, null);
-            doc.dispatchEvent(evt);
-          } catch(e) {}
-        }
-      }, true);
+      if (!window._seafariRequestListenerAdded) {
+        window.gBrowser.addEventListener("SeafariRequestData", function(event) {
+          var doc = event.target;
+          if (doc) {
+            injectDataIntoNTP(doc);
+          }
+        }, true);
+        window._seafariRequestListenerAdded = true;
+      }
     }
   }
 
@@ -437,11 +449,62 @@ try {
       setupUI(window);
     }
   }
+
+  // 1. Progress listener to inject data into NTP on page load
+  var progressListener = {
+    onStateChange: function(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+      if ((aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP) &&
+          (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_IS_DOCUMENT)) {
+        try {
+          var doc = aBrowser.contentDocument;
+          if (doc && doc.location && (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home")) {
+            injectDataIntoNTP(doc);
+          }
+        } catch(e) {}
+      }
+    },
+    onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation, aFlags) {
+      try {
+        var doc = aBrowser.contentDocument;
+        if (doc && doc.location && (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home")) {
+          injectDataIntoNTP(doc);
+        }
+      } catch(e) {}
+    }
+  };
+
+  function registerProgressListener(win) {
+    try {
+      if (win.gBrowser) {
+        win.gBrowser.addTabsProgressListener(progressListener);
+      }
+    } catch(err) {}
+  }
+
+  // Register on existing windows
+  var wins = windowMediator.getEnumerator("navigator:browser");
+  while (wins.hasMoreElements()) {
+    var win = wins.getNext();
+    registerProgressListener(win);
+  }
+
+  // Register on future windows
+  var observer = {
+    observe: function(aSubject, aTopic, aData) {
+      var win = aSubject;
+      win.addEventListener("load", function() {
+        if (win.location.href === "chrome://browser/content/browser.xhtml") {
+          registerProgressListener(win);
+        }
+      }, { once: true });
+    }
+  };
+  observerService.addObserver(observer, "domwindowopened", false);
+
 } catch (e) {
   // Silently handle startup exceptions in sandbox
 }
 EOF
-
 
 echo "Preparing Theme Folder..."
 THEME_DIR="$FIREFOX_DIR/seafari-theme"
@@ -555,12 +618,16 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
 }
 
 #tab-overview-button {
-    list-style-image: url("MacTahoe/icons/view-more-horizontal-symbolic.svg") !important;
+    list-style-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") !important;
 }
 
-/* Reload button style (next to URL bar, matching other buttons) */
-/* Estilo del botón de recarga (al lado de la barra de URL, a juego con el resto) */
-#nav-bar #stop-reload-button {
+/* Reload button style - docked inside the right end of the URL bar */
+#urlbar-container:not(#hack) {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+}
+
+#nav-bar #stop-reload-button:not(#hack) {
     margin: 0 4px !important;
     padding: 0 !important;
 }
@@ -570,203 +637,183 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     margin: 0 !important;
 }
 
-/* Ensure only one icon is visible (reload OR stop) depending on loading state */
-/* Asegurar que solo un icono sea visible (recarga O parada) según el estado de carga */
-#nav-bar #stop-reload-button > #reload-button[hidden],
-#nav-bar #stop-reload-button > #stop-button[hidden] {
-    display: none !important;
-}
-
-/* --- Unified Left Button Group (Capsule/Bubble) --- */
-/* English: Style the entire left button group (Back, Forward) as a single unified capsule */
-/* Español: Estilizar todo el grupo de botones de la izquierda (Atrás, Adelante) como una única cápsula unificada */
-#nav-bar #back-button,
-#nav-bar #forward-button {
+/* --- Unified Left Button Group (Liquid Glass Capsule/Bubble) --- */
+#nav-bar toolbarbutton#back-button:not(#hack),
+#nav-bar toolbarbutton#forward-button:not(#hack) {
     background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    padding: 0 8px !important;
-    min-width: 36px !important;
+    padding: 0 10px !important;
+    min-width: 38px !important;
     min-height: 34px !important;
     height: 34px !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
+    border-left: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
-/* Hover/Active states for Left Group */
-#nav-bar #back-button:hover,
-#nav-bar #forward-button:hover {
+#nav-bar toolbarbutton#back-button:hover:not(#hack),
+#nav-bar toolbarbutton#forward-button:hover:not(#hack) {
     background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar #back-button:active,
-#nav-bar #forward-button:active {
+#nav-bar toolbarbutton#back-button:active:not(#hack),
+#nav-bar toolbarbutton#forward-button:active:not(#hack) {
     background: rgba(0, 0, 0, 0.15) !important;
 }
 
 @media (prefers-color-scheme: dark) {
-    #nav-bar #back-button,
-    #nav-bar #forward-button {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    #nav-bar toolbarbutton#back-button:not(#hack),
+    #nav-bar toolbarbutton#forward-button:not(#hack) {
+        background: rgba(255, 255, 255, 0.07) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
+        border-left: none !important;
     }
-    #nav-bar #back-button:hover,
-    #nav-bar #forward-button:hover {
-        background: rgba(255, 255, 255, 0.16) !important;
+    #nav-bar toolbarbutton#back-button:hover:not(#hack),
+    #nav-bar toolbarbutton#forward-button:hover:not(#hack) {
+        background: rgba(255, 255, 255, 0.15) !important;
     }
-    #nav-bar #back-button:active,
-    #nav-bar #forward-button:active {
-        background: rgba(255, 255, 255, 0.24) !important;
+    #nav-bar toolbarbutton#back-button:active:not(#hack),
+    #nav-bar toolbarbutton#forward-button:active:not(#hack) {
+        background: rgba(255, 255, 255, 0.22) !important;
     }
 }
 
-:root[brighttext] #nav-bar #back-button,
-:root[brighttext] #nav-bar #forward-button {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+:root[brighttext] #nav-bar toolbarbutton#back-button:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#forward-button:not(#hack) {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
+    border-left: none !important;
 }
-:root[brighttext] #nav-bar #back-button:hover,
-:root[brighttext] #nav-bar #forward-button:hover {
+:root[brighttext] #nav-bar toolbarbutton#back-button:hover:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#forward-button:hover:not(#hack) {
     background: rgba(255, 255, 255, 0.16) !important;
 }
-:root[brighttext] #nav-bar #back-button:active,
-:root[brighttext] #nav-bar #forward-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
+:root[brighttext] #nav-bar toolbarbutton#back-button:active:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#forward-button:active:not(#hack) {
+    background: rgba(255, 255, 255, 0.22) !important;
 }
 
-/* Dynamic Left Corner Rounding for Left Group */
-#nav-bar #back-button:not([hidden]) {
+/* Boundaries for Left Group */
+#nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
+    padding-left: 14px !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
-
-/* Dynamic Right Corner Rounding for Left Group */
-#nav-bar #forward-button:not([hidden]) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
-}
-#nav-bar #forward-button[hidden] ~ #back-button:not([hidden]) {
-    border-top-right-radius: 999px !important;
-    border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
-}
-
-/* --- Standalone New Tab Button (placed in the rightmost group, left of account) --- */
-#nav-bar #new-tab-button {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border-radius: 999px !important;
-    margin: 0 4px !important;
-    padding: 0 !important;
-    min-width: 34px !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-#nav-bar #new-tab-button:hover {
-    background: rgba(0, 0, 0, 0.1) !important;
-}
-#nav-bar #new-tab-button:active {
-    background: rgba(0, 0, 0, 0.15) !important;
-}
-
 @media (prefers-color-scheme: dark) {
-    #nav-bar #new-tab-button {
-        background: rgba(255, 255, 255, 0.08) !important;
-    }
-    #nav-bar #new-tab-button:hover {
-        background: rgba(255, 255, 255, 0.16) !important;
-    }
-    #nav-bar #new-tab-button:active {
-        background: rgba(255, 255, 255, 0.24) !important;
+    #nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
+        border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
     }
 }
-:root[brighttext] #nav-bar #new-tab-button {
-    background: rgba(255, 255, 255, 0.08) !important;
-}
-:root[brighttext] #nav-bar #new-tab-button:hover {
-    background: rgba(255, 255, 255, 0.16) !important;
-}
-:root[brighttext] #nav-bar #new-tab-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
+:root[brighttext] #nav-bar toolbarbutton#back-button:not([hidden]):not(#hack) {
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-/* --- Unified Right Button Group (Capsule/Bubble: Overview, Menu) --- */
-#nav-bar #tab-overview-button,
-#nav-bar #PanelUI-menu-button {
+#nav-bar toolbarbutton#forward-button:not([hidden]):not(#hack) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 14px !important;
+}
+#nav-bar toolbarbutton#forward-button[hidden] ~ toolbarbutton#back-button:not([hidden]):not(#hack) {
+    border-top-right-radius: 999px !important;
+    border-bottom-right-radius: 999px !important;
+    padding-right: 14px !important;
+}
+
+/* --- Unified Right Button Group (Liquid Glass Capsule/Bubble: New Tab, Overview, Menu) --- */
+#nav-bar toolbarbutton#new-tab-button:not(#hack),
+#nav-bar toolbarbutton#tab-overview-button:not(#hack),
+#nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
     background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    padding: 0 8px !important;
-    min-width: 36px !important;
+    padding: 0 10px !important;
+    min-width: 38px !important;
     min-height: 34px !important;
     height: 34px !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
+    border-left: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
-#nav-bar #tab-overview-button:hover,
-#nav-bar #PanelUI-menu-button:hover {
+#nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
+#nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
+#nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
     background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar #tab-overview-button:active,
-#nav-bar #PanelUI-menu-button:active {
+#nav-bar toolbarbutton#new-tab-button:active:not(#hack),
+#nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
+#nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
     background: rgba(0, 0, 0, 0.15) !important;
 }
 
 @media (prefers-color-scheme: dark) {
-    #nav-bar #tab-overview-button,
-    #nav-bar #PanelUI-menu-button {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    #nav-bar toolbarbutton#new-tab-button:not(#hack),
+    #nav-bar toolbarbutton#tab-overview-button:not(#hack),
+    #nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
+        background: rgba(255, 255, 255, 0.07) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
+        border-left: none !important;
     }
-    #nav-bar #tab-overview-button:hover,
-    #nav-bar #PanelUI-menu-button:hover {
-        background: rgba(255, 255, 255, 0.16) !important;
+    #nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
+    #nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
+    #nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
+        background: rgba(255, 255, 255, 0.15) !important;
     }
-    #nav-bar #tab-overview-button:active,
-    #nav-bar #PanelUI-menu-button:active {
-        background: rgba(255, 255, 255, 0.24) !important;
+    #nav-bar toolbarbutton#new-tab-button:active:not(#hack),
+    #nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
+    #nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
+        background: rgba(255, 255, 255, 0.22) !important;
     }
 }
 
-:root[brighttext] #nav-bar #tab-overview-button,
-:root[brighttext] #nav-bar #PanelUI-menu-button {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+:root[brighttext] #nav-bar toolbarbutton#new-tab-button:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:not(#hack) {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
+    border-left: none !important;
 }
-:root[brighttext] #nav-bar #tab-overview-button:hover,
-:root[brighttext] #nav-bar #PanelUI-menu-button:hover {
+:root[brighttext] #nav-bar toolbarbutton#new-tab-button:hover:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:hover:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:hover:not(#hack) {
     background: rgba(255, 255, 255, 0.16) !important;
 }
-:root[brighttext] #nav-bar #tab-overview-button:active,
-:root[brighttext] #nav-bar #PanelUI-menu-button:active {
-    background: rgba(255, 255, 255, 0.24) !important;
+:root[brighttext] #nav-bar toolbarbutton#new-tab-button:active:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#tab-overview-button:active:not(#hack),
+:root[brighttext] #nav-bar toolbarbutton#PanelUI-menu-button:active:not(#hack) {
+    background: rgba(255, 255, 255, 0.22) !important;
 }
 
-/* Dynamic Left Corner Rounding for Capsule */
-#nav-bar #tab-overview-button:not([hidden]) {
+/* Rounded corners for the capsule boundaries */
+#nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+    padding-left: 14px !important;
+}
+@media (prefers-color-scheme: dark) {
+    #nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
+        border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+}
+:root[brighttext] #nav-bar toolbarbutton#new-tab-button:not([hidden]):not(#hack) {
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Dynamic Right Corner Rounding for Capsule */
-#nav-bar #PanelUI-menu-button:not([hidden]) {
+#nav-bar toolbarbutton#PanelUI-menu-button:not([hidden]):not(#hack) {
     border-top-right-radius: 999px !important;
     border-bottom-right-radius: 999px !important;
-    padding-right: 12px !important;
+    padding-right: 14px !important;
 }
 
 /* Ensure the URL Bar has a small spacing and default right padding */
