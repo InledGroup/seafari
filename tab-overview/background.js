@@ -1,3 +1,4 @@
+window.ublockStats = null;
 let tabPreviews = {};
 
 // Capture active tab screenshot
