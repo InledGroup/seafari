@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start Page</title>
+  <style>
+    :root {
+      --bg-overlay: rgba(0, 0, 0, 0.2);
+      --card-bg: rgba(255, 255, 255, 0.12);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --text-color: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+      --button-bg: rgba(255, 255, 255, 0.2);
+      --button-bg-hover: rgba(255, 255, 255, 0.3);
+      --accent-color: #0071e3;
+      --accent-hover: #005dc2;
+      --input-bg: rgba(255, 255, 255, 0.15);
+      --input-border: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Light Theme styles when background is light */
+    body.light-theme-text {
+      --bg-overlay: rgba(255, 255, 255, 0.1);
+      --card-bg: rgba(255, 255, 255, 0.65);
+      --card-border: rgba(0, 0, 0, 0.1);
+      --text-color: #1d1d1f;
+      --text-secondary: #515154;
+      --text-shadow: none;
+      --button-bg: rgba(0, 0, 0, 0.05);
+      --button-bg-hover: rgba(0, 0, 0, 0.1);
+      --input-bg: rgba(0, 0, 0, 0.05);
+      --input-border: rgba(0, 0, 0, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      transition: background 0.5s ease, color 0.3s ease;
+      position: relative;
+    }
+
+    /* Standard backgrounds */
+    body.bg-mountains {
+      background-image: linear-gradient(135deg, #7c98b3 0%, #a4b4c4 50%, #e3e8ec 100%);
+    }
+    body.bg-mountains::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 35vh;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%234A607A" fill-opacity="0.5" d="M0,192L60,197.3C120,203,240,213,360,197.3C480,181,600,139,720,138.7C840,139,960,181,1080,192C1200,203,1320,181,1380,170.7L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"></path><path fill="%232D3F54" fill-opacity="0.8" d="M0,224L80,218.7C160,213,320,203,480,213C640,224,800,256,960,250.7C1120,245,1280,203,1360,181.3L1440,160L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path></svg>');
+      background-size: cover;
+      background-position: bottom;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.bg-sunset {
+      background-image: radial-gradient(circle at 80% 20%, #ff8c00 0%, #e52d27 40%, #700d60 80%, #11001c 100%);
+    }
+    body.bg-aurora {
+      background-image: linear-gradient(170deg, #020024 0%, #090979 35%, #00d4ff 100%);
+    }
+    body.bg-ocean {
+      background-image: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    }
+    body.bg-dark {
+      background-image: linear-gradient(135deg, #141414 0%, #1f1f1f 50%, #282828 100%);
+    }
+    body.bg-light {
+      background-image: linear-gradient(135deg, #f5f5f7 0%, #e3e3e8 100%);
+    }
+
+    /* Blur overlay for content */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-overlay);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1060px;
+      padding: 60px 40px 120px 40px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+    }
+
+    /* Head / Logo Section */
+    .header-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .logo-img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .logo-img:hover {
+      transform: scale(1.05);
+    }
+
+    /* Section Styles */
+    .section-title {
+      font-size: 23px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+      text-shadow: var(--text-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Favorites Grid */
+    .favorites-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 20px 24px;
+      justify-content: start;
+    }
+
+    .fav-item-wrapper {
+      position: relative;
+      width: 88px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .fav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      outline: none;
+      transition: transform 0.2s ease;
+      width: 100%;
+    }
+
+    .fav-item:hover {
+      transform: translateY(-2px);
+    }
+
+    .fav-tile {
+      width: 72px;
+      height: 72px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-color);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .fav-item:hover .fav-tile {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    body.light-theme-text .fav-item:hover .fav-tile {
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .fav-icon {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .fav-label {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      width: 100%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: var(--text-shadow);
+      opacity: 0.9;
+    }
+
+    /* Delete Button */
+    .delete-btn {
+      position: absolute;
+      top: -6px;
+      right: 2px;
+      width: 20px;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 18px;
+      text-align: center;
+      cursor: pointer;
+      display: none;
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .delete-btn:hover {
+      background: #ff3b30;
+      border-color: #ff3b30;
+    }
+
+    /* Target wrapper for showing delete button */
+    .fav-item-wrapper:hover .delete-btn {
+      display: flex;
+    }
+
+    /* Add Favorite Button */
+    .add-fav-btn {
+      cursor: pointer;
+    }
+    .add-fav-icon {
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--text-color);
+      opacity: 0.8;
+    }
+
+    /* Privacy Report Card */
+    .privacy-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      padding: 24px 30px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .privacy-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+        gap: 20px;
+      }
+    }
+
+    .privacy-icon {
+      width: 48px;
+      height: 48px;
+      color: #34c759;
+      fill: none;
+    }
+
+    .privacy-main {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .privacy-headline {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.4;
+      max-width: 500px;
+    }
+
+    .privacy-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 18px;
+      margin-top: 5px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .show-details-btn {
+      color: var(--accent-color);
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      align-self: flex-start;
+      margin-top: 5px;
+      outline: none;
+    }
+    .show-details-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Detailed tracker list */
+    .tracker-details-list {
+      display: none;
+      grid-column: 1 / -1;
+      width: 100%;
+      border-top: 1px solid var(--card-border);
+      padding-top: 18px;
+      margin-top: 5px;
+      font-size: 13px;
+      text-align: left;
+    }
+    .tracker-details-list.visible {
+      display: block;
+    }
+    .tracker-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    body.light-theme-text .tracker-row {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .tracker-domain {
+      font-weight: 500;
+    }
+    .tracker-count {
+      color: var(--text-secondary);
+    }
+
+    /* Reading List Grid */
+    .reading-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .read-card-wrapper {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .read-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
+      flex-grow: 1;
+    }
+
+    .read-card:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    body.light-theme-text .read-card:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .read-card-header {
+      display: flex;
+      gap: 12px;
+    }
+
+    .read-icon-wrapper {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    body.light-theme-text .read-icon-wrapper {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .read-card-icon {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .read-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .read-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .read-domain {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .read-card-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Delete Read Button */
+    .delete-read-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+    .delete-read-btn:hover {
+      background: #ff3b30;
+    }
+    .read-card-wrapper:hover .delete-read-btn {
+      display: flex;
+    }
+
+    /* Customize/Edit Button (Bottom Right) */
+    .edit-toggle-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 50%;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+    }
+
+    .edit-toggle-btn:hover {
+      transform: scale(1.08);
+      background: rgba(255, 255, 255, 0.25);
+    }
+    body.light-theme-text .edit-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .edit-toggle-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* Customize Drawer (Settings Sidebar) */
+    .custom-drawer {
+      position: fixed;
+      top: 0;
+      right: -340px;
+      width: 320px;
+      height: 100%;
+      background: rgba(28, 28, 30, 0.85);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(35px);
+      -webkit-backdrop-filter: blur(35px);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+      padding: 30px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      z-index: 200;
+      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      color: #ffffff;
+    }
+
+    .custom-drawer.open {
+      right: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 16px;
+    }
+
+    .drawer-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .close-drawer-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-drawer-btn:hover {
+      color: #ffffff;
+    }
+
+    .drawer-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .drawer-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* Toggle Switches style like iOS */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .toggle-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 26px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    input:checked + .slider {
+      background-color: #34c759;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Background Selection Thumbnails */
+    .bg-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .bg-thumb {
+      width: 100%;
+      aspect-ratio: 16/10;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .bg-thumb:hover {
+      transform: scale(1.05);
+    }
+
+    .bg-thumb.active {
+      border-color: var(--accent-color);
+    }
+
+    .bg-thumb-mountains {
+      background-image: linear-gradient(135deg, #7c98b3 0%, #a4b4c4 100%);
+    }
+    .bg-thumb-sunset {
+      background-image: linear-gradient(135deg, #ff8c00 0%, #700d60 100%);
+    }
+    .bg-thumb-aurora {
+      background-image: linear-gradient(135deg, #020024 0%, #00d4ff 100%);
+    }
+    .bg-thumb-ocean {
+      background-image: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+    }
+    .bg-thumb-dark {
+      background-image: linear-gradient(135deg, #141414 0%, #282828 100%);
+    }
+    .bg-thumb-light {
+      background-image: linear-gradient(135deg, #f5f5f7 0%, #e3e3e8 100%);
+    }
+
+    /* Custom Background File Input */
+    .custom-file-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .custom-file-label:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .custom-file-input {
+      display: none;
+    }
+
+    /* Modal dialogs */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: rgba(30, 30, 30, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-radius: 20px;
+      width: 90%;
+      max-width: 420px;
+      padding: 26px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      color: white;
+    }
+    body.light-theme-text .modal-content {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: #1d1d1f;
+    }
+
+    .modal-header {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .modal-input {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: inherit;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .modal-input:focus {
+      border-color: var(--accent-color);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel {
+      background: var(--button-bg);
+      color: inherit;
+    }
+    .btn-cancel:hover {
+      background: var(--button-bg-hover);
+    }
+
+    .btn-primary {
+      background: var(--accent-color);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Hidden utility */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body class="bg-mountains">
+  <div class="overlay"></div>
+
+  <div class="container">
+    <!-- Center Logo -->
+    <div class="header-logo">
+      <img src="seafari.png" alt="Seafari" class="logo-img">
+    </div>
+
+    <!-- Favorites Section -->
+    <div id="section-favorites">
+      <h2 class="section-title"><span class="title-text">Favorites</span></h2>
+      <div class="favorites-grid" id="favorites-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Frequently Visited (History) Section -->
+    <div id="section-history">
+      <h2 class="section-title"><span class="title-text">Frequently Visited</span></h2>
+      <div class="favorites-grid" id="history-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Privacy Report Section -->
+    <div id="section-privacy">
+      <h2 class="section-title"><span class="title-text">Privacy Report</span></h2>
+      <div class="privacy-card">
+        <svg class="privacy-icon" viewBox="0 0 24 24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 11l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="privacy-main">
+          <div class="privacy-headline">Seafari prevents trackers from profiling you.</div>
+          <div class="privacy-stats">
+            <div class="stat-item">
+              <span class="stat-val" id="stats-trackers-count">0</span>
+              <span class="stat-lbl">Trackers Prevented</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val" id="stats-ratio">0%</span>
+              <span class="stat-lbl">Websites contacted trackers</span>
+            </div>
+          </div>
+          <button class="show-details-btn" id="toggle-tracker-details">Show Details</button>
+        </div>
+        
+        <!-- Hidden tracker list -->
+        <div class="tracker-details-list" id="tracker-details-list">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Reading List Section -->
+    <div id="section-reading">
+      <h2 class="section-title"><span class="title-text">Reading List</span></h2>
+      <div class="reading-grid" id="reading-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Customize/Edit Toggle Button -->
+  <div class="edit-toggle-btn" id="edit-toggle" title="Personalizar start page">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM2 12h20M12 2v20" />
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+    </svg>
+  </div>
+
+  <!-- Settings Drawer -->
+  <div class="custom-drawer" id="custom-drawer">
+    <div class="drawer-header">
+      <span class="drawer-title">Customize Page</span>
+      <button class="close-drawer-btn" id="close-drawer">&times;</button>
+    </div>
+
+    <!-- Toggles section -->
+    <div class="drawer-section">
+      <span class="drawer-section-title">Sections</span>
+      
+      <div class="toggle-row">
+        <span class="toggle-label">Favorites</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-favorites-cb" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Frequently Visited</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-history-cb" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Privacy Report</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-privacy-cb" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Reading List</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-reading-cb" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Backgrounds section -->
+    <div class="drawer-section">
+      <span class="drawer-section-title">Background Style</span>
+      <div class="bg-grid">
+        <div class="bg-thumb bg-thumb-mountains active" data-bg="mountains" title="Mountain Gray"></div>
+        <div class="bg-thumb bg-thumb-sunset" data-bg="sunset" title="Sunset Aura"></div>
+        <div class="bg-thumb bg-thumb-aurora" data-bg="aurora" title="Aurora Blue"></div>
+        <div class="bg-thumb bg-thumb-ocean" data-bg="ocean" title="Deep Ocean"></div>
+        <div class="bg-thumb bg-thumb-dark" data-bg="dark" title="Space Dark"></div>
+        <div class="bg-thumb bg-thumb-light" data-bg="light" title="Studio Light"></div>
+      </div>
+
+      <label class="custom-file-label" for="custom-bg-input">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+        Upload Custom Image...
+      </label>
+      <input type="file" id="custom-bg-input" class="custom-file-input" accept="image/*">
+    </div>
+  </div>
+
+  <!-- Add Favorite Dialog -->
+  <div class="modal" id="add-fav-modal">
+    <div class="modal-content">
+      <div class="modal-header">Add Favorite</div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label class="input-label" for="fav-name-input">NAME</label>
+          <input type="text" id="fav-name-input" class="modal-input" placeholder="Google" autofocus>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="fav-url-input">URL</label>
+          <input type="text" id="fav-url-input" class="modal-input" placeholder="https://google.com">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="fav-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="fav-save-btn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Reading Item Dialog -->
+  <div class="modal" id="add-read-modal">
+    <div class="modal-content">
+      <div class="modal-header">Add to Reading List</div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label class="input-label" for="read-title-input">TITLE</label>
+          <input type="text" id="read-title-input" class="modal-input" placeholder="My Article" autofocus>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="read-url-input">URL</label>
+          <input type="text" id="read-url-input" class="modal-input" placeholder="https://example.com/article">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="read-desc-input">DESCRIPTION (OPTIONAL)</label>
+          <input type="text" id="read-desc-input" class="modal-input" placeholder="A summary of the article...">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="read-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="read-save-btn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    const state = {
+      favorites: [
+        { name: "Google", url: "https://www.google.com" },
+        { name: "YouTube", url: "https://www.youtube.com" },
+        { name: "Wikipedia", url: "https://www.wikipedia.org" },
+        { name: "Reddit", url: "https://www.reddit.com" },
+        { name: "GitHub", url: "https://github.com" },
+        { name: "Amazon", url: "https://www.amazon.com" },
+        { name: "Twitter", url: "https://twitter.com" },
+        { name: "Yahoo", url: "https://www.yahoo.com" }
+      ],
+      readingList: [
+        { title: "Yahoo | Mail, Weather, Search, Politics, News", url: "https://yahoo.com", desc: "Latest news coverage, email, free stock quotes, live scores and video.", domain: "yahoo.com" },
+        { title: "Phone Cases - Mous", url: "https://mous.co", desc: "Extremely durable, protective and shockproof phone cases with carbon fiber.", domain: "mous.co" },
+        { title: "Princeton Research Papers - CEPR-DP13564.pdf", url: "https://www.princeton.edu", desc: "PDF documentation and academic archives hosted on Princeton servers.", domain: "princeton.edu" }
+      ],
+      history: [],
+      toggles: {
+        favorites: true,
+        history: true,
+        privacy: true,
+        reading: true
+      },
+      background: "mountains", 
+      customBgData: ""
+    };
+
+    // Load from LocalStorage
+    function loadState() {
+      const storedFavs = localStorage.getItem("seafari-favs");
+      if (storedFavs) state.favorites = JSON.parse(storedFavs);
+
+      const storedRead = localStorage.getItem("seafari-read");
+      if (storedRead) state.readingList = JSON.parse(storedRead);
+
+      const storedToggles = localStorage.getItem("seafari-toggles");
+      if (storedToggles) state.toggles = JSON.parse(storedToggles);
+
+      const storedBg = localStorage.getItem("seafari-bg");
+      if (storedBg) state.background = storedBg;
+
+      const storedCustomBg = localStorage.getItem("seafari-custom-bg");
+      if (storedCustomBg) state.customBgData = storedCustomBg;
+    }
+
+    // Save to LocalStorage
+    function saveState(key) {
+      if (key === "favorites" || !key) localStorage.setItem("seafari-favs", JSON.stringify(state.favorites));
+      if (key === "reading" || !key) localStorage.setItem("seafari-read", JSON.stringify(state.readingList));
+      if (key === "toggles" || !key) localStorage.setItem("seafari-toggles", JSON.stringify(state.toggles));
+      if (key === "background" || !key) localStorage.setItem("seafari-bg", state.background);
+      if (key === "custom-bg" || !key) localStorage.setItem("seafari-custom-bg", state.customBgData);
+    }
+
+    // DOM Elements
+    const body = document.body;
+    const favoritesContainer = document.getElementById("favorites-container");
+    const historyContainer = document.getElementById("history-container");
+    const readingContainer = document.getElementById("reading-container");
+    
+    // Toggles
+    const secFavorites = document.getElementById("section-favorites");
+    const secHistory = document.getElementById("section-history");
+    const secPrivacy = document.getElementById("section-privacy");
+    const secReading = document.getElementById("section-reading");
+
+    // Drawer Toggles
+    const toggleFavsCb = document.getElementById("toggle-favorites-cb");
+    const toggleHistoryCb = document.getElementById("toggle-history-cb");
+    const togglePrivacyCb = document.getElementById("toggle-privacy-cb");
+    const toggleReadingCb = document.getElementById("toggle-reading-cb");
+
+    // Drawer Elements
+    const customDrawer = document.getElementById("custom-drawer");
+    const editToggle = document.getElementById("edit-toggle");
+    const closeDrawer = document.getElementById("close-drawer");
+
+    // Init Page Elements
+    function initUI() {
+      // Apply Toggles Checkboxes
+      toggleFavsCb.checked = state.toggles.favorites;
+      toggleHistoryCb.checked = state.toggles.history;
+      togglePrivacyCb.checked = state.toggles.privacy;
+      toggleReadingCb.checked = state.toggles.reading;
+
+      applyTogglesVisibility();
+      applyBackground();
+      renderFavorites();
+      renderHistory();
+      renderReadingList();
+    }
+
+    function applyTogglesVisibility() {
+      if (state.toggles.favorites) secFavorites.classList.remove("hidden");
+      else secFavorites.classList.add("hidden");
+
+      if (state.toggles.history && state.history.length > 0) secHistory.classList.remove("hidden");
+      else secHistory.classList.add("hidden");
+
+      if (state.toggles.privacy) secPrivacy.classList.remove("hidden");
+      else secPrivacy.classList.add("hidden");
+
+      if (state.toggles.reading) secReading.classList.remove("hidden");
+      else secReading.classList.add("hidden");
+    }
+
+    function applyBackground() {
+      // Remove all bg classes
+      body.className = "";
+      body.style.backgroundImage = "";
+      
+      // Update Active Thumbnail
+      document.querySelectorAll(".bg-thumb").forEach(thumb => {
+        if (thumb.dataset.bg === state.background) {
+          thumb.classList.add("active");
+        } else {
+          thumb.classList.remove("active");
+        }
+      });
+
+      if (state.background === "custom" && state.customBgData) {
+        body.style.backgroundImage = `url(${state.customBgData})`;
+        body.classList.add("custom-bg-active");
+      } else {
+        body.classList.add(`bg-${state.background}`);
+      }
+
+      // Handle text colors based on background
+      if (state.background === "light") {
+        body.classList.add("light-theme-text");
+      } else {
+        body.classList.remove("light-theme-text");
+      }
+    }
+
+    function getDomain(url) {
+      try {
+        const u = new URL(url);
+        return u.hostname.replace("www.", "");
+      } catch (e) {
+        return url;
+      }
+    }
+
+    function getLetter(name) {
+      return name ? name.charAt(0).toUpperCase() : "?";
+    }
+
+    function renderFavorites() {
+      favoritesContainer.innerHTML = "";
+
+      state.favorites.forEach((fav, index) => {
+        const domain = getDomain(fav.url);
+        const initial = getLetter(fav.name);
+        
+        const favEl = document.createElement("div");
+        favEl.className = "fav-item-wrapper";
+        
+        // We use Google Favicons API
+        const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+
+        favEl.innerHTML = `
+          <a class="fav-item" href="${fav.url}">
+            <div class="fav-tile">
+              <img class="fav-icon" src="${faviconUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <span class="fav-initial" style="display:none;">${initial}</span>
+            </div>
+            <span class="fav-label">${fav.name}</span>
+          </a>
+          <div class="delete-btn" data-index="${index}" title="Eliminar favorito">&times;</div>
+        `;
+        favoritesContainer.appendChild(favEl);
+      });
+
+      // Add shortcut tile
+      const addEl = document.createElement("div");
+      addEl.className = "fav-item add-fav-btn";
+      addEl.innerHTML = `
+        <div class="fav-tile" id="open-add-fav">
+          <span class="add-fav-icon">+</span>
+        </div>
+        <span class="fav-label">Add Favorite</span>
+      `;
+      addEl.addEventListener("click", () => {
+        document.getElementById("add-fav-modal").classList.add("open");
+        document.getElementById("fav-name-input").focus();
+      });
+      favoritesContainer.appendChild(addEl);
+
+      // Bind delete events
+      document.querySelectorAll("#favorites-container .delete-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.index);
+          state.favorites.splice(idx, 1);
+          saveState("favorites");
+          renderFavorites();
+        });
+      });
+    }
+
+    function renderHistory() {
+      historyContainer.innerHTML = "";
+
+      if (state.history.length === 0) {
+        secHistory.classList.add("hidden");
+        return;
+      }
+
+      if (state.toggles.history) {
+        secHistory.classList.remove("hidden");
+      }
+
+      state.history.forEach((hist) => {
+        const domain = getDomain(hist.url);
+        const initial = getLetter(hist.title);
+        
+        const histEl = document.createElement("div");
+        histEl.className = "fav-item-wrapper";
+        
+        const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+
+        histEl.innerHTML = `
+          <a class="fav-item" href="${hist.url}">
+            <div class="fav-tile">
+              <img class="fav-icon" src="${faviconUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <span class="fav-initial" style="display:none;">${initial}</span>
+            </div>
+            <span class="fav-label">${hist.title}</span>
+          </a>
+        `;
+        historyContainer.appendChild(histEl);
+      });
+    }
+
+    function renderReadingList() {
+      readingContainer.innerHTML = "";
+
+      state.readingList.forEach((item, index) => {
+        const domain = item.domain || getDomain(item.url);
+        const faviconUrl = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+
+        const card = document.createElement("div");
+        card.className = "read-card-wrapper";
+        card.innerHTML = `
+          <a class="read-card" href="${item.url}">
+            <div class="read-card-header">
+              <div class="read-icon-wrapper">
+                <img class="read-card-icon" src="${faviconUrl}" onerror="this.src='seafari.png'">
+              </div>
+              <div class="read-info">
+                <span class="read-title">${item.title}</span>
+                <span class="read-domain">${domain}</span>
+              </div>
+            </div>
+            <p class="read-card-desc">${item.desc || "No description available."}</p>
+          </a>
+          <button class="delete-read-btn" data-index="${index}" title="Remove from list">&times;</button>
+        `;
+        readingContainer.appendChild(card);
+      });
+
+      // Add new card item to add to reading list
+      const addCard = document.createElement("div");
+      addCard.className = "read-card read-card-add-btn";
+      addCard.style.cursor = "pointer";
+      addCard.style.borderStyle = "dashed";
+      addCard.style.justifyContent = "center";
+      addCard.style.alignItems = "center";
+      addCard.style.minHeight = "120px";
+      addCard.innerHTML = `
+        <span style="font-size: 32px; opacity: 0.6; margin-bottom: 5px;">+</span>
+        <span style="font-size: 13px; font-weight: 600; opacity: 0.8;">Add to Reading List</span>
+      `;
+      addCard.addEventListener("click", () => {
+        document.getElementById("add-read-modal").classList.add("open");
+        document.getElementById("read-title-input").focus();
+      });
+      readingContainer.appendChild(addCard);
+
+      // Bind delete events
+      document.querySelectorAll(".delete-read-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.index);
+          state.readingList.splice(idx, 1);
+          saveState("reading");
+          renderReadingList();
+        });
+      });
+    }
+
+    // Toggle Drawer Menu
+    editToggle.addEventListener("click", () => {
+      customDrawer.classList.add("open");
+    });
+
+    closeDrawer.addEventListener("click", () => {
+      customDrawer.classList.remove("open");
+    });
+
+    // Close drawer when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!customDrawer.contains(e.target) && !editToggle.contains(e.target) && customDrawer.classList.contains("open")) {
+        customDrawer.classList.remove("open");
+      }
+    });
+
+    // Drawer Toggles actions
+    toggleFavsCb.addEventListener("change", (e) => {
+      state.toggles.favorites = e.target.checked;
+      saveState("toggles");
+      applyTogglesVisibility();
+    });
+
+    toggleHistoryCb.addEventListener("change", (e) => {
+      state.toggles.history = e.target.checked;
+      saveState("toggles");
+      applyTogglesVisibility();
+    });
+
+    togglePrivacyCb.addEventListener("change", (e) => {
+      state.toggles.privacy = e.target.checked;
+      saveState("toggles");
+      applyTogglesVisibility();
+    });
+
+    toggleReadingCb.addEventListener("change", (e) => {
+      state.toggles.reading = e.target.checked;
+      saveState("toggles");
+      applyTogglesVisibility();
+    });
+
+    // Background select click
+    document.querySelectorAll(".bg-thumb").forEach(thumb => {
+      thumb.addEventListener("click", () => {
+        state.background = thumb.dataset.bg;
+        saveState("background");
+        applyBackground();
+      });
+    });
+
+    // Custom File Background selector
+    const customBgInput = document.getElementById("custom-bg-input");
+    customBgInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          state.background = "custom";
+          state.customBgData = event.target.result;
+          saveState("background");
+          saveState("custom-bg");
+          applyBackground();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Modal Add Favorite events
+    const addFavModal = document.getElementById("add-fav-modal");
+    const favNameInput = document.getElementById("fav-name-input");
+    const favUrlInput = document.getElementById("fav-url-input");
+    
+    document.getElementById("fav-cancel-btn").addEventListener("click", () => {
+      addFavModal.classList.remove("open");
+      favNameInput.value = "";
+      favUrlInput.value = "";
+    });
+
+    document.getElementById("fav-save-btn").addEventListener("click", () => {
+      let name = favNameInput.value.trim();
+      let url = favUrlInput.value.trim();
+
+      if (!url) return;
+      if (!name) name = getDomain(url).split(".")[0];
+
+      if (!/^https?:\/\//i.test(url)) {
+        url = "https://" + url;
+      }
+
+      state.favorites.push({ name, url });
+      saveState("favorites");
+      renderFavorites();
+
+      addFavModal.classList.remove("open");
+      favNameInput.value = "";
+      favUrlInput.value = "";
+    });
+
+    // Modal Add Reading item events
+    const addReadModal = document.getElementById("add-read-modal");
+    const readTitleInput = document.getElementById("read-title-input");
+    const readUrlInput = document.getElementById("read-url-input");
+    const readDescInput = document.getElementById("read-desc-input");
+
+    document.getElementById("read-cancel-btn").addEventListener("click", () => {
+      addReadModal.classList.remove("open");
+      readTitleInput.value = "";
+      readUrlInput.value = "";
+      readDescInput.value = "";
+    });
+
+    document.getElementById("read-save-btn").addEventListener("click", () => {
+      let title = readTitleInput.value.trim();
+      let url = readUrlInput.value.trim();
+      let desc = readDescInput.value.trim();
+
+      if (!url) return;
+      if (!title) title = getDomain(url);
+
+      if (!/^https?:\/\//i.test(url)) {
+        url = "https://" + url;
+      }
+
+      const domain = getDomain(url);
+
+      state.readingList.push({ title, url, desc, domain });
+      saveState("reading");
+      renderReadingList();
+
+      addReadModal.classList.remove("open");
+      readTitleInput.value = "";
+      readUrlInput.value = "";
+      readDescInput.value = "";
+    });
+
+    // Privacy details toggle
+    const toggleTrackerDetails = document.getElementById("toggle-tracker-details");
+    const trackerDetailsList = document.getElementById("tracker-details-list");
+    toggleTrackerDetails.addEventListener("click", () => {
+      if (trackerDetailsList.classList.contains("visible")) {
+        trackerDetailsList.classList.remove("visible");
+        toggleTrackerDetails.textContent = "Show Details";
+      } else {
+        trackerDetailsList.classList.add("visible");
+        toggleTrackerDetails.textContent = "Hide Details";
+      }
+    });
+
+    // Render ETP Privacy stats dynamically
+    function renderPrivacyReport(privacyStats) {
+      if (!privacyStats) return;
+      
+      document.getElementById("stats-trackers-count").textContent = privacyStats.totalBlocked || 0;
+      document.getElementById("stats-ratio").textContent = privacyStats.ratio || "0%";
+      
+      trackerDetailsList.innerHTML = "";
+      if (privacyStats.topDomains && privacyStats.topDomains.length > 0) {
+        privacyStats.topDomains.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "tracker-row";
+          row.innerHTML = `
+            <span class="tracker-domain">${item.domain}</span>
+            <span class="tracker-count">${item.count} blocks</span>
+          `;
+          trackerDetailsList.appendChild(row);
+        });
+      } else {
+        trackerDetailsList.innerHTML = `<div style="text-align:center; padding:10px; color:var(--text-secondary);">No trackers blocked yet.</div>`;
+      }
+    }
+
+    // Listen to Firefox AutoConfig data injection event
+    document.addEventListener("SeafariDataReady", () => {
+      if (window.realHistoryData) {
+        state.history = window.realHistoryData;
+        renderHistory();
+        applyTogglesVisibility();
+      }
+      if (window.realPrivacyStats) {
+        renderPrivacyReport(window.realPrivacyStats);
+      }
+    });
+
+    // Start UI
+    loadState();
+    initUI();
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "name": "Seafari Tab Overview",
+  "version": "1.0",
+  "description": "Safari-like tab overview with live tab previews.",
+  "applications": {
+    "gecko": {
+      "id": "tab-overview@seafari.org"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_title": "Tab Overview"
+  }
+}

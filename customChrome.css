@@ -47,7 +47,6 @@
 /* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
 /* Ocultar iconos no deseados (perfil de usuario, extensiones, escudo de protección de rastreo y barra lateral) */
 #fxa-toolbar-button,
-#unified-extensions-button,
 #tracking-protection-icon-container,
 #tracking-protection-icon-box,
 #tracking-protection-icon,
@@ -56,7 +55,6 @@
 #sidebar-button,
 #developer-button,
 #nav-bar #fxa-toolbar-button,
-#nav-bar #unified-extensions-button,
 #nav-bar #tracking-protection-icon-container,
 #nav-bar #sidebar-button,
 #nav-bar #developer-button {
@@ -206,10 +204,48 @@
     padding-right: 12px !important;
 }
 
-/* --- Unified Right Button Group (Capsule/Bubble) --- */
-/* English: Style the entire right button group (New Tab, Overview, Menu) as a single unified capsule */
-/* Español: Estilizar todo el grupo de botones de la derecha (Nueva pestaña, Overview, Menú) como una única cápsula unificada */
-#nav-bar #new-tab-button,
+/* --- Standalone New Tab Button (placed in the rightmost group, left of account) --- */
+#nav-bar #new-tab-button {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 999px !important;
+    margin: 0 4px !important;
+    padding: 0 !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+#nav-bar #new-tab-button:hover {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+#nav-bar #new-tab-button:active {
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nav-bar #new-tab-button {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+    #nav-bar #new-tab-button:hover {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+    #nav-bar #new-tab-button:active {
+        background: rgba(255, 255, 255, 0.24) !important;
+    }
+}
+:root[brighttext] #nav-bar #new-tab-button {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+:root[brighttext] #nav-bar #new-tab-button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+:root[brighttext] #nav-bar #new-tab-button:active {
+    background: rgba(255, 255, 255, 0.24) !important;
+}
+
+/* --- Unified Right Button Group (Capsule/Bubble: Overview, Menu) --- */
 #nav-bar #tab-overview-button,
 #nav-bar #PanelUI-menu-button {
     background: rgba(0, 0, 0, 0.05) !important;
@@ -226,70 +262,54 @@
     align-items: center !important;
     justify-content: center !important;
 }
-
-/* Hover/Active states for Right Group */
-#nav-bar #new-tab-button:hover,
 #nav-bar #tab-overview-button:hover,
 #nav-bar #PanelUI-menu-button:hover {
     background: rgba(0, 0, 0, 0.1) !important;
 }
-#nav-bar #new-tab-button:active,
 #nav-bar #tab-overview-button:active,
 #nav-bar #PanelUI-menu-button:active {
     background: rgba(0, 0, 0, 0.15) !important;
 }
 
 @media (prefers-color-scheme: dark) {
-    #nav-bar #new-tab-button,
     #nav-bar #tab-overview-button,
     #nav-bar #PanelUI-menu-button {
         background: rgba(255, 255, 255, 0.08) !important;
         border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
-    #nav-bar #new-tab-button:hover,
     #nav-bar #tab-overview-button:hover,
     #nav-bar #PanelUI-menu-button:hover {
         background: rgba(255, 255, 255, 0.16) !important;
     }
-    #nav-bar #new-tab-button:active,
     #nav-bar #tab-overview-button:active,
     #nav-bar #PanelUI-menu-button:active {
         background: rgba(255, 255, 255, 0.24) !important;
     }
 }
 
-:root[brighttext] #nav-bar #new-tab-button,
 :root[brighttext] #nav-bar #tab-overview-button,
 :root[brighttext] #nav-bar #PanelUI-menu-button {
     background: rgba(255, 255, 255, 0.08) !important;
     border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
-:root[brighttext] #nav-bar #new-tab-button:hover,
 :root[brighttext] #nav-bar #tab-overview-button:hover,
 :root[brighttext] #nav-bar #PanelUI-menu-button:hover {
     background: rgba(255, 255, 255, 0.16) !important;
 }
-:root[brighttext] #nav-bar #new-tab-button:active,
 :root[brighttext] #nav-bar #tab-overview-button:active,
 :root[brighttext] #nav-bar #PanelUI-menu-button:active {
     background: rgba(255, 255, 255, 0.24) !important;
 }
 
-/* Dynamic Left Corner Rounding for Right Group */
-#nav-bar #new-tab-button:not([hidden]) {
-    border-top-left-radius: 999px !important;
-    border-bottom-left-radius: 999px !important;
-    border-left: none !important;
-    padding-left: 12px !important;
-}
-#nav-bar #new-tab-button[hidden] ~ #tab-overview-button:not([hidden]) {
+/* Dynamic Left Corner Rounding for Capsule */
+#nav-bar #tab-overview-button:not([hidden]) {
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
     border-left: none !important;
     padding-left: 12px !important;
 }
 
-/* Dynamic Right Corner Rounding for Right Group */
+/* Dynamic Right Corner Rounding for Capsule */
 #nav-bar #PanelUI-menu-button:not([hidden]) {
     border-top-right-radius: 999px !important;
     border-bottom-right-radius: 999px !important;
