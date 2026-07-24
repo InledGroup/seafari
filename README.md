@@ -49,8 +49,14 @@ rm -rf ~/.mozilla/seafari-profile
 ./Seafari-x86_64.AppImage
 ```
 ## Auto publish system  
-Write [RELEASE] on commit for acumulative release.
-Write [RELEASE][number.number] for version increasing.
+Write [RELEASE] on commit for acumulative release.  
+
+## TIPS:  
+### Devtools for full UI:  
+Go to `about:config` and set to true:
+- devtools.chrome.enabled
+- devtools.debugger.remote-enabled  
+Then, press **Ctrl+Shift+Alt+I**
 
 ## License and acknowledgment
 

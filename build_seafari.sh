@@ -193,8 +193,11 @@ cat <<EOF > "$DIST_DIR/policies.json"
       "app.update.auto": false,
       "app.update.enabled": false,
       "browser.startup.homepage": "about:newtab",
+      "browser.startup.page": 1,
+      "browser.startup.homepage_override.mstone": "ignore",
       "browser.newtabpage.enabled": true,
-      "browser.messaging-system.whatsNewPanel.enabled": false,
+      "browser.newtabpage.url": "about:newtab",
+      "browser.newtabpage.activity-stream.enabled": false,
       "browser.newtabpage.activity-stream.showSearch": false,
       "browser.newtabpage.activity-stream.showTopSites": true,
       "browser.newtabpage.activity-stream.feeds.section.topstories": false,
@@ -262,17 +265,33 @@ try {
   var ioService = Components.classes["@mozilla.org/network/io-service;1"]
                             .getService(Components.interfaces.nsIIOService);
   var newtabURI = ioService.newFileURI(file).spec;
+  log("New tab URI resolved to: " + newtabURI);
 
+  // Method 1: XPCOM pref branch — most reliable, available very early in startup
+  try {
+    var prefBranch = Components.classes["@mozilla.org/preferences-service;1"]
+                               .getService(Components.interfaces.nsIPrefBranch);
+    prefBranch.setCharPref("browser.newtabpage.url", newtabURI);
+    log("Set browser.newtabpage.url via nsIPrefBranch");
+  } catch(e) {
+    log("nsIPrefBranch setCharPref failed: " + e);
+  }
+
+  // Method 2: AboutNewTab module — backup approach
   try {
     ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL = newtabURI;
+    log("Set AboutNewTab.newTabURL via ESM");
   } catch(e) {
     try {
       var AboutNewTab = Components.utils.import("resource:///modules/AboutNewTab.jsm", {}).AboutNewTab;
       AboutNewTab.newTabURL = newtabURI;
-    } catch(err) {}
+      log("Set AboutNewTab.newTabURL via JSM");
+    } catch(err) {
+      log("AboutNewTab fallback also failed: " + err);
+    }
   }
 } catch(e) {
-  log("Error in legacy newtab setup: " + e);
+  log("Error in newtab setup: " + e);
 }
 
 try {
@@ -287,6 +306,10 @@ try {
   pref("browser.fixup.alternate.enabled", false);
   pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0);
   pref("widget.gtk.global-menu.enabled", true);
+  pref("widget.use-xdg-desktop-portal.menubar", true);
+  pref("browser.startup.page", 1);
+  pref("browser.startup.homepage_override.mstone", "ignore");
+  pref("browser.newtabpage.activity-stream.enabled", false);
   pref("browser.dom.window.dump.enabled", true);
   $UA_LINE
 } catch (e) {
@@ -432,6 +455,66 @@ try {
     var navBar = document.getElementById("nav-bar-customization-target");
     if (!navBar) return;
 
+    function relocateUblockBtn(node) {
+      if (!node) return;
+      
+      // If node is a wrapper (toolbaritem), extract the actual button
+      var ublockBtn = node;
+      if (node.tagName !== "toolbarbutton") {
+        ublockBtn = node.querySelector("toolbarbutton") || node;
+      }
+      
+      log("Relocating uBlock button to URL bar: " + ublockBtn.id);
+      
+      var urlbarContainer = document.getElementById("urlbar-input-container");
+      var identityBox = document.getElementById("identity-box");
+      if (urlbarContainer && identityBox) {
+        urlbarContainer.insertBefore(ublockBtn, identityBox);
+        
+        // Ensure the button is visible
+        ublockBtn.style.removeProperty("display");
+        ublockBtn.removeAttribute("hidden");
+        
+        // Style it to make sure it looks proper inline
+        forceStyle(ublockBtn, "display", "-moz-box");
+        forceStyle(ublockBtn, "visibility", "visible");
+        
+        // Hide the original wrapper if left behind
+        if (node !== ublockBtn) {
+          node.style.setProperty("display", "none", "important");
+          node.setAttribute("hidden", "true");
+        }
+        
+        // Event listeners
+        if (!ublockBtn._seafariListenersAdded) {
+          ublockBtn.setAttribute("draggable", "true");
+          ublockBtn.addEventListener("dragstart", function(event) {
+            if (window.gIdentityHandler && typeof window.gIdentityHandler.onDragStart === "function") {
+              log("Forwarding dragstart from ublockBtn to gIdentityHandler");
+              window.gIdentityHandler.onDragStart(event);
+            }
+          }, true);
+
+          ublockBtn.addEventListener("click", function(event) {
+            if (event.button === 0) { // Left click
+              log("uBlock button clicked - triggering ETP shield and lock actions");
+              var shieldBtn = document.getElementById("tracking-protection-icon-container");
+              if (shieldBtn) {
+                try { shieldBtn.click(); } catch(e) {}
+              }
+              var trustBtn = document.getElementById("trust-icon-container");
+              if (trustBtn) {
+                try { trustBtn.click(); } catch(e) {}
+              }
+            }
+          }, false);
+          
+          ublockBtn._seafariListenersAdded = true;
+        }
+        log("uBlock button successfully moved and configured");
+      }
+    }
+
     // Set up a 10s refresh interval to keep extension ublock stats up to date.
     if (!window._seafariUblockRefreshAdded) {
       function updateUBlockStatsInExtension() {
@@ -514,19 +597,63 @@ try {
               var { ExtensionParent } = ChromeUtils.importESModule("resource://gre/modules/ExtensionParent.sys.mjs");
               var extension = ExtensionParent.GlobalManager.getExtension("tab-overview@seafari.org");
               if (extension) {
-                var newtabURI = "moz-extension://" + extension.uuid + "/newtab.html";
-                log("Setting new tab URL dynamically to: " + newtabURI);
+                var extNewtabURI = "moz-extension://" + extension.uuid + "/newtab.html";
+                log("Updating newtab URL to extension: " + extNewtabURI);
+                resolvedExtNewtabURL = extNewtabURI;
+                // Method 1: XPCOM pref
                 try {
-                  ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL = newtabURI;
+                  var prefBranch = Components.classes["@mozilla.org/preferences-service;1"]
+                                             .getService(Components.interfaces.nsIPrefBranch);
+                  prefBranch.setCharPref("browser.newtabpage.url", extNewtabURI);
+                } catch(e) {}
+                // Method 2: AboutNewTab module
+                try {
+                  ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL = extNewtabURI;
                 } catch(e) {
                   try {
                     Cu.import("resource:///modules/AboutNewTab.jsm");
-                    AboutNewTab.newTabURL = newtabURI;
+                    AboutNewTab.newTabURL = extNewtabURI;
                   } catch(err) {}
+                }
+
+                // Redirect any already open about:newtab/about:home tabs to the extension's newtab page
+                try {
+                  var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                                     .getService(Components.interfaces.nsIWindowMediator);
+                  var enumerator = wm.getEnumerator("navigator:browser");
+                  while (enumerator.hasMoreElements()) {
+                    var win = enumerator.getNext();
+                    if (win.gBrowser) {
+                      for (let tab of win.gBrowser.tabs) {
+                        var browser = tab.linkedBrowser;
+                        if (browser && browser.currentURI) {
+                          var spec = browser.currentURI.spec;
+                          if (spec === "about:newtab" || spec === "about:home") {
+                            log("Redirecting active tab " + spec + " to " + extNewtabURI);
+                            try {
+                              browser.loadURI(extNewtabURI, {
+                                triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
+                              });
+                            } catch(ex) {
+                              try {
+                                win.gBrowser.loadURI(browser, extNewtabURI, {
+                                  triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
+                                });
+                              } catch(ex2) {
+                                browser.location = extNewtabURI;
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                } catch(ex) {
+                  log("Error redirecting existing tabs: " + ex);
                 }
               }
             } catch(ex) {
-              log("Error setting newtab URL: " + ex);
+              log("Error updating newtab URL to extension: " + ex);
             }
           }).catch(function(err) {
             log("Error installing temporary addon: " + err);
@@ -549,6 +676,118 @@ try {
       overviewBtn.setAttribute("title", "Tab Overview");
       overviewBtn.setAttribute("label", "Tab Overview");
       navBar.appendChild(overviewBtn);
+    }
+
+    // --- KDE Global Menu / DBus AppMenu integration ---
+    // Populate #toolbar-menubar with XUL menu items so KDE's global menu panel
+    // picks them up via DBus. The menubar stays hidden in Firefox (CSS),
+    // but its DOM structure is exposed to the desktop environment.
+    try {
+      if (!window._seafariGlobalMenuSetup) {
+        var menubar = document.getElementById("toolbar-menubar");
+        if (menubar && menubar.children.length === 0) {
+          function gMenuPopup() {
+            return document.createXULElement("menupopup");
+          }
+          function gMenu(label, accesskey) {
+            var m = document.createXULElement("menu");
+            m.setAttribute("label", label);
+            m.setAttribute("accesskey", accesskey);
+            return m;
+          }
+          function gMenuItem(label, key, command) {
+            var mi = document.createXULElement("menuitem");
+            mi.setAttribute("label", label);
+            if (key) mi.setAttribute("key", key);
+            if (command) mi.setAttribute("command", command);
+            return mi;
+          }
+          function gMenuSep() {
+            return document.createXULElement("menuseparator");
+          }
+
+          // --- File ---
+          var fileMenu = gMenu("File", "F");
+          var filePopup = gMenuPopup();
+          filePopup.appendChild(gMenuItem("New Tab", "key_newNavigatorTab", "cmd_newNavigatorTab"));
+          filePopup.appendChild(gMenuItem("New Window", "key_newNavigator", "cmd_newNavigator"));
+          filePopup.appendChild(gMenuSep());
+          filePopup.appendChild(gMenuItem("Close Tab", "key_close", "cmd_close"));
+          filePopup.appendChild(gMenuItem("Close Window", "key_closeWindow", "cmd_closeWindow"));
+          filePopup.appendChild(gMenuSep());
+          filePopup.appendChild(gMenuItem("Save Page As…", "key_savePage", "cmd_savePage"));
+          filePopup.appendChild(gMenuItem("Print…", "key_print", "cmd_print"));
+          fileMenu.appendChild(filePopup);
+          menubar.appendChild(fileMenu);
+
+          // --- Edit ---
+          var editMenu = gMenu("Edit", "E");
+          var editPopup = gMenuPopup();
+          editPopup.appendChild(gMenuItem("Undo", "key_undo", "cmd_undo"));
+          editPopup.appendChild(gMenuItem("Redo", "key_redo", "cmd_redo"));
+          editPopup.appendChild(gMenuSep());
+          editPopup.appendChild(gMenuItem("Cut", "key_cut", "cmd_cut"));
+          editPopup.appendChild(gMenuItem("Copy", "key_copy", "cmd_copy"));
+          editPopup.appendChild(gMenuItem("Paste", "key_paste", "cmd_paste"));
+          editPopup.appendChild(gMenuItem("Select All", "key_selectAll", "cmd_selectAll"));
+          editMenu.appendChild(editPopup);
+          menubar.appendChild(editMenu);
+
+          // --- View ---
+          var viewMenu = gMenu("View", "V");
+          var viewPopup = gMenuPopup();
+          viewPopup.appendChild(gMenuItem("Zoom In", "key_zoomIn", "cmd_zoomIn"));
+          viewPopup.appendChild(gMenuItem("Zoom Out", "key_zoomOut", "cmd_zoomOut"));
+          viewPopup.appendChild(gMenuItem("Reset Zoom", "key_zoomReset", "cmd_zoomReset"));
+          viewPopup.appendChild(gMenuSep());
+          viewPopup.appendChild(gMenuItem("Page Source", "key_viewSource", "cmd_viewSource"));
+          viewPopup.appendChild(gMenuItem("Page Info", "key_pageInfo", "cmd_pageInfo"));
+          viewMenu.appendChild(viewPopup);
+          menubar.appendChild(viewMenu);
+
+          // --- History ---
+          var historyMenu = gMenu("History", "H");
+          var historyPopup = gMenuPopup();
+          historyPopup.appendChild(gMenuItem("Back", "key_back", "cmd_back"));
+          historyPopup.appendChild(gMenuItem("Forward", "key_forward", "cmd_forward"));
+          historyPopup.appendChild(gMenuSep());
+          historyPopup.appendChild(gMenuItem("Home", "key_home", "cmd_home"));
+          historyPopup.appendChild(gMenuSep());
+          historyPopup.appendChild(gMenuItem("Show All History", "key_history", "cmd_history"));
+          historyMenu.appendChild(historyPopup);
+          menubar.appendChild(historyMenu);
+
+          // --- Bookmarks ---
+          var bmMenu = gMenu("Bookmarks", "B");
+          var bmPopup = gMenuPopup();
+          bmPopup.appendChild(gMenuItem("Bookmark This Page", "key_addBookmark", "AddBookmarkAs"));
+          bmPopup.appendChild(gMenuItem("Show All Bookmarks", "key_bookmarks", "cmd_bookmarks"));
+          bmMenu.appendChild(bmPopup);
+          menubar.appendChild(bmMenu);
+
+          // --- Tools ---
+          var toolsMenu = gMenu("Tools", "T");
+          var toolsPopup = gMenuPopup();
+          toolsPopup.appendChild(gMenuItem("Add-ons Manager", null, "cmd_addons"));
+          toolsPopup.appendChild(gMenuItem("Downloads", "key_downloads", "Tools:Downloads"));
+          toolsPopup.appendChild(gMenuSep());
+          toolsPopup.appendChild(gMenuItem("Settings", null, "cmd_preferences"));
+          toolsMenu.appendChild(toolsPopup);
+          menubar.appendChild(toolsMenu);
+
+          // --- Help ---
+          var helpMenu = gMenu("Help", "?");
+          var helpPopup = gMenuPopup();
+          helpPopup.appendChild(gMenuItem("About Seafari", null, "Help:About"));
+          helpMenu.appendChild(helpPopup);
+          menubar.appendChild(helpMenu);
+
+          log("KDE Global Menu menubar populated with " + menubar.children.length + " menus");
+        }
+        window._seafariGlobalMenuSetup = true;
+      }
+    } catch(e) {
+      log("Error setting up global menu: " + e);
     }
 
     // IDs to fully hide
@@ -716,9 +955,15 @@ try {
               if (knownSkipIds.indexOf(id) !== -1) return;
               if (knownLeftIds.indexOf(id) !== -1 || knownMenuIds.indexOf(id) !== -1 || knownAll[id]) return;
               
-              // This is an extension or custom button! Move it into the extensions pill
+              // This is an extension or custom button!
               log("Dynamic button added to toolbar: " + id + ". Moving to extensions pill...");
               
+              // If this is uBlock, relocate it
+              if (id.indexOf("ublock") !== -1 || id.indexOf("uBlock") !== -1) {
+                relocateUblockBtn(node);
+                return;
+              }
+
               // Get or create seafari-pill-extensions
               var extPill = document.getElementById("seafari-pill-extensions");
               if (!extPill) {
@@ -787,6 +1032,46 @@ try {
       }
     }
 
+    // --- Move uBlock button to replace tracking protection shield ---
+    try {
+      if (!window._seafariUblockRelocated) {
+        // Log all toolbar buttons to find uBlock
+        var allBtns = document.querySelectorAll("toolbarbutton");
+        var btnIds = [];
+        allBtns.forEach(function(b) { if (b.id) btnIds.push(b.id); });
+        log("All toolbarbutton IDs: " + btnIds.join(", "));
+
+        var ublockBtn = null;
+        // Method 1: exact ID
+        ublockBtn = document.getElementById("ublock0_raymondhill_net-browser-action");
+        if (!ublockBtn) {
+          // Method 2: query by attribute
+          ublockBtn = document.querySelector('[id*="ublock"][id*="browser-action"]');
+        }
+        if (!ublockBtn) {
+          // Method 3: by extension ID attribute
+          ublockBtn = document.querySelector('[data-extensionid="uBlock0@raymondhill.net"]');
+        }
+        if (!ublockBtn) {
+          // Method 4: by class webextension-action
+          var extBtns = document.querySelectorAll(".webextension-action");
+          extBtns.forEach(function(b) {
+            log("webextension-action button: id=" + b.id + " title=" + (b.getAttribute("tooltiptext") || b.getAttribute("title") || ""));
+            if (!ublockBtn && b.id && (b.id.indexOf("ublock") !== -1 || b.id.indexOf("uBlock") !== -1)) {
+              ublockBtn = b;
+            }
+          });
+        }
+
+        if (ublockBtn) {
+          relocateUblockBtn(ublockBtn);
+        } else {
+          log("uBlock button NOT found in toolbar");
+        }
+        window._seafariUblockRelocated = true;
+      }
+    } catch(e) { log("uBlock relocation error: " + e); }
+
     if (window.gBrowser) {
       if (!window._seafariRequestListenerAdded) {
         window.gBrowser.addEventListener("SeafariRequestData", function(event) {
@@ -841,7 +1126,9 @@ try {
     }
   }
 
-  // 1. Progress listener to inject data into NTP on page load
+  // 1. Progress listener: redirect about:newtab AND inject data into NTP
+  var resolvedExtNewtabURL = null;
+
   var progressListener = {
     onStateChange: function(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
       if ((aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP) &&
@@ -849,28 +1136,66 @@ try {
         try {
           var doc = aBrowser.contentDocument;
           if (doc && doc.location) {
-            log("progressListener onStateChange (STATE_STOP) for URL: " + doc.location.href);
             if (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home") {
               injectDataIntoNTP(doc);
             }
           }
-        } catch(e) {
-          log("Error in progressListener onStateChange: " + e);
-        }
+        } catch(e) {}
       }
     },
     onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation, aFlags) {
       try {
+        var url = aLocation.spec;
+        // Intercept about:newtab and about:home → redirect to extension's newtab
+        if (url === "about:newtab" || url === "about:home") {
+          // Resolve extension URL once
+          if (!resolvedExtNewtabURL) {
+            try {
+              var { ExtensionParent } = ChromeUtils.importESModule("resource://gre/modules/ExtensionParent.sys.mjs");
+              var ext = ExtensionParent.GlobalManager.getExtension("tab-overview@seafari.org");
+              if (ext) {
+                resolvedExtNewtabURL = "moz-extension://" + ext.uuid + "/newtab.html";
+                log("Resolved extension newtab URL: " + resolvedExtNewtabURL);
+              }
+            } catch(e) {}
+          }
+          if (resolvedExtNewtabURL) {
+            log("Redirecting " + url + " → " + resolvedExtNewtabURL);
+            var win = aBrowser.ownerGlobal;
+            if (win && win.gBrowser) {
+              try {
+                aBrowser.loadURI(resolvedExtNewtabURL, {
+                  triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
+                });
+              } catch(e) {
+                try {
+                  win.gBrowser.loadURI(aBrowser, resolvedExtNewtabURL, {
+                    triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
+                  });
+                } catch(e2) {
+                  var originalTab = win.gBrowser.getTabForBrowser(aBrowser);
+                  var newTab = win.gBrowser.addTrustedTab(resolvedExtNewtabURL, {
+                    triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
+                  });
+                  win.gBrowser.selectedTab = newTab;
+                  // Close the original about:newtab tab after a tick
+                  setTimeout(function() {
+                    try { win.gBrowser.removeTab(originalTab); } catch(err) {}
+                  }, 100);
+                }
+              }
+            }
+            return;
+          }
+        }
+        // Inject data into NTP pages
         var doc = aBrowser.contentDocument;
         if (doc && doc.location) {
-          log("progressListener onLocationChange for URL: " + doc.location.href);
           if (doc.location.href.indexOf("newtab.html") !== -1 || doc.location.href === "about:newtab" || doc.location.href === "about:home") {
             injectDataIntoNTP(doc);
           }
         }
-      } catch(e) {
-        log("Error in progressListener onLocationChange: " + e);
-      }
+      } catch(e) {}
     }
   };
 
@@ -961,23 +1286,36 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     filter: invert(1) brightness(100) !important; 
 }
 
-/* Hide unwanted icons (user profile, extensions, tracking protection shield, and sidebar) */
-/* Ocultar iconos no deseados (perfil de usuario, extensiones, escudo de protección de rastreo y barra lateral) */
-#fxa-toolbar-button,
+/* Ocultar iconos no deseados (candado de identidad, escudo de protección de rastreo, barra lateral, etc.) */
+#trust-icon-container,
 #tracking-protection-icon-container,
 #tracking-protection-icon-box,
 #tracking-protection-icon,
 #tracking-protection-icon-animatable-image,
 .tracking-protection-button,
+#fxa-toolbar-button,
 #sidebar-button,
 #developer-button,
 #nav-bar #fxa-toolbar-button,
-#nav-bar #tracking-protection-icon-container,
 #nav-bar #sidebar-button,
 #nav-bar #developer-button {
     display: none !important;
     visibility: collapse !important;
     width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hide extension indicator in URL bar when on extension pages (e.g. newtab) */
+/* Ocultar indicador de extensión en la barra de URL cuando se está en páginas de extensiones */
+#identity-box.extensionPage,
+#identity-box.extensionPage #identity-icon-box,
+#identity-box.extensionPage #identity-icon,
+#identity-box.extensionPage #identity-icon-label {
+    display: none !important;
+    visibility: collapse !important;
+    width: 0 !important;
+    min-width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -1335,6 +1673,95 @@ button.dialog-button[default="true"]:active,
     background-color: #004da6 !important;
     background-image: none !important;
     box-shadow: none !important;
+}
+
+#ublock0_raymondhill_net-BAP {
+    min-width: 30px !important;
+    min-height: 30px !important;
+    margin: 3px 3px 3px 0 !important;
+    padding: 7px !important;
+    border-radius: 999px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+}
+
+#urlbar:not([pageproxystate="valid"]) #ublock0_raymondhill_net-BAP {
+    display: none !important;
+}
+
+#ublock0_raymondhill_net-BAP #trust-label {
+    display: none !important;
+}
+
+#ublock0_raymondhill_net-BAP #trust-icon {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+}
+
+/* Style the real uBlock button when placed in the URL bar */
+#ublock0_raymondhill_net-browser-action,
+[id*="ublock"][id*="browser-action"] {
+    min-width: 30px !important;
+    min-height: 30px !important;
+    margin: 3px 3px 3px 0 !important;
+    padding: 7px !important;
+    border-radius: 999px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#ublock0_raymondhill_net-browser-action:hover,
+[id*="ublock"][id*="browser-action"]:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+}
+
+#ublock0_raymondhill_net-browser-action:active,
+[id*="ublock"][id*="browser-action"]:active {
+    background: rgba(0, 0, 0, 0.14) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #ublock0_raymondhill_net-browser-action:hover,
+    [id*="ublock"][id*="browser-action"]:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+    #ublock0_raymondhill_net-browser-action:active,
+    [id*="ublock"][id*="browser-action"]:active {
+        background: rgba(255, 255, 255, 0.20) !important;
+    }
+}
+
+#ublock0_raymondhill_net-browser-action image,
+[id*="ublock"][id*="browser-action"] image {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+}
+
+#ublock0_raymondhill_net-browser-action .webextension-browser-action-badge,
+[id*="ublock"][id*="browser-action"] .webextension-browser-action-badge {
+    position: absolute !important;
+    top: 1px !important;
+    right: 1px !important;
+    background-color: var(--theme-primary-color, #0071e3) !important;
+    color: white !important;
+    font-size: 8px !important;
+    font-weight: bold !important;
+    padding: 1px 2px !important;
+    border-radius: 4px !important;
+    pointer-events: none !important;
 }
 EOF
 
@@ -1836,6 +2263,55 @@ EOF
         perl -0777 -pi -e 's|(\{\s*id:\s*"supportShareIdeas",\s*l10nId:\s*"support-share-ideas",\s*control:\s*"moz-box-link",\s*controlAttrs:\s*\{\s*href:\s*"https://connect.mozilla.org/",\s*\},\s*\})|${1},\n          {\n            id: "supportDiscord",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://discord.com/invite/PSeTkDMnr",\n              label: "Join our Discord",\n            },\n          },\n          {\n            id: "supportMatrix",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://matrix.inled.es",\n              label: "Join our Matrix space",\n            },\n          },\n          {\n            id: "supportGithub",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://github.com/InledGroup/seafari",\n              label: "GitHub Repository",\n            },\n          }|g' "$about_firefox_mjs"
     fi
 
+    # Find and redirect native newtab pages to our extension's newtab (CSP-safe by modifying external JS)
+    find "$temp_dir" -type f \( -name "newtab.xhtml" -o -name "newtab.html" -o -name "activity-stream.html" \) 2>/dev/null | while read -r ntp_file; do
+        echo "Found native newtab file: $ntp_file"
+        local ntp_dir
+        ntp_dir=$(dirname "$ntp_file")
+        
+        local js_files_found=0
+        # Prepend the redirect script to all JS files in the same directory (so it gets loaded by the page)
+        find "$ntp_dir" -type f -name "*.js" 2>/dev/null | while read -r js_file; do
+            echo "Prepending redirect script to JS file: $js_file"
+            local tmp_js
+            tmp_js=$(mktemp)
+            echo "try {
+              var prefURL = '';
+              if (typeof Services !== 'undefined' && Services.prefs) {
+                prefURL = Services.prefs.getStringPref('browser.newtabpage.url');
+              } else {
+                var prefService = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch);
+                prefURL = prefService.getCharPref('browser.newtabpage.url');
+              }
+              if (prefURL && prefURL.startsWith('moz-extension://')) {
+                window.location.replace(prefURL);
+              }
+            } catch(e) {}" > "$tmp_js"
+            cat "$js_file" >> "$tmp_js"
+            mv "$tmp_js" "$js_file"
+            js_files_found=1
+        done
+        
+        # Fallback inline injection if no JS files were found in the same folder
+        if [ "$js_files_found" -eq 0 ]; then
+            echo "No JS files found in $ntp_dir, injecting inline fallback script..."
+            local redirect_script="<script type=\"text/javascript\">try { var prefURL = \"\"; if (typeof Services !== \"undefined\" && Services.prefs) { prefURL = Services.prefs.getStringPref(\"browser.newtabpage.url\"); } else { var prefService = Components.classes[\"@mozilla.org/preferences-service;1\"].getService(Components.interfaces.nsIPrefBranch); prefURL = prefService.getCharPref(\"browser.newtabpage.url\"); } if (prefURL && prefURL.startsWith(\"moz-extension://\")) { window.location.replace(prefURL); } } catch(e) {}</script>"
+            if grep -q "<head>" "$ntp_file"; then
+                sed -i "s|<head>|<head>${redirect_script}|g" "$ntp_file"
+            elif grep -q "<html>" "$ntp_file"; then
+                sed -i "s|<html>|<html>${redirect_script}|g" "$ntp_file"
+            elif grep -q "<html " "$ntp_file"; then
+                sed -i "s|<html [^>]*>|&\n${redirect_script}|g" "$ntp_file"
+            else
+                local tmp_ntp
+                tmp_ntp=$(mktemp)
+                echo -e "${redirect_script}" > "$tmp_ntp"
+                cat "$ntp_file" >> "$tmp_ntp"
+                mv "$tmp_ntp" "$ntp_file"
+            fi
+        fi
+    done
+
     find "$temp_dir" -type f \( -name "*.properties" -o -name "*.dtd" -o -name "*.ftl" -o -name "*.json" -o -name "*.js" -o -name "*.sys.mjs" -o -name "*.xhtml" -o -name "*.xml" -o -name "*.html" -o -name "*.css" \) -exec perl -pi -e 's|(?<!/)\bFirefox\b|Seafari|g' {} + 2>/dev/null || true
 
     # English: Re-compress the files back into the original omni.ja location
@@ -1897,6 +2373,16 @@ sed -i '/browser.fixup.alternate.enabled/d' "$USER_JS"
 echo 'user_pref("browser.fixup.alternate.enabled", false);' >> "$USER_JS"
 sed -i '/browser.urlbar.dnsResolveSingleWordsAfterSearch/d' "$USER_JS"
 echo 'user_pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0);' >> "$USER_JS"
+sed -i '/browser.startup.page/d' "$USER_JS"
+echo 'user_pref("browser.startup.page", 1);' >> "$USER_JS"
+sed -i '/browser.startup.homepage_override.mstone/d' "$USER_JS"
+echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");' >> "$USER_JS"
+sed -i '/browser.newtabpage.url/d' "$USER_JS"
+echo "user_pref(\"browser.newtabpage.url\", \"file://$PROFILE_DIR/chrome/newtab.html\");" >> "$USER_JS"
+sed -i '/browser.newtabpage.activity-stream.enabled/d' "$USER_JS"
+echo 'user_pref("browser.newtabpage.activity-stream.enabled", false);' >> "$USER_JS"
+sed -i '/browser.startup.homepage/d' "$USER_JS"
+echo "user_pref(\"browser.startup.homepage\", \"file://$PROFILE_DIR/chrome/newtab.html\");" >> "$USER_JS"
 exec "$LIB_DIR/firefox" --name "seafari" --class "seafari" --profile "$PROFILE_DIR" -no-remote "$@"
 EOF
 chmod +x "$WORKSPACE/seafari.sh"

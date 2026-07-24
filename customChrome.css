@@ -42,16 +42,10 @@
     filter: invert(1) brightness(100) !important; 
 }
 
-/* Hide unwanted icons (tracking protection shield and sidebar) */
-/* Ocultar iconos no deseados (escudo de protección de rastreo y barra lateral) */
-#tracking-protection-icon-container,
-#tracking-protection-icon-box,
-#tracking-protection-icon,
-#tracking-protection-icon-animatable-image,
-.tracking-protection-button,
+/* Hide unwanted icons (sidebar and developer button) */
+/* Ocultar iconos no deseados (barra lateral y botón de desarrollador) */
 #sidebar-button,
 #developer-button,
-#nav-bar #tracking-protection-icon-container,
 #nav-bar #sidebar-button,
 #nav-bar #developer-button {
     display: none !important;
@@ -599,5 +593,67 @@ button.dialog-button[default="true"]:active,
 }
 #nav-bar hbox[seafari-pill] > *:last-child {
     padding-right: 10px !important;
+}
+
+/* Style the real uBlock button when placed in the URL bar */
+#ublock0_raymondhill_net-browser-action,
+[id*="ublock"][id*="browser-action"] {
+    min-width: 30px !important;
+    min-height: 30px !important;
+    margin: 3px 3px 3px 0 !important;
+    padding: 7px !important;
+    border-radius: 999px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#ublock0_raymondhill_net-browser-action:hover,
+[id*="ublock"][id*="browser-action"]:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+}
+
+#ublock0_raymondhill_net-browser-action:active,
+[id*="ublock"][id*="browser-action"]:active {
+    background: rgba(0, 0, 0, 0.14) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    #ublock0_raymondhill_net-browser-action:hover,
+    [id*="ublock"][id*="browser-action"]:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+    #ublock0_raymondhill_net-browser-action:active,
+    [id*="ublock"][id*="browser-action"]:active {
+        background: rgba(255, 255, 255, 0.20) !important;
+    }
+}
+
+#ublock0_raymondhill_net-browser-action image,
+[id*="ublock"][id*="browser-action"] image {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+}
+
+#ublock0_raymondhill_net-browser-action .webextension-browser-action-badge,
+[id*="ublock"][id*="browser-action"] .webextension-browser-action-badge {
+    position: absolute !important;
+    top: 1px !important;
+    right: 1px !important;
+    background-color: var(--theme-primary-color, #0071e3) !important;
+    color: white !important;
+    font-size: 8px !important;
+    font-weight: bold !important;
+    padding: 1px 2px !important;
+    border-radius: 4px !important;
+    pointer-events: none !important;
 }
 
