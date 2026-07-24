@@ -42,12 +42,15 @@
     filter: invert(1) brightness(100) !important; 
 }
 
-/* Hide unwanted icons (sidebar and developer button) */
-/* Ocultar iconos no deseados (barra lateral y botón de desarrollador) */
+/* Hide unwanted icons (sidebar, developer button, and extension newtab warning) */
+/* Ocultar iconos no deseados y aviso de nueva pestaña de extensiones */
 #sidebar-button,
 #developer-button,
 #nav-bar #sidebar-button,
-#nav-bar #developer-button {
+#nav-bar #developer-button,
+notification[value="addon-webextension-newtab"],
+#addon-webextension-newtab-notification,
+.notificationbox-stack notification[value="addon-webextension-newtab"] {
     display: none !important;
     visibility: collapse !important;
     width: 0 !important;
@@ -597,16 +600,24 @@ button.dialog-button[default="true"]:active,
 
 /* Style the real uBlock button when placed in the URL bar */
 #ublock0_raymondhill_net-browser-action,
-[id*="ublock"][id*="browser-action"] {
+[id*="ublock"][id*="browser-action"],
+#ublock0_raymondhill_net-BAP {
     min-width: 30px !important;
+    max-width: 30px !important;
+    width: 30px !important;
     min-height: 30px !important;
-    margin: 3px 3px 3px 0 !important;
-    padding: 7px !important;
+    max-height: 30px !important;
+    height: 30px !important;
+    margin: 2px 2px 2px 4px !important;
+    padding: 0 !important;
     border-radius: 999px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     position: relative !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    -moz-box-flex: 0 !important;
     -moz-appearance: none !important;
     appearance: none !important;
     background: transparent !important;
@@ -615,22 +626,26 @@ button.dialog-button[default="true"]:active,
 }
 
 #ublock0_raymondhill_net-browser-action:hover,
-[id*="ublock"][id*="browser-action"]:hover {
+[id*="ublock"][id*="browser-action"]:hover,
+#ublock0_raymondhill_net-BAP:hover {
     background: rgba(0, 0, 0, 0.08) !important;
 }
 
 #ublock0_raymondhill_net-browser-action:active,
-[id*="ublock"][id*="browser-action"]:active {
+[id*="ublock"][id*="browser-action"]:active,
+#ublock0_raymondhill_net-BAP:active {
     background: rgba(0, 0, 0, 0.14) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     #ublock0_raymondhill_net-browser-action:hover,
-    [id*="ublock"][id*="browser-action"]:hover {
+    [id*="ublock"][id*="browser-action"]:hover,
+    #ublock0_raymondhill_net-BAP:hover {
         background: rgba(255, 255, 255, 0.12) !important;
     }
     #ublock0_raymondhill_net-browser-action:active,
-    [id*="ublock"][id*="browser-action"]:active {
+    [id*="ublock"][id*="browser-action"]:active,
+    #ublock0_raymondhill_net-BAP:active {
         background: rgba(255, 255, 255, 0.20) !important;
     }
 }

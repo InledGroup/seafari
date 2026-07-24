@@ -458,60 +458,59 @@ try {
     function relocateUblockBtn(node) {
       if (!node) return;
       
-      // If node is a wrapper (toolbaritem), extract the actual button
+      // Relocate the entire wrapper node to preserve popup functionality
       var ublockBtn = node;
-      if (node.tagName !== "toolbarbutton") {
-        ublockBtn = node.querySelector("toolbarbutton") || node;
-      }
       
-      log("Relocating uBlock button to URL bar: " + ublockBtn.id);
+      log("Relocating uBlock button wrapper to URL bar: " + ublockBtn.id);
       
-      var urlbarContainer = document.getElementById("urlbar-input-container");
       var identityBox = document.getElementById("identity-box");
+      var urlbarContainer = identityBox ? identityBox.parentNode : null;
+      if (!urlbarContainer) {
+        urlbarContainer = document.querySelector(".urlbar-input-container") || document.getElementById("urlbar-input-container");
+      }
       if (urlbarContainer && identityBox) {
         urlbarContainer.insertBefore(ublockBtn, identityBox);
         
-        // Ensure the button is visible
+        // Ensure it is visible
         ublockBtn.style.removeProperty("display");
         ublockBtn.removeAttribute("hidden");
         
-        // Style it to make sure it looks proper inline
-        forceStyle(ublockBtn, "display", "-moz-box");
+        // Style it inline to fit properly in the URL bar
+        forceStyle(ublockBtn, "display", "-moz-inline-box");
         forceStyle(ublockBtn, "visibility", "visible");
+        forceStyle(ublockBtn, "margin", "0 4px");
+        forceStyle(ublockBtn, "padding", "0");
+        forceStyle(ublockBtn, "width", "30px");
+        forceStyle(ublockBtn, "height", "30px");
+        forceStyle(ublockBtn, "min-width", "30px");
+        forceStyle(ublockBtn, "min-height", "30px");
         
-        // Hide the original wrapper if left behind
-        if (node !== ublockBtn) {
-          node.style.setProperty("display", "none", "important");
-          node.setAttribute("hidden", "true");
+        // Ensure the inner button is also visible and styled
+        var innerBtn = ublockBtn.querySelector("toolbarbutton") || ublockBtn;
+        if (innerBtn !== ublockBtn) {
+          innerBtn.style.removeProperty("display");
+          innerBtn.removeAttribute("hidden");
+          forceStyle(innerBtn, "display", "-moz-box");
+          forceStyle(innerBtn, "visibility", "visible");
+          forceStyle(innerBtn, "width", "30px");
+          forceStyle(innerBtn, "height", "30px");
+          forceStyle(innerBtn, "min-width", "30px");
+          forceStyle(innerBtn, "min-height", "30px");
         }
         
         // Event listeners
         if (!ublockBtn._seafariListenersAdded) {
-          ublockBtn.setAttribute("draggable", "true");
-          ublockBtn.addEventListener("dragstart", function(event) {
+          var dragBtn = innerBtn || ublockBtn;
+          dragBtn.setAttribute("draggable", "true");
+          dragBtn.addEventListener("dragstart", function(event) {
             if (window.gIdentityHandler && typeof window.gIdentityHandler.onDragStart === "function") {
               log("Forwarding dragstart from ublockBtn to gIdentityHandler");
               window.gIdentityHandler.onDragStart(event);
             }
           }, true);
-
-          ublockBtn.addEventListener("click", function(event) {
-            if (event.button === 0) { // Left click
-              log("uBlock button clicked - triggering ETP shield and lock actions");
-              var shieldBtn = document.getElementById("tracking-protection-icon-container");
-              if (shieldBtn) {
-                try { shieldBtn.click(); } catch(e) {}
-              }
-              var trustBtn = document.getElementById("trust-icon-container");
-              if (trustBtn) {
-                try { trustBtn.click(); } catch(e) {}
-              }
-            }
-          }, false);
-          
           ublockBtn._seafariListenersAdded = true;
         }
-        log("uBlock button successfully moved and configured");
+        log("uBlock button wrapper successfully moved and configured");
       }
     }
 
@@ -631,12 +630,14 @@ try {
                           if (spec === "about:newtab" || spec === "about:home") {
                             log("Redirecting active tab " + spec + " to " + extNewtabURI);
                             try {
-                              browser.loadURI(extNewtabURI, {
+                              var uri = Services.io.newURI(extNewtabURI);
+                              browser.loadURI(uri, {
                                 triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
                               });
                             } catch(ex) {
                               try {
-                                win.gBrowser.loadURI(browser, extNewtabURI, {
+                                var uri = Services.io.newURI(extNewtabURI);
+                                win.gBrowser.loadURI(browser, uri, {
                                   triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
                                 });
                               } catch(ex2) {
@@ -1146,8 +1147,8 @@ try {
     onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation, aFlags) {
       try {
         var url = aLocation.spec;
-        // Intercept about:newtab and about:home → redirect to extension's newtab
-        if (url === "about:newtab" || url === "about:home") {
+        // Intercept about:newtab, about:home, and local newtab.html → redirect to extension's newtab
+        if (url === "about:newtab" || url === "about:home" || (url && url.indexOf("newtab.html") !== -1 && !url.startsWith("moz-extension://"))) {
           // Resolve extension URL once
           if (!resolvedExtNewtabURL) {
             try {
@@ -1164,12 +1165,14 @@ try {
             var win = aBrowser.ownerGlobal;
             if (win && win.gBrowser) {
               try {
-                aBrowser.loadURI(resolvedExtNewtabURL, {
+                var uri = Services.io.newURI(resolvedExtNewtabURL);
+                aBrowser.loadURI(uri, {
                   triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
                 });
               } catch(e) {
                 try {
-                  win.gBrowser.loadURI(aBrowser, resolvedExtNewtabURL, {
+                  var uri = Services.io.newURI(resolvedExtNewtabURL);
+                  win.gBrowser.loadURI(aBrowser, uri, {
                     triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
                   });
                 } catch(e2) {
@@ -1286,8 +1289,7 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
     filter: invert(1) brightness(100) !important; 
 }
 
-/* Ocultar iconos no deseados (candado de identidad, escudo de protección de rastreo, barra lateral, etc.) */
-#trust-icon-container,
+/* Ocultar iconos no deseados (escudo de protección de rastreo, barra lateral, etc.) */
 #tracking-protection-icon-container,
 #tracking-protection-icon-box,
 #tracking-protection-icon,
@@ -1298,7 +1300,10 @@ cat <<'EOF' > "$THEME_DIR/customChrome.css"
 #developer-button,
 #nav-bar #fxa-toolbar-button,
 #nav-bar #sidebar-button,
-#nav-bar #developer-button {
+#nav-bar #developer-button,
+notification[value="addon-webextension-newtab"],
+#addon-webextension-newtab-notification,
+.notificationbox-stack notification[value="addon-webextension-newtab"] {
     display: none !important;
     visibility: collapse !important;
     width: 0 !important;
@@ -1704,16 +1709,24 @@ button.dialog-button[default="true"]:active,
 
 /* Style the real uBlock button when placed in the URL bar */
 #ublock0_raymondhill_net-browser-action,
-[id*="ublock"][id*="browser-action"] {
+[id*="ublock"][id*="browser-action"],
+#ublock0_raymondhill_net-BAP {
     min-width: 30px !important;
+    max-width: 30px !important;
+    width: 30px !important;
     min-height: 30px !important;
-    margin: 3px 3px 3px 0 !important;
-    padding: 7px !important;
+    max-height: 30px !important;
+    height: 30px !important;
+    margin: 2px 2px 2px 4px !important;
+    padding: 0 !important;
     border-radius: 999px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     position: relative !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    -moz-box-flex: 0 !important;
     -moz-appearance: none !important;
     appearance: none !important;
     background: transparent !important;
@@ -1722,22 +1735,26 @@ button.dialog-button[default="true"]:active,
 }
 
 #ublock0_raymondhill_net-browser-action:hover,
-[id*="ublock"][id*="browser-action"]:hover {
+[id*="ublock"][id*="browser-action"]:hover,
+#ublock0_raymondhill_net-BAP:hover {
     background: rgba(0, 0, 0, 0.08) !important;
 }
 
 #ublock0_raymondhill_net-browser-action:active,
-[id*="ublock"][id*="browser-action"]:active {
+[id*="ublock"][id*="browser-action"]:active,
+#ublock0_raymondhill_net-BAP:active {
     background: rgba(0, 0, 0, 0.14) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     #ublock0_raymondhill_net-browser-action:hover,
-    [id*="ublock"][id*="browser-action"]:hover {
+    [id*="ublock"][id*="browser-action"]:hover,
+    #ublock0_raymondhill_net-BAP:hover {
         background: rgba(255, 255, 255, 0.12) !important;
     }
     #ublock0_raymondhill_net-browser-action:active,
-    [id*="ublock"][id*="browser-action"]:active {
+    [id*="ublock"][id*="browser-action"]:active,
+    #ublock0_raymondhill_net-BAP:active {
         background: rgba(255, 255, 255, 0.20) !important;
     }
 }
