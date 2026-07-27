@@ -1,206 +1,206 @@
-name: Build and Release Seafari
+# name: Build and Release Seafari
 
-on:
-  push:
-    branches:
-      - main
-      - master
-  schedule:
-    - cron: '0 0 * * *' # Every day at midnight
-  repository_dispatch:
-    types: [firefox-update]
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - main
+#       - master
+#   schedule:
+#     - cron: '0 0 * * *' # Every day at midnight
+#   repository_dispatch:
+#     types: [firefox-update]
+#   workflow_dispatch:
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
-jobs:
-  prepare-release:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || contains(github.event.head_commit.message, '[RELEASE]')
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.vars.outputs.VERSION }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+# jobs:
+#   prepare-release:
+#     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || contains(github.event.head_commit.message, '[RELEASE]')
+#     runs-on: ubuntu-latest
+#     outputs:
+#       version: ${{ steps.vars.outputs.VERSION }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Determine Release Version
-        id: vars
-        run: |
-          # English: Get the latest version from git tags (e.g. v1.2.3)
-          # Español: Obtener la última versión desde los tags de git (ej. v1.2.3)
-          LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n1)
-          if [ -z "$LATEST_TAG" ]; then
-            CURRENT_VERSION="0.0.0"
-          else
-            CURRENT_VERSION="${LATEST_TAG#v}"
-          fi
-          echo "Latest tag version: $CURRENT_VERSION"
+#       - name: Determine Release Version
+#         id: vars
+#         run: |
+#           # English: Get the latest version from git tags (e.g. v1.2.3)
+#           # Español: Obtener la última versión desde los tags de git (ej. v1.2.3)
+#           LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+#           if [ -z "$LATEST_TAG" ]; then
+#             CURRENT_VERSION="0.0.0"
+#           else
+#             CURRENT_VERSION="${LATEST_TAG#v}"
+#           fi
+#           echo "Latest tag version: $CURRENT_VERSION"
           
-          # English: Parse version components
-          # Español: Parsear los componentes de la versión
-          MAJOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f1)
-          MINOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f2)
-          PATCH=$(echo "$CURRENT_VERSION" | cut -d'.' -f3)
+#           # English: Parse version components
+#           # Español: Parsear los componentes de la versión
+#           MAJOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f1)
+#           MINOR=$(echo "$CURRENT_VERSION" | cut -d'.' -f2)
+#           PATCH=$(echo "$CURRENT_VERSION" | cut -d'.' -f3)
           
-          # English: Get current commit message
-          # Español: Obtener el mensaje de commit actual
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit Message: $COMMIT_MSG"
+#           # English: Get current commit message
+#           # Español: Obtener el mensaje de commit actual
+#           COMMIT_MSG=$(git log -1 --pretty=%B)
+#           echo "Commit Message: $COMMIT_MSG"
           
-          IS_RELEASE_COMMIT=false
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            # English: If commit specifies target version via [RELEASE][X.X]
-            # Español: Si el commit especifica la versión objetivo vía [RELEASE][X.X]
-            if [[ "$COMMIT_MSG" =~ \[RELEASE\]\[([0-9]+\.[0-9]+)\] ]]; then
-              VERSION_XX="${BASH_REMATCH[1]}"
-              MAJOR=$(echo "$VERSION_XX" | cut -d'.' -f1)
-              MINOR=$(echo "$VERSION_XX" | cut -d'.' -f2)
-              PATCH="0"
-              NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-              IS_RELEASE_COMMIT=true
-              echo "Release commit detected with target version: $NEW_VERSION"
-            # English: If commit contains [RELEASE] without a version, reset patch to 0
-            # Español: Si el commit contiene [RELEASE] sin una versión, reiniciar parche a 0
-            elif [[ "$COMMIT_MSG" == *"[RELEASE]"* ]]; then
-              PATCH="0"
-              NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-              IS_RELEASE_COMMIT=true
-              echo "General release commit detected. Resetting patch: $NEW_VERSION"
-            fi
-          fi
+#           IS_RELEASE_COMMIT=false
+#           if [[ "${{ github.event_name }}" == "push" ]]; then
+#             # English: If commit specifies target version via [RELEASE][X.X]
+#             # Español: Si el commit especifica la versión objetivo vía [RELEASE][X.X]
+#             if [[ "$COMMIT_MSG" =~ \[RELEASE\]\[([0-9]+\.[0-9]+)\] ]]; then
+#               VERSION_XX="${BASH_REMATCH[1]}"
+#               MAJOR=$(echo "$VERSION_XX" | cut -d'.' -f1)
+#               MINOR=$(echo "$VERSION_XX" | cut -d'.' -f2)
+#               PATCH="0"
+#               NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+#               IS_RELEASE_COMMIT=true
+#               echo "Release commit detected with target version: $NEW_VERSION"
+#             # English: If commit contains [RELEASE] without a version, reset patch to 0
+#             # Español: Si el commit contiene [RELEASE] sin una versión, reiniciar parche a 0
+#             elif [[ "$COMMIT_MSG" == *"[RELEASE]"* ]]; then
+#               PATCH="0"
+#               NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+#               IS_RELEASE_COMMIT=true
+#               echo "General release commit detected. Resetting patch: $NEW_VERSION"
+#             fi
+#           fi
           
-          if [ "$IS_RELEASE_COMMIT" = false ]; then
-            # English: Increment patch version for scheduled, dispatch, or manual runs
-            # Español: Incrementar la versión de parche para ejecuciones programadas, de despacho o manuales
-            NEW_PATCH=$((PATCH + 1))
-            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-            echo "Incrementing patch version: $NEW_VERSION"
-          fi
+#           if [ "$IS_RELEASE_COMMIT" = false ]; then
+#             # English: Increment patch version for scheduled, dispatch, or manual runs
+#             # Español: Incrementar la versión de parche para ejecuciones programadas, de despacho o manuales
+#             NEW_PATCH=$((PATCH + 1))
+#             NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+#             echo "Incrementing patch version: $NEW_VERSION"
+#           fi
           
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+#           echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-  build-and-release:
-    needs: prepare-release
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-      fail-fast: false
-    env:
-      VERSION: ${{ needs.prepare-release.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#   build-and-release:
+#     needs: prepare-release
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         arch: [amd64, arm64]
+#       fail-fast: false
+#     env:
+#       VERSION: ${{ needs.prepare-release.outputs.version }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zip unzip wget tar sed dpkg-dev binutils libfuse2 ruby ruby-dev build-essential rpm libarchive-tools
-          sudo gem install --no-document fpm
+#       - name: Install dependencies
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y zip unzip wget tar sed dpkg-dev binutils libfuse2 ruby ruby-dev build-essential rpm libarchive-tools
+#           sudo gem install --no-document fpm
 
-      - name: Build Seafari
-        run: |
-          chmod +x build_seafari.sh
-          ./build_seafari.sh --version "$VERSION" ${{ matrix.arch }}
+#       - name: Build Seafari
+#         run: |
+#           chmod +x build_seafari.sh
+#           ./build_seafari.sh --version "$VERSION" ${{ matrix.arch }}
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            seafari_*.deb
-            Seafari-*.AppImage
-            seafari-*.rpm
-            seafari-*.pkg.tar.zst
-          tag_name: v${{ env.VERSION }}
-          name: Seafari v${{ env.VERSION }}
-          draft: false
-          prerelease: false
-          make_latest: true
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       - name: Create Release
+#         uses: softprops/action-gh-release@v2
+#         with:
+#           files: |
+#             seafari_*.deb
+#             Seafari-*.AppImage
+#             seafari-*.rpm
+#             seafari-*.pkg.tar.zst
+#           tag_name: v${{ env.VERSION }}
+#           name: Seafari v${{ env.VERSION }}
+#           draft: false
+#           prerelease: false
+#           make_latest: true
+#           fail_on_unmatched_files: false
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  trigger-apt-update:
-    needs: [prepare-release, build-and-release]
-    if: always() && !cancelled()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger APT Repo Update
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ needs.prepare-release.outputs.version }}"
+#   trigger-apt-update:
+#     needs: [prepare-release, build-and-release]
+#     if: always() && !cancelled()
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Trigger APT Repo Update
+#         env:
+#           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         run: |
+#           VERSION="${{ needs.prepare-release.outputs.version }}"
 
-          # English: Build the list of expected artifacts for all architectures
-          # Español: Construir la lista de artefactos esperados para todas las arquitecturas
-          declare -A EXPECTED_URLS
-          for ARCH in amd64 arm64; do
-            if [ "$ARCH" = "amd64" ]; then
-              DEB_ARCH="amd64"
-              RPM_ARCH="x86_64"
-            else
-              DEB_ARCH="arm64"
-              RPM_ARCH="aarch64"
-            fi
+#           # English: Build the list of expected artifacts for all architectures
+#           # Español: Construir la lista de artefactos esperados para todas las arquitecturas
+#           declare -A EXPECTED_URLS
+#           for ARCH in amd64 arm64; do
+#             if [ "$ARCH" = "amd64" ]; then
+#               DEB_ARCH="amd64"
+#               RPM_ARCH="x86_64"
+#             else
+#               DEB_ARCH="arm64"
+#               RPM_ARCH="aarch64"
+#             fi
 
-            EXPECTED_URLS["deb_${ARCH}"]="seafari_${VERSION}_${DEB_ARCH}.deb"
-            EXPECTED_URLS["rpm_${ARCH}"]="seafari-${VERSION}-1.${RPM_ARCH}.rpm"
-            EXPECTED_URLS["pkg_${ARCH}"]="seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
-          done
+#             EXPECTED_URLS["deb_${ARCH}"]="seafari_${VERSION}_${DEB_ARCH}.deb"
+#             EXPECTED_URLS["rpm_${ARCH}"]="seafari-${VERSION}-1.${RPM_ARCH}.rpm"
+#             EXPECTED_URLS["pkg_${ARCH}"]="seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+#           done
 
-          BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}"
+#           BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}"
 
-          echo "Waiting for all artifacts across all architectures..."
-          # English: Retry up to 12 times (60s total) to let GitHub process asset uploads
-          # Español: Reintentar hasta 12 veces (60s total) para que GitHub procese las subidas
-          MAX_RETRIES=12
-          RETRY_DELAY=5
-          for ((i=1; i<=MAX_RETRIES; i++)); do
-            PAYLOAD_ITEMS=()
+#           echo "Waiting for all artifacts across all architectures..."
+#           # English: Retry up to 12 times (60s total) to let GitHub process asset uploads
+#           # Español: Reintentar hasta 12 veces (60s total) para que GitHub procese las subidas
+#           MAX_RETRIES=12
+#           RETRY_DELAY=5
+#           for ((i=1; i<=MAX_RETRIES; i++)); do
+#             PAYLOAD_ITEMS=()
 
-            # English: Get list of uploaded assets from GitHub release (single API call)
-            # Español: Obtener la lista de artefactos subidos de la release de GitHub (una sola llamada a la API)
-            UPLOADED_ASSETS=$(gh release view "v${VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null || true)
+#             # English: Get list of uploaded assets from GitHub release (single API call)
+#             # Español: Obtener la lista de artefactos subidos de la release de GitHub (una sola llamada a la API)
+#             UPLOADED_ASSETS=$(gh release view "v${VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null || true)
 
-            for KEY in "${!EXPECTED_URLS[@]}"; do
-              FILE_NAME="${EXPECTED_URLS[$KEY]}"
-              if echo "$UPLOADED_ASSETS" | grep -Fqx "$FILE_NAME"; then
-                echo "  Found: $FILE_NAME"
-                # English: Determine the payload key name (deb_url, rpm_url, pkg_url) per arch
-                # Español: Determinar el nombre de la clave del payload (deb_url, rpm_url, pkg_url) por arquitectura
-                TYPE=$(echo "$KEY" | cut -d_ -f1)
-                ARCH_SUFFIX=$(echo "$KEY" | cut -d_ -f2)
-                PAYLOAD_ITEMS+=("\"${TYPE}_${ARCH_SUFFIX}_url\": \"${BASE_URL}/${FILE_NAME}\"")
-              else
-                echo "  WARNING: Not found yet: $FILE_NAME"
-              fi
-            done
+#             for KEY in "${!EXPECTED_URLS[@]}"; do
+#               FILE_NAME="${EXPECTED_URLS[$KEY]}"
+#               if echo "$UPLOADED_ASSETS" | grep -Fqx "$FILE_NAME"; then
+#                 echo "  Found: $FILE_NAME"
+#                 # English: Determine the payload key name (deb_url, rpm_url, pkg_url) per arch
+#                 # Español: Determinar el nombre de la clave del payload (deb_url, rpm_url, pkg_url) por arquitectura
+#                 TYPE=$(echo "$KEY" | cut -d_ -f1)
+#                 ARCH_SUFFIX=$(echo "$KEY" | cut -d_ -f2)
+#                 PAYLOAD_ITEMS+=("\"${TYPE}_${ARCH_SUFFIX}_url\": \"${BASE_URL}/${FILE_NAME}\"")
+#               else
+#                 echo "  WARNING: Not found yet: $FILE_NAME"
+#               fi
+#             done
 
-            # English: If at least one package is found, trigger a single repository update with all found artifacts
-            # Español: Si se encuentra al menos un paquete, disparar una única actualización del repositorio con todos los artefactos encontrados
-            if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
-              IFS=,
-              CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
-              unset IFS
+#             # English: If at least one package is found, trigger a single repository update with all found artifacts
+#             # Español: Si se encuentra al menos un paquete, disparar una única actualización del repositorio con todos los artefactos encontrados
+#             if [ ${#PAYLOAD_ITEMS[@]} -gt 0 ]; then
+#               IFS=,
+#               CLIENT_PAYLOAD="{$(echo "${PAYLOAD_ITEMS[*]}")}"
+#               unset IFS
 
-              echo "Triggering single APT repo update with payload: $CLIENT_PAYLOAD"
-              curl -X POST \
-                -H "Accept: application/vnd.github.v3+json" \
-                -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
-                https://api.github.com/repos/InledGroup/apt/dispatches \
-                -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
-              break
-            fi
+#               echo "Triggering single APT repo update with payload: $CLIENT_PAYLOAD"
+#               curl -X POST \
+#                 -H "Accept: application/vnd.github.v3+json" \
+#                 -H "Authorization: token ${{ secrets.APT_REPO_TOKEN }}" \
+#                 https://api.github.com/repos/InledGroup/apt/dispatches \
+#                 -d "{\"event_type\": \"package_upload\", \"client_payload\": $CLIENT_PAYLOAD}"
+#               break
+#             fi
 
-            if [ "$i" -lt "$MAX_RETRIES" ]; then
-              echo "Retrying in ${RETRY_DELAY}s... (attempt $i/$MAX_RETRIES)"
-              sleep "$RETRY_DELAY"
-            else
-              echo "WARNING: No artifacts found after $MAX_RETRIES attempts. Skipping update trigger."
-            fi
-          done
+#             if [ "$i" -lt "$MAX_RETRIES" ]; then
+#               echo "Retrying in ${RETRY_DELAY}s... (attempt $i/$MAX_RETRIES)"
+#               sleep "$RETRY_DELAY"
+#             else
+#               echo "WARNING: No artifacts found after $MAX_RETRIES attempts. Skipping update trigger."
+#             fi
+#           done
 
 
