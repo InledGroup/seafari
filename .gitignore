@@ -5,8 +5,6 @@ seafari_*.rpm
 seafari_*.pkg.tar.zst
 appimagetool
 build_workspace/
-build_cache_amd64/
-build_cache_arm64/
 tmp_ja*/
 
 # Seafari temporary files
@@ -14,6 +12,7 @@ tmp_ja*/
 
 # OS files
 .DS_Store
+build_cache_amd64/
 
 # Cloned repositories
 apt/
@@ -25,4 +24,3 @@ seafari-debug.log
 diagnose.js
 test_extraction.js
 *.log
-.release-notes-tmp.md
