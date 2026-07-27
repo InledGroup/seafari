@@ -25,6 +25,15 @@ This way, Seafari is updated at the same time as Firefox. And you can audit how 
 
 Seafari is distributed with versions compatible with Debian, Fedora, Arch and their respective AMD and ARM architectures. A generic Appimage is also distributed.
 
+## Changelog  
+### v2.5.*
+- New unified pills for button groups, like in Safari
+- uBlock Origin button next to the Firefox button
+- New Safari-like NewTabPage  
+
+## Daily security updates  
+Seafari is updated daily by downloading the latest version of Firefox from Mozilla. That is why a smaller version is published every day. It's not a bug, it's a security feature.
+
 ## Development
 
 To build Seafari locally:
