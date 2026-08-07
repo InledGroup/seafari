@@ -2366,7 +2366,7 @@ cat <<'EOF' > "$WORKSPACE/seafari.sh"
 #!/bin/bash
 HERE=$(dirname $(readlink -f $0))
 if [ -d "$HERE/firefox" ]; then LIB_DIR="$HERE/firefox"; elif [ -d "$HERE/usr/lib/seafari" ]; then LIB_DIR="$HERE/usr/lib/seafari"; elif [ -d "/usr/lib/seafari" ]; then LIB_DIR="/usr/lib/seafari"; else LIB_DIR="$HERE/firefox"; fi
-PROFILE_DIR="$HOME/.mozilla/seafari-profile"
+PROFILE_DIR="${SEAFARI_PROFILE:-$HOME/.mozilla/seafari-profile}"
 mkdir -p "$PROFILE_DIR/chrome"
 cp -r "$LIB_DIR/seafari-theme/"* "$PROFILE_DIR/chrome/"
 USER_JS="$PROFILE_DIR/user.js"
@@ -2400,7 +2400,61 @@ sed -i '/browser.newtabpage.activity-stream.enabled/d' "$USER_JS"
 echo 'user_pref("browser.newtabpage.activity-stream.enabled", false);' >> "$USER_JS"
 sed -i '/browser.startup.homepage/d' "$USER_JS"
 echo "user_pref(\"browser.startup.homepage\", \"file://$PROFILE_DIR/chrome/newtab.html\");" >> "$USER_JS"
-exec "$LIB_DIR/firefox" --name "seafari" --class "seafari" --profile "$PROFILE_DIR" -no-remote "$@"
+
+CRASH_LOG="$PROFILE_DIR/seafari_crash.log"
+echo "=== Seafari Session Start: $(date) ===" > "$CRASH_LOG"
+
+# Run Firefox capturing logs
+export MOZ_CRASHREPORTER_DISABLE=1
+"$LIB_DIR/firefox" --name "seafari" --class "seafari" --profile "$PROFILE_DIR" -no-remote "$@" 2>&1 | tee -a "$CRASH_LOG"
+EXIT_CODE=${PIPESTATUS[0]}
+
+echo "=== Seafari Session End with exit code $EXIT_CODE ===" >> "$CRASH_LOG"
+
+# Check if exited with crash signals (anything > 128 indicating a signal exit, except SIGINT/130 and SIGTERM/143)
+if [ $EXIT_CODE -gt 128 ] && [ $EXIT_CODE -ne 130 ] && [ $EXIT_CODE -ne 143 ]; then
+    echo "Seafari crashed (Exit Code: $EXIT_CODE). Launching custom crash handler..." >> "$CRASH_LOG"
+    if command -v zenity &> /dev/null; then
+        # Try to copy to clipboard in background
+        CLIPBOARD_MSG=""
+        if command -v wl-copy &> /dev/null; then
+            wl-copy < "$CRASH_LOG" && CLIPBOARD_MSG="\n(The logs have been automatically copied to your clipboard)"
+        elif command -v xclip &> /dev/null; then
+            xclip -selection clipboard < "$CRASH_LOG" && CLIPBOARD_MSG="\n(The logs have been automatically copied to your clipboard)"
+        elif command -v xsel &> /dev/null; then
+            xsel --clipboard --input < "$CRASH_LOG" && CLIPBOARD_MSG="\n(The logs have been automatically copied to your clipboard)"
+        fi
+
+        # First alert the user and ask to open GitHub
+        zenity --question \
+            --title="Seafari Crash Handler" \
+            --text="Seafari has closed unexpectedly (Exit Code: $EXIT_CODE).\n\nWould you like to open our GitHub issues page to report this crash?$CLIPBOARD_MSG\n\n(You can copy and view the crash logs on the next screen)" \
+            --ok-label="Open GitHub & View Logs" \
+            --cancel-label="Close" \
+            --width=500 --height=180
+
+        if [ $? -eq 0 ]; then
+            # Open GitHub issues page in background
+            xdg-open "https://github.com/InledGroup/seafari/issues" &
+            
+            # Show the crash log to let them inspect/copy it
+            zenity --text-info \
+                --title="Seafari Crash Log" \
+                --filename="$CRASH_LOG" \
+                --ok-label="Close" \
+                --width=700 \
+                --height=500
+        fi
+    else
+        echo "=========================================================="
+        echo "SEAFARI CRASHED (Exit Code: $EXIT_CODE)"
+        echo "Please report the crash to: https://github.com/InledGroup/seafari"
+        echo "Logs saved to: $CRASH_LOG"
+        echo "=========================================================="
+    fi
+fi
+
+exit $EXIT_CODE
 EOF
 chmod +x "$WORKSPACE/seafari.sh"
 

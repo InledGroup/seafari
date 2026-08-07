@@ -24,3 +24,4 @@ seafari-debug.log
 diagnose.js
 test_extraction.js
 *.log
+$CRASH_LOG

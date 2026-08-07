@@ -140,6 +140,35 @@
     }
 }
 
+/* Fix webpage select dropdown text and background colors in content scope */
+#ContentSelectDropdownPopup,
+#ContentSelectDropdownPopup::part(content),
+#ContentSelectDropdownPopup::part(arrowscrollbox),
+#ContentSelectDropdownPopup *|arrowscrollbox,
+#ContentSelectDropdownPopup *|scrollbox,
+#ContentSelectDropdownPopup .menupopup-scrollbox {
+	--panel-background: var(--gnome-menu-solid-background, white) !important;
+	--panel-color: var(--gnome-toolbar-color, black) !important;
+	--content-select-background-image: linear-gradient(var(--gnome-menu-solid-background, white), var(--gnome-menu-solid-background, white)) !important;
+	background-color: var(--gnome-menu-solid-background, white) !important;
+	color: var(--gnome-toolbar-color, black) !important;
+	background-image: none !important;
+}
 
+#ContentSelectDropdownPopup *|menuitem {
+	background-color: transparent !important;
+}
 
+#ContentSelectDropdownPopup *|menuitem[_moz-menuactive="true"] {
+	background-color: var(--theme-primary-color, #0071e3) !important;
+}
 
+#ContentSelectDropdownPopup *|menuitem,
+#ContentSelectDropdownPopup *|menuitem * {
+	color: var(--gnome-toolbar-color, black) !important;
+}
+
+#ContentSelectDropdownPopup *|menuitem[_moz-menuactive="true"],
+#ContentSelectDropdownPopup *|menuitem[_moz-menuactive="true"] * {
+	color: white !important;
+}
