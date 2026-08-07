@@ -82,4 +82,4 @@ Feel free to contact us with any questions. We welcome pull requests and issues.
 Contributions and issues are welcome! You will become a contributor and we will give you appropriate credit for each post. Read more at[https://help.inled.es/help/contribute-to-inled-projects/](https://help.inled.es/help/contribute-to-inled-projects/)
 
 ---
-v2
+v2.6
