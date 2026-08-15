@@ -23,7 +23,8 @@ const state = {
     reading: true
   },
   background: "mountains", 
-  customBgData: ""
+  customBgData: "",
+  videoBg: ""
 };
 
 // Load and save state using browser.storage.local (asynchronous, reliable)
@@ -41,6 +42,7 @@ function loadState() {
         if (s.toggles !== undefined) state.toggles = s.toggles;
         if (s.background !== undefined) state.background = s.background;
         if (s.customBgData !== undefined) state.customBgData = s.customBgData;
+        if (s.videoBg !== undefined) state.videoBg = s.videoBg;
         
         // Sync drawer checkboxes with loaded state
         if (toggleFavsCb) toggleFavsCb.checked = state.toggles.favorites;
@@ -74,6 +76,7 @@ function loadStateFromLocalStorage() {
     if (s.toggles !== undefined) state.toggles = s.toggles;
     if (s.background !== undefined) state.background = s.background;
     if (s.customBgData !== undefined) state.customBgData = s.customBgData;
+    if (s.videoBg !== undefined) state.videoBg = s.videoBg;
   } catch(e) {}
   initUI();
 }
@@ -84,7 +87,8 @@ function saveState(key) {
     readingList: state.readingList,
     toggles: state.toggles,
     background: state.background,
-    customBgData: state.customBgData
+    customBgData: state.customBgData,
+    videoBg: state.videoBg
   };
   
   // Save synchronously to localStorage
@@ -166,18 +170,43 @@ function applyBackground() {
     }
   });
 
-  if (state.background === "custom" && state.customBgData) {
+  // Background video handling (videoBg takes precedence as the actual bg).
+  const videoEl = document.getElementById("bg-video");
+  const removeVideoBtn = document.getElementById("remove-video-btn");
+  if (state.videoBg) {
+    videoEl.src = state.videoBg;
+    videoEl.style.display = "block";
+    videoEl.play().catch(function() {});
+    if (removeVideoBtn) removeVideoBtn.style.display = "inline-block";
+  } else {
+    videoEl.pause();
+    videoEl.removeAttribute("src");
+    videoEl.style.display = "none";
+    if (removeVideoBtn) removeVideoBtn.style.display = "none";
+  }
+
+  const videoActive = !!state.videoBg;
+
+  if (videoActive) {
+    // Video covers everything; keep a dark fallback behind it.
+    body.classList.add("bg-dark");
+  } else if (state.background === "custom" && state.customBgData) {
     body.style.backgroundImage = `url(${state.customBgData})`;
     body.classList.add("custom-bg-active");
+  } else if (state.background === "video" && !state.videoBg) {
+    body.classList.add("bg-dark");
   } else {
     body.classList.add(`bg-${state.background}`);
   }
 
-  // Handle text colors based on background
+  // Handle text colors and theme-color meta based on background
+  var themeMeta = document.getElementById("theme-color-meta");
   if (state.background === "light") {
     body.classList.add("light-theme-text");
+    if (themeMeta) themeMeta.content = "#f5f5f7";
   } else {
     body.classList.remove("light-theme-text");
+    if (themeMeta) themeMeta.content = "#121214";
   }
 }
 
@@ -385,6 +414,10 @@ toggleReadingCb.addEventListener("change", (e) => {
 document.querySelectorAll(".bg-thumb").forEach(thumb => {
   thumb.addEventListener("click", () => {
     state.background = thumb.dataset.bg;
+    if (thumb.dataset.bg === "video" && !state.videoBg) {
+      document.getElementById("custom-video-input").click();
+      return;
+    }
     saveState("background");
     applyBackground();
   });
@@ -406,6 +439,33 @@ customBgInput.addEventListener("change", (e) => {
     reader.readAsDataURL(file);
   }
 });
+
+// Background video selector
+const customVideoInput = document.getElementById("custom-video-input");
+customVideoInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      state.background = "video";
+      state.videoBg = event.target.result;
+      saveState("background");
+      saveState("video-bg");
+      applyBackground();
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Remove background video
+const removeVideoBtn = document.getElementById("remove-video-btn");
+if (removeVideoBtn) {
+  removeVideoBtn.addEventListener("click", () => {
+    state.videoBg = "";
+    saveState("video-bg");
+    applyBackground();
+  });
+}
 
 // Modal Add Favorite events
 const addFavModal = document.getElementById("add-fav-modal");
@@ -475,40 +535,12 @@ document.getElementById("read-save-btn").addEventListener("click", () => {
   readDescInput.value = "";
 });
 
-// Privacy details toggle
-const toggleTrackerDetails = document.getElementById("toggle-tracker-details");
-const trackerDetailsList = document.getElementById("tracker-details-list");
-toggleTrackerDetails.addEventListener("click", () => {
-  if (trackerDetailsList.classList.contains("visible")) {
-    trackerDetailsList.classList.remove("visible");
-    toggleTrackerDetails.textContent = "Show Details";
-  } else {
-    trackerDetailsList.classList.add("visible");
-    toggleTrackerDetails.textContent = "Hide Details";
-  }
-});
-
 // Render ETP Privacy stats dynamically
 function renderPrivacyReport(privacyStats) {
   if (!privacyStats) return;
   
   document.getElementById("stats-trackers-count").textContent = privacyStats.totalBlocked || 0;
   document.getElementById("stats-ratio").textContent = privacyStats.ratio || "0%";
-  
-  trackerDetailsList.innerHTML = "";
-  if (privacyStats.topDomains && privacyStats.topDomains.length > 0) {
-    privacyStats.topDomains.forEach(item => {
-      const row = document.createElement("div");
-      row.className = "tracker-row";
-      row.innerHTML = `
-        <span class="tracker-domain">${item.domain}</span>
-        <span class="tracker-count">${item.count} blocks</span>
-      `;
-      trackerDetailsList.appendChild(row);
-    });
-  } else {
-    trackerDetailsList.innerHTML = `<div style="text-align:center; padding:10px; color:var(--text-secondary);">No trackers blocked yet.</div>`;
-  }
 }
 
 // ─── Native WebExtension Loading ───────────────────────────────
@@ -556,13 +588,7 @@ function loadUblockStats() {
           var totalBlocked = response.totalBlocked;
           var privacyData = {
             totalBlocked: totalBlocked,
-            ratio: totalBlocked > 0 ? "86%" : "0%",
-            topDomains: [
-              { domain: "google-analytics.com", count: Math.round(totalBlocked * 0.4) },
-              { domain: "doubleclick.net",       count: Math.round(totalBlocked * 0.3) },
-              { domain: "facebook.com",          count: Math.round(totalBlocked * 0.2) },
-              { domain: "adnxs.com",             count: Math.round(totalBlocked * 0.1) }
-            ]
+            ratio: totalBlocked > 0 ? "86%" : "0%"
           };
           renderPrivacyReport(privacyData);
           if (bridgeEl) {

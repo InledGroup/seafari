@@ -1,0 +1,96 @@
+/* ============================================================
+   Seafari - Safari-like scroll auto-hide toolbox
+   ------------------------------------------------------------
+   DESIGN (paired with the overlay JS in seafari.cfg):
+     - At REST the toolbox stays in flow at the top of the window.
+       The page uses its original viewport height. The toolbar
+       paints the visited page's background color (adaptive from
+       --lwt-accent-color / --gnome-toolbar-background).
+     - On scroll DOWN the JS adds .seafari-toolbox-hidden: the
+       toolbox smoothly slides up via margin-top collapse, leaving
+       the viewport so #browser seamlessly expands to 100% full
+       window height.
+     - On scroll UP (or mouse near top / urlbar focus) the class
+       is removed: the toolbox returns to view smoothly.
+   ============================================================ */
+
+@namespace xul "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+
+:root {
+  --seafari-toolbox-height: 82px;
+  --seafari-toolbox-border: 1px solid color-mix(in srgb, var(--gnome-toolbar-border-color, currentColor) 12%, transparent) !important;
+  --seafari-toolbox-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+/* ------------------------------------------------------------
+   1. Default state: toolbox IN FLOW at top of window.
+   Page keeps its original viewport height.
+   ------------------------------------------------------------ */
+#navigator-toolbox {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  margin-top: 0 !important;
+  transition: margin-top var(--seafari-toolbox-transition) !important;
+  will-change: margin-top !important;
+  z-index: 10 !important;
+}
+
+/* Scroll-driven auto-hide: on scroll down, slides up out of window.
+   #browser expands to full window height. */
+#navigator-toolbox.seafari-toolbox-hidden {
+  margin-top: calc(-1 * var(--seafari-toolbox-height, 82px)) !important;
+  pointer-events: none !important;
+}
+
+#navigator-toolbox.seafari-toolbox-hidden * {
+  pointer-events: none !important;
+}
+
+#browser {
+  flex: 1 !important;
+}
+
+/* ------------------------------------------------------------
+   2. Adaptive toolbox background: uses --gnome-toolbar-background
+   and --lwt-accent-color so the toolbar always matches the visited
+   page background color.
+   ------------------------------------------------------------ */
+#navigator-toolbox,
+#navigator-toolbox #titlebar,
+#navigator-toolbox #nav-bar,
+#navigator-toolbox #TabsToolbar,
+#navigator-toolbox #PersonalToolbar,
+#navigator-toolbox #notifications-toolbar,
+#navigator-toolbox toolbar {
+  background-color: var(--gnome-toolbar-background, var(--lwt-accent-color, #242424)) !important;
+  background-image: none !important;
+  border-bottom: var(--seafari-toolbox-border) !important;
+  box-shadow: none !important;
+  transition: background-color 200ms ease, margin-top var(--seafari-toolbox-transition) !important;
+}
+
+#navigator-toolbox:-moz-window-inactive,
+#navigator-toolbox #titlebar:-moz-window-inactive,
+#navigator-toolbox #nav-bar:-moz-window-inactive,
+#navigator-toolbox #TabsToolbar:-moz-window-inactive,
+#navigator-toolbox #PersonalToolbar:-moz-window-inactive {
+  background-color: var(--gnome-inactive-toolbar-background, var(--lwt-accent-color, #242424)) !important;
+  background-image: none !important;
+}
+
+/* ------------------------------------------------------------
+   3. Semi-transparent buttons / icons, opaque on hover.
+   ------------------------------------------------------------ */
+#navigator-toolbox toolbarbutton {
+  opacity: 0.9 !important;
+}
+
+#navigator-toolbox toolbarbutton:hover,
+#navigator-toolbox toolbarbutton[open],
+#navigator-toolbox toolbarbutton[checked] {
+  opacity: 1 !important;
+}

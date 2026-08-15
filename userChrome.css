@@ -3,7 +3,7 @@
  * Add "/*" at the begining of "@import" line to DISABLE.
  */
 
-@import "MacTahoe/theme.css"; /**/
+@import "MacTahoe/theme-adaptive.css"; /**/
 
 /*--------------Configure common theme features--------------*/
 
@@ -37,6 +37,11 @@
 
 /* Hide window buttons (close/min/max) in maximized windows */
 /*@import "MacTahoe/hide-window-buttons.css"; /**/
+
+/* Transparent overlay toolbox: the toolbar floats over the web page and the
+ * page viewport continues underneath it (Safari frosted-glass style).
+ * Tune the alpha / blur / button opacity in MacTahoe/transparent-toolbox.css */
+@import "MacTahoe/transparent-toolbox.css"; /**/
 
 /* Import your custom stylesheet */
 @import "customChrome.css"; /**/

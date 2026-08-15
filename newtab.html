@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#121214" id="theme-color-meta">
   <title>Start Page</title>
   <style>
     :root {
@@ -101,6 +102,18 @@
       bottom: 0;
       background: var(--bg-overlay);
       z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Background video (uploaded via the customize drawer) */
+    .bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
       pointer-events: none;
     }
 
@@ -344,52 +357,6 @@
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    }
-
-    .show-details-btn {
-      color: var(--accent-color);
-      background: none;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      align-self: flex-start;
-      margin-top: 5px;
-      outline: none;
-    }
-    .show-details-btn:hover {
-      text-decoration: underline;
-    }
-
-    /* Detailed tracker list */
-    .tracker-details-list {
-      display: none;
-      grid-column: 1 / -1;
-      width: 100%;
-      border-top: 1px solid var(--card-border);
-      padding-top: 18px;
-      margin-top: 5px;
-      font-size: 13px;
-      text-align: left;
-    }
-    .tracker-details-list.visible {
-      display: block;
-    }
-    .tracker-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    body.light-theme-text .tracker-row {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    .tracker-domain {
-      font-weight: 500;
-    }
-    .tracker-count {
-      color: var(--text-secondary);
     }
 
     /* Reading List Grid */
@@ -730,6 +697,16 @@
     .bg-thumb-light {
       background-image: linear-gradient(135deg, #f5f5f7 0%, #e3e3e8 100%);
     }
+    .bg-thumb-video {
+      background-image: linear-gradient(135deg, #1a1a2e 0%, #3a1c5e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .bg-thumb-video-icon {
+      opacity: 0.85;
+    }
 
     /* Custom Background File Input */
     .custom-file-label {
@@ -875,6 +852,7 @@
 </head>
 <body class="bg-mountains">
   <div class="overlay"></div>
+  <video class="bg-video" id="bg-video" autoplay muted loop playsinline style="display:none;"></video>
 
   <div class="container">
     <!-- Center Logo -->
@@ -919,12 +897,6 @@
               <span class="stat-lbl">Websites contacted trackers</span>
             </div>
           </div>
-          <button class="show-details-btn" id="toggle-tracker-details">Show Details</button>
-        </div>
-        
-        <!-- Hidden tracker list -->
-        <div class="tracker-details-list" id="tracker-details-list">
-          <!-- Rendered dynamically -->
         </div>
       </div>
     </div>
@@ -1000,6 +972,11 @@
         <div class="bg-thumb bg-thumb-ocean" data-bg="ocean" title="Deep Ocean"></div>
         <div class="bg-thumb bg-thumb-dark" data-bg="dark" title="Space Dark"></div>
         <div class="bg-thumb bg-thumb-light" data-bg="light" title="Studio Light"></div>
+        <div class="bg-thumb bg-thumb-video" data-bg="video" title="Uploaded Video">
+          <svg class="bg-thumb-video-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
       </div>
 
       <label class="custom-file-label" for="custom-bg-input">
@@ -1009,6 +986,15 @@
         Upload Custom Image...
       </label>
       <input type="file" id="custom-bg-input" class="custom-file-input" accept="image/*">
+
+      <label class="custom-file-label" for="custom-video-input">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 10l5-3v10l-5-3M3 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+        </svg>
+        Upload Background Video...
+      </label>
+      <input type="file" id="custom-video-input" class="custom-file-input" accept="video/*">
+      <button class="btn btn-cancel" id="remove-video-btn" style="display:none;">Remove Video</button>
     </div>
   </div>
 
@@ -1084,7 +1070,8 @@
         reading: true
       },
       background: "mountains", 
-      customBgData: ""
+      customBgData: "",
+      videoBg: ""
     };
 
     // Load from profile JSON file via chrome bridge.
@@ -1102,6 +1089,7 @@
         if (s.toggles !== undefined) state.toggles = s.toggles;
         if (s.background !== undefined) state.background = s.background;
         if (s.customBgData !== undefined) state.customBgData = s.customBgData;
+        if (s.videoBg !== undefined) state.videoBg = s.videoBg;
         return true;
       } catch(e) {
         return false;
@@ -1117,6 +1105,7 @@
         if (s.toggles !== undefined) state.toggles = s.toggles;
         if (s.background !== undefined) state.background = s.background;
         if (s.customBgData !== undefined) state.customBgData = s.customBgData;
+        if (s.videoBg !== undefined) state.videoBg = s.videoBg;
         // Also sync autoconfig data back to localStorage so both are consistent
         saveToLocalStorage();
       } else {
@@ -1132,7 +1121,8 @@
           readingList: state.readingList,
           toggles: state.toggles,
           background: state.background,
-          customBgData: state.customBgData
+          customBgData: state.customBgData,
+          videoBg: state.videoBg
         };
         localStorage.setItem(LS_KEY, JSON.stringify(data));
       } catch(e) {}
@@ -1145,7 +1135,8 @@
         readingList: state.readingList,
         toggles: state.toggles,
         background: state.background,
-        customBgData: state.customBgData
+        customBgData: state.customBgData,
+        videoBg: state.videoBg
       };
       // Always save to localStorage first — this guarantees persistence
       saveToLocalStorage();
@@ -1215,10 +1206,34 @@
       // Remove all bg classes
       body.className = "";
       body.style.backgroundImage = "";
+
+      // Background video handling
+      var videoEl = document.getElementById("bg-video");
+      var removeVideoBtn = document.getElementById("remove-video-btn");
+      if (state.videoBg) {
+        videoEl.src = state.videoBg;
+        videoEl.style.display = "block";
+        videoEl.play().catch(function() {});
+        removeVideoBtn.style.display = "inline-block";
+        body.style.backgroundImage = "none";
+        body.classList.add("bg-dark");
+        // Text stays light over video
+        body.classList.remove("light-theme-text");
+      } else {
+        videoEl.pause();
+        videoEl.removeAttribute("src");
+        videoEl.style.display = "none";
+        if (removeVideoBtn) removeVideoBtn.style.display = "none";
+      }
       
-      // Update Active Thumbnail
+      // Update Active Thumbnail. The video thumb counts as active whenever a
+      // background video is set (videoBg takes precedence as the actual bg).
+      var videoActive = !!state.videoBg;
       document.querySelectorAll(".bg-thumb").forEach(thumb => {
-        if (thumb.dataset.bg === state.background) {
+        var isVideoThumb = thumb.dataset.bg === "video";
+        if (isVideoThumb) {
+          thumb.classList.toggle("active", videoActive);
+        } else if (thumb.dataset.bg === state.background) {
           thumb.classList.add("active");
         } else {
           thumb.classList.remove("active");
@@ -1228,15 +1243,21 @@
       if (state.background === "custom" && state.customBgData) {
         body.style.backgroundImage = `url(${state.customBgData})`;
         body.classList.add("custom-bg-active");
+      } else if (state.background === "video" && !state.videoBg) {
+        // Video thumb selected but no video uploaded yet -> dark fallback.
+        body.classList.add("bg-dark");
       } else {
         body.classList.add(`bg-${state.background}`);
       }
 
-      // Handle text colors based on background
+      // Handle text colors and theme-color meta based on background
+      var themeMeta = document.getElementById("theme-color-meta");
       if (state.background === "light") {
         body.classList.add("light-theme-text");
+        if (themeMeta) themeMeta.content = "#f5f5f7";
       } else {
         body.classList.remove("light-theme-text");
+        if (themeMeta) themeMeta.content = "#121214";
       }
     }
 
@@ -1443,6 +1464,18 @@
     // Background select click
     document.querySelectorAll(".bg-thumb").forEach(thumb => {
       thumb.addEventListener("click", () => {
+        if (thumb.dataset.bg === "video") {
+          // Clicking the video thumb: open the file picker when no video is
+          // set; otherwise just keep the video as active background.
+          if (!state.videoBg) {
+            document.getElementById("custom-video-input").click();
+            return;
+          }
+          state.background = "video";
+          saveState("background");
+          applyBackground();
+          return;
+        }
         state.background = thumb.dataset.bg;
         saveState("background");
         applyBackground();
@@ -1458,12 +1491,39 @@
         reader.onload = (event) => {
           state.background = "custom";
           state.customBgData = event.target.result;
+          state.videoBg = "";
           saveState("background");
           saveState("custom-bg");
           applyBackground();
         };
         reader.readAsDataURL(file);
       }
+    });
+
+    // Custom Background Video selector
+    const customVideoInput = document.getElementById("custom-video-input");
+    customVideoInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          state.videoBg = event.target.result;
+          state.background = "video";
+          state.customBgData = "";
+          saveState("background");
+          saveState("video-bg");
+          applyBackground();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Remove background video
+    const removeVideoBtn = document.getElementById("remove-video-btn");
+    removeVideoBtn.addEventListener("click", () => {
+      state.videoBg = "";
+      saveState("video-bg");
+      applyBackground();
     });
 
     // Modal Add Favorite events
@@ -1534,40 +1594,12 @@
       readDescInput.value = "";
     });
 
-    // Privacy details toggle
-    const toggleTrackerDetails = document.getElementById("toggle-tracker-details");
-    const trackerDetailsList = document.getElementById("tracker-details-list");
-    toggleTrackerDetails.addEventListener("click", () => {
-      if (trackerDetailsList.classList.contains("visible")) {
-        trackerDetailsList.classList.remove("visible");
-        toggleTrackerDetails.textContent = "Show Details";
-      } else {
-        trackerDetailsList.classList.add("visible");
-        toggleTrackerDetails.textContent = "Hide Details";
-      }
-    });
-
     // Render ETP Privacy stats dynamically
     function renderPrivacyReport(privacyStats) {
       if (!privacyStats) return;
       
       document.getElementById("stats-trackers-count").textContent = privacyStats.totalBlocked || 0;
       document.getElementById("stats-ratio").textContent = privacyStats.ratio || "0%";
-      
-      trackerDetailsList.innerHTML = "";
-      if (privacyStats.topDomains && privacyStats.topDomains.length > 0) {
-        privacyStats.topDomains.forEach(item => {
-          const row = document.createElement("div");
-          row.className = "tracker-row";
-          row.innerHTML = `
-            <span class="tracker-domain">${item.domain}</span>
-            <span class="tracker-count">${item.count} blocks</span>
-          `;
-          trackerDetailsList.appendChild(row);
-        });
-      } else {
-        trackerDetailsList.innerHTML = `<div style="text-align:center; padding:10px; color:var(--text-secondary);">No trackers blocked yet.</div>`;
-      }
     }
 
     // ─── Fetch-based data loading (Fission-safe) ───────────────────────────────

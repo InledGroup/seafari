@@ -174,7 +174,12 @@ cat <<EOF > "$DIST_DIR/policies.json"
     },
     "ExtensionSettings": {
       "ATBC@EasonWong": {
-        "installation_mode": "blocked"
+        "installation_mode": "normal_installed",
+        "install_url": "file:///usr/lib/seafari/distribution/extensions/ATBC@EasonWong.xpi"
+      },
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "normal_installed",
+        "install_url": "file:///usr/lib/seafari/distribution/extensions/uBlock0@raymondhill.net.xpi"
       }
     },
     "Preferences": {
@@ -413,6 +418,61 @@ try {
     return totalBlocked;
   }
 
+  // ---- User state bridge (newtab <-> profile JSON) ----------------------
+  // The newtab page saves its full state (including large background videos,
+  // which exceed localStorage quota) via the SeafariSaveData custom event.
+  // Chrome persists it to a JSON file in the profile and injects it back on
+  // load as realUserState.
+  function stateFilePath() {
+    var f = Components.classes["@mozilla.org/file/directory_service;1"]
+                      .getService(Components.interfaces.nsIProperties)
+                      .get("ProfD", Components.interfaces.nsIFile);
+    f.append("seafari-state.json");
+    return f;
+  }
+
+  function readUserState() {
+    try {
+      var f = stateFilePath();
+      if (!f.exists()) return null;
+      var fis = Components.classes["@mozilla.org/network/file-input-stream;1"]
+                          .createInstance(Components.interfaces.nsIFileInputStream);
+      fis.init(f, 0x01, 0, 0); // read-only
+      var data = "";
+      try {
+        var sis = Components.classes["@mozilla.org/scriptableinputstream;1"]
+                            .createInstance(Components.interfaces.nsIScriptableInputStream);
+        sis.init(fis);
+        data = sis.read(sis.available());
+        sis.close();
+      } finally {
+        fis.close();
+      }
+      return data ? JSON.parse(data) : null;
+    } catch(e) {
+      log("readUserState error: " + e);
+      return null;
+    }
+  }
+
+  function writeUserState(json) {
+    try {
+      var f = stateFilePath();
+      var fos = Components.classes["@mozilla.org/file/output-stream;1"]
+                          .createInstance(Components.interfaces.nsIFileOutputStream);
+      // write | create | truncate, mode 0666
+      fos.init(f, 0x02 | 0x08 | 0x20, 438, 0);
+      var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"]
+                                .createInstance(Components.interfaces.nsIConverterOutputStream);
+      converter.init(fos, "UTF-8", 0, 0);
+      converter.writeString(json);
+      converter.close();
+      log("writeUserState: saved " + json.length + " chars");
+    } catch(e) {
+      log("writeUserState error: " + e);
+    }
+  }
+
   function injectDataIntoNTP(doc) {
     try {
       log("injectDataIntoNTP called for " + doc.location.href);
@@ -435,6 +495,12 @@ try {
           { domain: "adnxs.com", count: Math.round(totalBlocked * 0.1) }
         ]
       };
+
+      var userState = readUserState();
+      if (userState) {
+        contentWindow.wrappedJSObject.realUserState = Components.utils.cloneInto(userState, contentWindow);
+        log("Injected realUserState into NTP");
+      }
 
       contentWindow.wrappedJSObject.realHistoryData = Components.utils.cloneInto(historyData, contentWindow);
       contentWindow.wrappedJSObject.realPrivacyStats = Components.utils.cloneInto(privacyData, contentWindow);
@@ -585,6 +651,25 @@ try {
           }
         } catch(e) {
           log("Error loading uBlock Origin: " + e);
+        }
+
+        // Dynamic installation of Adaptive Tab Bar Colour (ATBC)
+        try {
+          var fileATBC = Services.dirsvc.get("GreD", Components.interfaces.nsIFile);
+          fileATBC.append("distribution");
+          fileATBC.append("extensions");
+          fileATBC.append("ATBC@EasonWong.xpi");
+          if (fileATBC.exists() && AddonManager) {
+            AddonManager.installTemporaryAddon(fileATBC).then(function(addon) {
+              log("ATBC temporary addon installed successfully");
+            }).catch(function(e) {
+              log("Error installing ATBC: " + e);
+            });
+          } else {
+            log("ATBC xpi file not found at: " + fileATBC.path);
+          }
+        } catch(e) {
+          log("Error loading ATBC: " + e);
         }
 
         var file = Services.dirsvc.get("GreD", Components.interfaces.nsIFile);
@@ -1081,6 +1166,14 @@ try {
             injectDataIntoNTP(doc);
           }
         }, true);
+        window.gBrowser.addEventListener("SeafariSaveData", function(event) {
+          try {
+            var json = (event.detail && String(event.detail)) || "";
+            if (json) writeUserState(json);
+          } catch(e) {
+            log("SeafariSaveData handler error: " + e);
+          }
+        }, true);
         window._seafariRequestListenerAdded = true;
       }
     }
@@ -1233,6 +1326,167 @@ try {
 } catch (e) {
   // Silently handle startup exceptions in sandbox
 }
+
+// ============================================================
+// Seafari overlay: Safari-like scroll auto-hide and adaptive UI.
+// ------------------------------------------------------------
+// DESIGN:
+//   - At rest the toolbox is in flow (position: static, margin-top: 0).
+//     The page uses its original viewport height.
+//     The toolbar paints the page's adaptive background color
+//     (--gnome-toolbar-background / --lwt-accent-color).
+//   - Scroll DOWN -> toolbox smoothly slides up via margin-top collapse,
+//     smoothly vacating the space so #browser expands to 100% full
+//     window height.
+//   - Scroll UP / mouse near top edge (<45px) / URL bar focused /
+//     tab switch -> toolbox slides back down smoothly into flow.
+// ============================================================
+try {
+  function later(fn, ms) {
+    try {
+      var t = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+      t.initWithCallback({ notify: function() { try { fn(); } catch(e) {} } }, ms || 0, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+    } catch(e) { try { fn(); } catch(e2) {} }
+  }
+
+  function setupOverlayUI(win) {
+    try {
+      var doc = win.document;
+      var toolbox = doc.getElementById("navigator-toolbox");
+      if (!toolbox || win._seafariOverlayAdded) return;
+      win._seafariOverlayAdded = true;
+
+      var hidden = false;
+      function setHidden(h) {
+        h = !!h;
+        if (h === hidden) return;
+        hidden = h;
+        try {
+          if (h) {
+            updateToolboxHeight();
+            toolbox.classList.add("seafari-toolbox-hidden");
+          } else {
+            toolbox.classList.remove("seafari-toolbox-hidden");
+          }
+        } catch(e) {}
+        log("OVERLAY-HIDE " + hidden);
+      }
+
+      function updateToolboxHeight() {
+        try {
+          if (!toolbox.classList.contains("seafari-toolbox-hidden")) {
+            var rect = toolbox.getBoundingClientRect();
+            if (rect.height > 20) {
+              win.document.documentElement.style.setProperty("--seafari-toolbox-height", Math.round(rect.height) + "px");
+            }
+          }
+        } catch(e) {}
+      }
+      later(updateToolboxHeight, 500);
+      win.addEventListener("resize", function() { later(updateToolboxHeight, 100); });
+
+      var urlbar = doc.getElementById("urlbar");
+
+      function isTopProtected() {
+        try {
+          if (urlbar && doc.activeElement && urlbar.contains(doc.activeElement)) return true;
+          var popups = doc.querySelectorAll("menupopup[open], panel[open], #widget-overflow[open]");
+          if (popups && popups.length > 0) return true;
+        } catch(e) {}
+        return false;
+      }
+
+      // --- Wheel & Gesture Scroll Listener ---
+      var scrollAccum = 0;
+      var lastWheelTime = 0;
+      win.addEventListener("wheel", function(ev) {
+        try {
+          if (isTopProtected()) {
+            setHidden(false);
+            return;
+          }
+          var now = Date.now();
+          if (now - lastWheelTime > 350) scrollAccum = 0;
+          lastWheelTime = now;
+
+          scrollAccum += ev.deltaY;
+          if (scrollAccum > 35) {
+            setHidden(true);
+            scrollAccum = 0;
+          } else if (scrollAccum < -20) {
+            setHidden(false);
+            scrollAccum = 0;
+          }
+        } catch(e) {}
+      }, { capture: true, passive: true });
+
+      // --- Keydown Scroll Listener ---
+      win.addEventListener("keydown", function(ev) {
+        try {
+          if (isTopProtected()) return;
+          var target = ev.target;
+          var tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+          if (tag === "input" || tag === "textarea" || (target && target.isContentEditable)) return;
+
+          if (ev.key === "PageDown" || ev.key === "ArrowDown" || (ev.key === " " && !ev.shiftKey)) {
+            setHidden(true);
+          } else if (ev.key === "PageUp" || ev.key === "ArrowUp" || ev.key === "Home" || (ev.key === " " && ev.shiftKey)) {
+            setHidden(false);
+          }
+        } catch(e) {}
+      }, { capture: true, passive: true });
+
+      // --- Mouse near top edge (<45px) brings back toolbar ---
+      win.addEventListener("mousemove", function(ev) {
+        try {
+          if (ev.clientY < 45) {
+            setHidden(false);
+            scrollAccum = 0;
+          }
+        } catch(e) {}
+      }, { capture: true, passive: true });
+
+      // --- Tab switch / Navigation brings back toolbar & measures height ---
+      win.addEventListener("TabSelect", function() {
+        setHidden(false);
+        scrollAccum = 0;
+        later(updateToolboxHeight, 100);
+      }, true);
+
+      if (urlbar) {
+        urlbar.addEventListener("focusin", function() { setHidden(false); });
+        urlbar.addEventListener("focusout", function() { scrollAccum = 0; });
+      }
+
+    } catch(e) { log("setupOverlayUI error: " + e); }
+  }
+
+  var overlayObsSvc = Components.classes["@mozilla.org/observer-service;1"]
+                                 .getService(Components.interfaces.nsIObserverService);
+  var overlayObs = {
+    observe: function(aSubject) {
+      var w = aSubject;
+      w.addEventListener("load", function() {
+        if (w.location && w.location.href === "chrome://browser/content/browser.xhtml") {
+          setupOverlayUI(w);
+        }
+      }, { once: true });
+    }
+  };
+  overlayObsSvc.addObserver(overlayObs, "domwindowopened", false);
+
+  var overlayMediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                                   .getService(Components.interfaces.nsIWindowMediator);
+  var overlayWins = overlayMediator.getEnumerator("navigator:browser");
+  while (overlayWins.hasMoreElements()) {
+    var ow = overlayWins.getNext();
+    if (ow.location && ow.location.href === "chrome://browser/content/browser.xhtml") {
+      setupOverlayUI(ow);
+    }
+  }
+} catch (e) {
+  // Overlay UI is optional; never break startup
+}
 EOF
 
 echo "Preparing Theme Folder..."
@@ -1243,7 +1497,7 @@ cp "seafari.png" "$THEME_DIR/seafari.png"
 
 echo "Applying UI FIXES..."
 cat <<'EOF' > "$THEME_DIR/customChrome.css"
-@import "MacTahoe/theme.css";
+@import "MacTahoe/theme-adaptive.css";
 
 :root {
     --theme-primary-color: #0071e3 !important;
@@ -2460,10 +2714,35 @@ chmod +x "$WORKSPACE/seafari.sh"
 
 echo "Packaging .deb for $ARCH_TYPE..."
 DEB_ROOT="$WORKSPACE/deb"
-mkdir -p "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/lib/seafari" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps" "$DEB_ROOT/DEBIAN"
+mkdir -p "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/lib/seafari" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/DEBIAN" \
+    "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps" \
+    "$DEB_ROOT/usr/share/icons/hicolor/16x16/apps" \
+    "$DEB_ROOT/usr/share/icons/hicolor/32x32/apps" \
+    "$DEB_ROOT/usr/share/icons/hicolor/48x48/apps" \
+    "$DEB_ROOT/usr/share/icons/hicolor/64x64/apps" \
+    "$DEB_ROOT/usr/share/icons/hicolor/128x128/apps" \
+    "$DEB_ROOT/usr/share/icons/hicolor/256x256/apps"
 cp -r "$FIREFOX_DIR/"* "$DEB_ROOT/usr/lib/seafari/"
 cp "$WORKSPACE/seafari.sh" "$DEB_ROOT/usr/bin/seafari"
-cp "seafari.png" "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"
+# English: Install the Seafari icon in the standard hicolor locations so every
+# desktop environment (GNOME, KDE Plasma, XFCE...) can find it. The PNG is placed
+# both in scalable/apps (GTK fallback) and in fixed size dirs (preferred by KDE).
+# If ImageMagick is available, generate proper resized copies; otherwise reuse the
+# original PNG as a fallback.
+# Español: Instalar el icono de Seafari en las ubicaciones hicolor estándar para
+# que todos los entornos de escritorio (GNOME, KDE Plasma, XFCE...) puedan encontrarlo.
+# El PNG se coloca tanto en scalable/apps (respaldo GTK) como en directorios de
+# tamaño fijo (preferido por KDE). Si ImageMagick está disponible, se generan copias
+# redimensionadas; si no, se reutiliza el PNG original como respaldo.
+ICON_DIR="$DEB_ROOT/usr/share/icons/hicolor"
+for SIZE in 16 32 48 64 128 256; do
+    if command -v convert &> /dev/null; then
+        convert "$ROOT_DIR/seafari.png" -resize "${SIZE}x${SIZE}" "$ICON_DIR/${SIZE}x${SIZE}/apps/seafari.png"
+    else
+        cp "$ROOT_DIR/seafari.png" "$ICON_DIR/${SIZE}x${SIZE}/apps/seafari.png"
+    fi
+done
+cp "$ROOT_DIR/seafari.png" "$ICON_DIR/scalable/apps/seafari.png"
 cat <<EOF > "$DEB_ROOT/usr/share/applications/seafari.desktop"
 [Desktop Entry]
 Name=Seafari
@@ -2472,6 +2751,7 @@ Icon=seafari
 Terminal=false
 Type=Application
 Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/x-www-form-urlencoded;x-scheme-handler/http;x-scheme-handler/https;
 StartupWMClass=seafari
 EOF
 cat <<EOF > "$DEB_ROOT/DEBIAN/control"
@@ -2481,32 +2761,78 @@ Architecture: $DEB_ARCH
 Maintainer: Seafari Team
 Description: Seafari - Safari styled browser.
 EOF
+# English: Post-install script shared by the .deb, .rpm and pacman packages.
+# It regenerates the icon and desktop-file caches so the Seafari logo appears
+# right after installation (fpm pacman/rpm packages do not refresh them by default).
+# Español: Script post-instalación compartido por los paquetes .deb, .rpm y pacman.
+# Regenera las cachés de iconos y archivos .desktop para que el logo de Seafari
+# aparezca justo después de la instalación (los paquetes pacman/rpm de fpm no las
+# refrescan por defecto).
+POSTINSTALL="$WORKSPACE/seafari.postinst"
+cat <<'EOF' > "$POSTINSTALL"
+#!/bin/sh
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+fi
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database >/dev/null 2>&1 || true
+fi
+# Register Seafari as a browser so the OS offers it for web links.
+# Only become the default if the user has not chosen another browser yet.
+if command -v xdg-settings >/dev/null 2>&1; then
+    CURRENT_DEFAULT="$(xdg-settings get default-web-browser 2>/dev/null || true)"
+    if [ -z "$CURRENT_DEFAULT" ] || [ "$CURRENT_DEFAULT" = "unknown" ] || [ "$CURRENT_DEFAULT" = "firefox.desktop" ]; then
+        xdg-settings set default-web-browser seafari.desktop >/dev/null 2>&1 || true
+    fi
+fi
+if command -v xdg-mime >/dev/null 2>&1; then
+    xdg-mime default seafari.desktop text/html text/xml application/xhtml+xml x-scheme-handler/http x-scheme-handler/https >/dev/null 2>&1 || true
+fi
+exit 0
+EOF
+chmod +x "$POSTINSTALL"
+cp "$POSTINSTALL" "$DEB_ROOT/DEBIAN/postinst"
 dpkg-deb --build --root-owner-group "$DEB_ROOT" "seafari_${VERSION}_${DEB_ARCH}.deb"
 
 echo "Packaging .rpm and .pacman using fpm..."
+# English: Build the file mapping list for the hicolor icons (all sizes + scalable)
+# so rpm and pacman packages ship every icon location.
+# Español: Construir la lista de mapeo de archivos para los iconos hicolor (todos
+# los tamaños + scalable) para que los paquetes rpm y pacman incluyan todas las
+# ubicaciones de icono.
+ICON_MAPS=""
+for SIZE in 16 32 48 64 128 256; do
+    ICON_MAPS="$ICON_MAPS \"$DEB_ROOT/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/seafari.png\"=/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/seafari.png"
+done
+ICON_MAPS="$ICON_MAPS \"$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png\"=/usr/share/icons/hicolor/scalable/apps/seafari.png"
+
 # Ensure fpm is available or notify
 if command -v fpm &> /dev/null; then
     # RPM Packaging
-    fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
+    eval fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
         -p "seafari-${VERSION}-1.${RPM_ARCH}.rpm" \
         --description "Seafari - Safari styled browser" \
         --category "Network" \
         --license "MPL 2.0" \
+        --after-install "$POSTINSTALL" \
+        --after-upgrade "$POSTINSTALL" \
         "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
         "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
         "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png || true
+        $ICON_MAPS || true
 
     # Arch Linux (pacman) Packaging
-    fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
+    eval fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
         -p "seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst" \
         --description "Seafari - Safari styled browser" \
         --category "Network" \
         --license "MPL 2.0" \
+        --after-install "$POSTINSTALL" \
+        --after-upgrade "$POSTINSTALL" \
         "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
         "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
         "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png"=/usr/share/icons/hicolor/scalable/apps/seafari.png || true
+        $ICON_MAPS || true
 else
     echo "WARNING: fpm not found. Skipping RPM and Arch Linux packaging."
     echo "To install fpm: gem install fpm"
@@ -2533,3 +2859,7 @@ else
 fi
 
 echo "Build complete for $ARCH_TYPE."
+
+
+
+
