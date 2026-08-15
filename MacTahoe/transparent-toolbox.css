@@ -7,46 +7,46 @@
        paints the visited page's background color (adaptive from
        --lwt-accent-color / --gnome-toolbar-background).
      - On scroll DOWN the JS adds .seafari-toolbox-hidden: the
-       toolbox smoothly slides up via margin-top collapse, leaving
-       the viewport so #browser seamlessly expands to 100% full
+       toolbox smoothly slides up with a cubic-bezier transition,
+       vacating the space so #browser seamlessly expands to 100% full
        window height.
      - On scroll UP (or mouse near top / urlbar focus) the class
-       is removed: the toolbox returns to view smoothly.
+       is removed: the toolbox glides back down smoothly into view.
    ============================================================ */
 
 @namespace xul "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 :root {
-  --seafari-toolbox-height: 82px;
+  --seafari-toolbox-height: 84px;
   --seafari-toolbox-border: 1px solid color-mix(in srgb, var(--gnome-toolbar-border-color, currentColor) 12%, transparent) !important;
-  --seafari-toolbox-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  --seafari-toolbox-transition: 280ms cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
 /* ------------------------------------------------------------
    1. Default state: toolbox IN FLOW at top of window.
-   Page keeps its original viewport height.
+   Smooth slide up/down animation via margin-top transition.
    ------------------------------------------------------------ */
-#navigator-toolbox {
+:root #navigator-toolbox {
   position: static !important;
   top: auto !important;
   left: auto !important;
   right: auto !important;
   bottom: auto !important;
   transform: none !important;
-  margin-top: 0 !important;
-  transition: margin-top var(--seafari-toolbox-transition) !important;
+  margin-top: 0px !important;
+  transition: margin-top var(--seafari-toolbox-transition), background-color 200ms ease !important;
   will-change: margin-top !important;
   z-index: 10 !important;
 }
 
 /* Scroll-driven auto-hide: on scroll down, slides up out of window.
    #browser expands to full window height. */
-#navigator-toolbox.seafari-toolbox-hidden {
-  margin-top: calc(-1 * var(--seafari-toolbox-height, 82px)) !important;
+:root #navigator-toolbox.seafari-toolbox-hidden {
+  margin-top: calc(-1 * var(--seafari-toolbox-height, 84px)) !important;
   pointer-events: none !important;
 }
 
-#navigator-toolbox.seafari-toolbox-hidden * {
+:root #navigator-toolbox.seafari-toolbox-hidden * {
   pointer-events: none !important;
 }
 
@@ -70,7 +70,6 @@
   background-image: none !important;
   border-bottom: var(--seafari-toolbox-border) !important;
   box-shadow: none !important;
-  transition: background-color 200ms ease, margin-top var(--seafari-toolbox-transition) !important;
 }
 
 #navigator-toolbox:-moz-window-inactive,

@@ -16,7 +16,6 @@
 .notificationbox-stack {
 	color: var(--gnome-toolbar-color);
 	background: var(--gnome-toolbar-background) !important;
-	transition: none !important;
 }
 
 #navigator-toolbox {

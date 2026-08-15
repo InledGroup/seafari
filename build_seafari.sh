@@ -1396,7 +1396,7 @@ try {
         return false;
       }
 
-      // --- Wheel & Gesture Scroll Listener ---
+      // --- Instant Direction-Based Scroll Listener ---
       var scrollAccum = 0;
       var lastWheelTime = 0;
       win.addEventListener("wheel", function(ev) {
@@ -1406,16 +1406,21 @@ try {
             return;
           }
           var now = Date.now();
-          if (now - lastWheelTime > 350) scrollAccum = 0;
+          if (now - lastWheelTime > 250) scrollAccum = 0;
           lastWheelTime = now;
 
-          scrollAccum += ev.deltaY;
-          if (scrollAccum > 35) {
-            setHidden(true);
-            scrollAccum = 0;
-          } else if (scrollAccum < -20) {
-            setHidden(false);
-            scrollAccum = 0;
+          if (ev.deltaY > 0) {
+            scrollAccum = Math.max(0, scrollAccum) + ev.deltaY;
+            if (scrollAccum >= 5 || ev.deltaY >= 6) {
+              setHidden(true);
+              scrollAccum = 0;
+            }
+          } else if (ev.deltaY < 0) {
+            scrollAccum = Math.min(0, scrollAccum) + ev.deltaY;
+            if (scrollAccum <= -3 || ev.deltaY <= -4) {
+              setHidden(false);
+              scrollAccum = 0;
+            }
           }
         } catch(e) {}
       }, { capture: true, passive: true });
