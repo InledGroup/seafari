@@ -2862,7 +2862,7 @@ EOF
     # English: RPM package built with rpmbuild (no fpm needed).
     # Español: Paquete RPM construido con rpmbuild (sin necesidad de fpm).
     if command -v rpmbuild &> /dev/null; then
-        RPMBUILD_DIR="$WORKSPACE/rpmbuild"
+        RPMBUILD_DIR="$(readlink -f "$WORKSPACE/rpmbuild")"
         rm -rf "$RPMBUILD_DIR"
         mkdir -p "$RPMBUILD_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
         DEB_ROOT_ABS="$(readlink -f "$DEB_ROOT")"
