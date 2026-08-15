@@ -1,10 +1,25 @@
-# Seafari
+<div align="left">
+  <img src="seafari.png" alt="Seafari Logo" width="110" align="left" style="margin-right: 20px;">
+  <h1>Seafari</h1>
+</div>
 
 Seafari is a browser made on top of Mozilla Firefox. Gets daily updates from Mozilla source and is fully open-source.  
-Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.
+Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.  
 
-![Seafari Logo](seafari.png)
-![Seafari demo](demo.png)
+**We are proud to announce that Seafari is now the default browser for Pear OS**
+
+<p align="center">
+  <img src="seafari-pear-os.gif" alt="Seafari pear os" width="100%">
+</p>
+
+<p align="center">
+  <img src="demo-seafari-v2.6.gif" alt="Seafari demo" width="85%">
+</p>
+
+<p align="center">
+  <img src="demo.png" alt="Seafari demo" width="55%">
+</p>
+
 
 ##  It's different
 You're probably wondering why create a new browser when you can start from Gnome's Epiphany browser. The problem is that Epiphany does not support extensions and is blocked by some search engines.  
@@ -26,6 +41,11 @@ This way, Seafari is updated at the same time as Firefox. And you can audit how 
 Seafari is distributed with versions compatible with Debian, Fedora, Arch and their respective AMD and ARM architectures. A generic Appimage is also distributed.
 
 ## Changelog  
+
+### v2.6.*  
+- Now the top toolbox is automatically hidden when scrolling a page and reappears in the same way.
+- Added support for background videos in NTP
+- Correct link handling
 ### v2.5.*
 - New unified pills for button groups, like in Safari
 - uBlock Origin button next to the Firefox button
@@ -79,7 +99,7 @@ If you'd like to integrate Seafari into your distribution, we would greatly appr
 Feel free to contact us with any questions. We welcome pull requests and issues.
 
 ## Contribute!  
-Contributions and issues are welcome! You will become a contributor and we will give you appropriate credit for each post. Read more at[https://help.inled.es/help/contribute-to-inled-projects/](https://help.inled.es/help/contribute-to-inled-projects/)
+Contributions and issues are welcome! You will become a contributor and we will give you appropriate credit for each post. Read more at [https://help.inled.es/help/contribute-to-inled-projects/](https://help.inled.es/help/contribute-to-inled-projects/)
 
 ---
 v2.6
