@@ -42,7 +42,7 @@ Seafari is distributed with versions compatible with Debian, Fedora, Arch and th
 
 ## Changelog  
 
-### v2.6.*  
+### v2.7.*  
 - Now the top toolbox is automatically hidden when scrolling a page and reappears in the same way.
 - Added support for background videos in NTP
 - Correct link handling
