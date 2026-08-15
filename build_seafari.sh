@@ -2799,48 +2799,129 @@ chmod +x "$POSTINSTALL"
 cp "$POSTINSTALL" "$DEB_ROOT/DEBIAN/postinst"
 dpkg-deb --build --root-owner-group "$DEB_ROOT" "seafari_${VERSION}_${DEB_ARCH}.deb"
 
-echo "Packaging .rpm and .pacman using fpm..."
-# English: Build the file mapping list for the hicolor icons (all sizes + scalable)
-# so rpm and pacman packages ship every icon location.
-# Español: Construir la lista de mapeo de archivos para los iconos hicolor (todos
-# los tamaños + scalable) para que los paquetes rpm y pacman incluyan todas las
-# ubicaciones de icono.
-ICON_MAPS=""
-for SIZE in 16 32 48 64 128 256; do
-    ICON_MAPS="$ICON_MAPS \"$DEB_ROOT/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/seafari.png\"=/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/seafari.png"
-done
-ICON_MAPS="$ICON_MAPS \"$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/seafari.png\"=/usr/share/icons/hicolor/scalable/apps/seafari.png"
-
-# Ensure fpm is available or notify
-if command -v fpm &> /dev/null; then
-    # RPM Packaging
-    eval fpm -s dir -t rpm -n seafari -v $VERSION -a $RPM_ARCH \
-        -p "seafari-${VERSION}-1.${RPM_ARCH}.rpm" \
-        --description "Seafari - Safari styled browser" \
-        --category "Network" \
-        --license "MPL 2.0" \
-        --after-install "$POSTINSTALL" \
-        --after-upgrade "$POSTINSTALL" \
-        "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
-        "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
-        "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        $ICON_MAPS || true
-
-    # Arch Linux (pacman) Packaging
-    eval fpm -s dir -t pacman -n seafari -v $VERSION -a $RPM_ARCH \
-        -p "seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst" \
-        --description "Seafari - Safari styled browser" \
-        --category "Network" \
-        --license "MPL 2.0" \
-        --after-install "$POSTINSTALL" \
-        --after-upgrade "$POSTINSTALL" \
-        "$DEB_ROOT/usr/bin/seafari"=/usr/bin/seafari \
-        "$DEB_ROOT/usr/lib/seafari/"=/usr/lib/seafari \
-        "$DEB_ROOT/usr/share/applications/seafari.desktop"=/usr/share/applications/seafari.desktop \
-        $ICON_MAPS || true
+if [ "$SKIP_RPM" == "true" ]; then
+    echo "Skipping RPM and Arch Linux (pacman) packaging (--skip-rpm)..."
 else
-    echo "WARNING: fpm not found. Skipping RPM and Arch Linux packaging."
-    echo "To install fpm: gem install fpm"
+    echo "Packaging .rpm and .pkg.tar.zst..."
+
+    # English: Arch Linux (pacman) package built with bsdtar + zstd (no fpm needed).
+    # A .pkg.tar.zst is just a zstd-compressed tar, so these portable tools work on any distro.
+    # Español: Paquete de Arch Linux (pacman) construido con bsdtar + zstd (sin necesidad de fpm).
+    # Un .pkg.tar.zst es solo un tar comprimido con zstd, así que estas herramientas portables
+    # funcionan en cualquier distribución.
+    PKG_ROOT="$WORKSPACE/pkg"
+    rm -rf "$PKG_ROOT"
+    mkdir -p "$PKG_ROOT"
+    cp -a "$DEB_ROOT/usr" "$PKG_ROOT/"
+    PKG_SIZE=$(du -sk "$PKG_ROOT" | cut -f1)
+    PKG_DATE=$(date -u +%s)
+    cat > "$PKG_ROOT/.PKGINFO" <<EOF
+pkgname = seafari
+pkgver = ${VERSION}-1
+pkgdesc = Seafari - Safari styled browser.
+url =
+builddate = ${PKG_DATE}
+packager = Unknown Packager
+size = ${PKG_SIZE}
+arch = ${RPM_ARCH}
+license = MPL-2.0
+EOF
+    cat > "$PKG_ROOT/.INSTALL" <<'EOF'
+post_install() {
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+    fi
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database >/dev/null 2>&1 || true
+    fi
+    if command -v xdg-settings >/dev/null 2>&1; then
+        CURRENT_DEFAULT="$(xdg-settings get default-web-browser 2>/dev/null || true)"
+        if [ -z "$CURRENT_DEFAULT" ] || [ "$CURRENT_DEFAULT" = "unknown" ] || [ "$CURRENT_DEFAULT" = "firefox.desktop" ]; then
+            xdg-settings set default-web-browser seafari.desktop >/dev/null 2>&1 || true
+        fi
+    fi
+    if command -v xdg-mime >/dev/null 2>&1; then
+        xdg-mime default seafari.desktop text/html text/xml application/xhtml+xml x-scheme-handler/http x-scheme-handler/https >/dev/null 2>&1 || true
+    fi
+}
+post_upgrade() {
+    post_install
+}
+post_remove() {
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+    fi
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database >/dev/null 2>&1 || true
+    fi
+}
+EOF
+    ( cd "$PKG_ROOT" && bsdtar -cf - .PKGINFO .INSTALL usr ) | zstd -c -z -q -T0 -19 - > "seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+    echo "Created seafari-${VERSION}-1-${RPM_ARCH}.pkg.tar.zst"
+
+    # English: RPM package built with rpmbuild (no fpm needed).
+    # Español: Paquete RPM construido con rpmbuild (sin necesidad de fpm).
+    if command -v rpmbuild &> /dev/null; then
+        RPMBUILD_DIR="$WORKSPACE/rpmbuild"
+        rm -rf "$RPMBUILD_DIR"
+        mkdir -p "$RPMBUILD_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+        DEB_ROOT_ABS="$(readlink -f "$DEB_ROOT")"
+        SPEC="$RPMBUILD_DIR/SPECS/seafari.spec"
+        cat > "$SPEC" <<EOF
+Name:           seafari
+Version:        $VERSION
+Release:        1
+Summary:        Seafari - Safari styled browser
+License:        MPL-2.0
+URL:            https://github.com/InledGroup/seafari
+BuildArch:      $RPM_ARCH
+AutoReqProv:    no
+%global __os_install_post %{nil}
+
+%description
+Seafari - Safari styled browser.
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/usr
+cp -a $DEB_ROOT_ABS/usr/. %{buildroot}/usr/
+
+%post
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+fi
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database >/dev/null 2>&1 || true
+fi
+if command -v xdg-settings >/dev/null 2>&1; then
+    CURRENT_DEFAULT="\$(xdg-settings get default-web-browser 2>/dev/null || true)"
+    if [ -z "\$CURRENT_DEFAULT" ] || [ "\$CURRENT_DEFAULT" = "unknown" ] || [ "\$CURRENT_DEFAULT" = "firefox.desktop" ]; then
+        xdg-settings set default-web-browser seafari.desktop >/dev/null 2>&1 || true
+    fi
+fi
+if command -v xdg-mime >/dev/null 2>&1; then
+    xdg-mime default seafari.desktop text/html text/xml application/xhtml+xml x-scheme-handler/http x-scheme-handler/https >/dev/null 2>&1 || true
+fi
+exit 0
+
+%postun
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+fi
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database >/dev/null 2>&1 || true
+fi
+exit 0
+
+%files
+EOF
+        ( cd "$DEB_ROOT" && find usr -type f -print -o -type l -print | sed 's|^|/|' ) >> "$SPEC"
+        rpmbuild --define "_topdir $RPMBUILD_DIR" -bb "$SPEC"
+        cp "$RPMBUILD_DIR/RPMS/$RPM_ARCH/seafari-${VERSION}-1.${RPM_ARCH}.rpm" .
+        echo "Created seafari-${VERSION}-1.${RPM_ARCH}.rpm"
+    else
+        echo "WARNING: rpmbuild not found. Skipping RPM packaging."
+    fi
 fi
 
 if [ "$ARCH_TYPE" == "amd64" ]; then

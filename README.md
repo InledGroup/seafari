@@ -63,7 +63,7 @@ To build Seafari locally:
    git clone https://github.com/InledGroup/seafari.git
    cd seafari
    ```
-2. Run the build script (requires `dpkg-dev`, `binutils`, and `fpm` for RPM):
+2. Run the build script (requires `dpkg-dev`, `binutils`, and `rpmbuild` for RPM):
    ```bash
    ./build_seafari.sh amd64 --skip-rpm
    ```
