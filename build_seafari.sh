@@ -2874,7 +2874,6 @@ Release:        1
 Summary:        Seafari - Safari styled browser
 License:        MPL-2.0
 URL:            https://github.com/InledGroup/seafari
-BuildArch:      $RPM_ARCH
 AutoReqProv:    no
 %global __os_install_post %{nil}
 
@@ -2916,7 +2915,7 @@ exit 0
 %files
 EOF
         ( cd "$DEB_ROOT" && find usr -type f -print -o -type l -print | sed 's|^|/|' ) >> "$SPEC"
-        rpmbuild --define "_topdir $RPMBUILD_DIR" -bb "$SPEC"
+        rpmbuild --define "_topdir $RPMBUILD_DIR" --target "$RPM_ARCH" -bb "$SPEC"
         cp "$RPMBUILD_DIR/RPMS/$RPM_ARCH/seafari-${VERSION}-1.${RPM_ARCH}.rpm" .
         echo "Created seafari-${VERSION}-1.${RPM_ARCH}.rpm"
     else
