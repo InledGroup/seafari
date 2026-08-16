@@ -84,20 +84,16 @@ toolbarspring {
 
 /* URL bar results */
 .urlbarView {
-	background: var(--gnome-popover-background) !important;
+	background: var(--gnome-popover-solid-background, #ffffff) !important;
 	color: var(--gnome-toolbar-color) !important;
 	margin: 6px 0 0 0 !important;
 	width: 100% !important;
 	position: absolute !important;
-	box-shadow: var(--gnome-urlbar-box-shadow) !important;
-	border-radius: 16px !important;
-	border: 0 !important;
-}
-
-@media (prefers-color-scheme: dark) {
-	.urlbarView {
-		border: 1px solid rgba(255, 255, 255, 0.1) !important;
-	}
+	box-shadow: var(--gnome-popover-shadow, 0 10px 30px rgba(0, 0, 0, 0.15)) !important;
+	border-radius: 14px !important;
+	border: 1px solid var(--gnome-popover-border-color, rgba(0, 0, 0, 0.12)) !important;
+	overflow: hidden !important;
+	z-index: 99999 !important;
 }
 
 .urlbarView-body-outer {

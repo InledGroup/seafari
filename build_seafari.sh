@@ -68,20 +68,50 @@ fi
 CACHE_DIR="$ROOT_DIR/build_cache_$ARCH_TYPE"
 mkdir -p "$CACHE_DIR"
 
-if [ ! -f "$CACHE_DIR/firefox.tar.xz" ]; then
+check_tarball() {
+    local file="$1"
+    if [ -f "$file" ] && [ -s "$file" ]; then
+        if tar -tf "$file" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+check_xpi() {
+    local file="$1"
+    if [ -f "$file" ] && [ -s "$file" ]; then
+        if unzip -tq "$file" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+if ! check_tarball "$CACHE_DIR/firefox.tar.xz"; then
     echo "Downloading fresh Seafari base ($ARCH_TYPE)..."
-    wget -L -O "$CACHE_DIR/firefox.tar.xz" "$FF_URL"
+    rm -f "$CACHE_DIR/firefox.tar.xz" "$CACHE_DIR/firefox.tar.xz.tmp"
+    wget -L -O "$CACHE_DIR/firefox.tar.xz.tmp" "$FF_URL"
+    if check_tarball "$CACHE_DIR/firefox.tar.xz.tmp"; then
+        mv "$CACHE_DIR/firefox.tar.xz.tmp" "$CACHE_DIR/firefox.tar.xz"
+    else
+        echo "ERROR: Downloaded Seafari base tarball is corrupt or incomplete!"
+        rm -f "$CACHE_DIR/firefox.tar.xz.tmp"
+        exit 1
+    fi
 else
     echo "Using cached Seafari base tarball from $CACHE_DIR/firefox.tar.xz"
 fi
 
-if [ ! -f "$CACHE_DIR/ublock_origin.xpi" ]; then
+if ! check_xpi "$CACHE_DIR/ublock_origin.xpi"; then
     echo "Downloading uBlock Origin..."
+    rm -f "$CACHE_DIR/ublock_origin.xpi"
     wget -O "$CACHE_DIR/ublock_origin.xpi" "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
 fi
 
-if [ ! -f "$CACHE_DIR/adaptive_tab_bar_colour.xpi" ]; then
+if ! check_xpi "$CACHE_DIR/adaptive_tab_bar_colour.xpi"; then
     echo "Downloading Adaptive Tab Bar Colour..."
+    rm -f "$CACHE_DIR/adaptive_tab_bar_colour.xpi"
     wget -O "$CACHE_DIR/adaptive_tab_bar_colour.xpi" "https://addons.mozilla.org/firefox/downloads/file/4704834/adaptive_tab_bar_colour-3.3.2.xpi"
 fi
 
@@ -903,10 +933,12 @@ try {
     var extensionNodes = [];
     var menuNodes      = [];
 
-    var knownLeftIds = ["back-button", "forward-button"];
-    var knownMenuIds = ["new-tab-button", "tab-overview-button", "PanelUI-menu-button"];
-    var knownSkipIds = ["urlbar-container", "stop-reload-button",
-                        "sidebar-button", "developer-button"];
+    // Right pill: [new-tab | PanelUI-menu | tab-overview]
+    var knownLeftIds  = ["back-button", "forward-button"];
+    var knownMenuIds  = ["new-tab-button", "PanelUI-menu-button", "tab-overview-button"];
+    var knownSkipIds  = ["urlbar-container", "stop-reload-button",
+                         "sidebar-button", "developer-button",
+                         "fxa-toolbar-button", "unified-extensions-button"];
 
     var knownAll = {};
     knownLeftIds.forEach(function(id) { knownAll[id] = true; });
@@ -922,18 +954,26 @@ try {
       var node = findNode(id);
       if (node) leftNodes.push(node);
     });
+    // Right pill: explicit order new-tab → menu → tab-overview
     knownMenuIds.forEach(function(id) {
       var node = findNode(id);
       if (node) menuNodes.push(node);
     });
 
+    // Extensions pill: fxa first (explicit), then unified-extensions, then any unknown dynamic buttons
+    var fxaNode = findNode("fxa-toolbar-button");
+    var unifiedExtNode = findNode("unified-extensions-button");
+    if (fxaNode) extensionNodes.push(fxaNode);
+    if (unifiedExtNode) extensionNodes.push(unifiedExtNode);
+
     Array.from(navBar.children).forEach(function(node) {
       var id = node.id || "";
       if (knownSkipIds.indexOf(id) !== -1) return;
       if (id.indexOf("seafari-pill") === 0) return;
-      if (knownLeftIds.indexOf(id) !== -1) { leftNodes.push(node); return; }
-      if (knownMenuIds.indexOf(id) !== -1) { menuNodes.push(node); return; }
+      if (knownLeftIds.indexOf(id) !== -1) return;
+      if (knownMenuIds.indexOf(id) !== -1) return;
       if (knownAll[id]) return;
+      // Unknown buttons (user-installed extension buttons) → extensions pill
       extensionNodes.push(node);
     });
 
@@ -992,10 +1032,10 @@ try {
 
     // English: Re-append in precise order with pill wrappers
     // Español: Volver a añadir en orden preciso con wrappers de cápsula
-    // Layout: [Left pill] [UrlBar+Reload pill] [Extensions pill] [Menu pill]
-    var pillLeft      = makePill(document, "seafari-pill-left",      leftNodes);
+    // Layout: [Left pill] [UrlBar+Reload pill] [Ext pill] [Right pill: + | ☰ | 🗂]
+    var pillLeft       = makePill(document, "seafari-pill-left",       leftNodes);
     var pillExtensions = makePill(document, "seafari-pill-extensions", extensionNodes);
-    var pillMenu      = makePill(document, "seafari-pill-menu",      menuNodes);
+    var pillMenu       = makePill(document, "seafari-pill-menu",       menuNodes);
 
     // UrlBar + Reload share one pill
     var urlbarNodes = [];
@@ -1039,7 +1079,7 @@ try {
               var id = node.id || "";
               if (id.indexOf("seafari-pill") === 0) return;
               if (knownSkipIds.indexOf(id) !== -1) return;
-              if (knownLeftIds.indexOf(id) !== -1 || knownMenuIds.indexOf(id) !== -1 || knownAll[id]) return;
+              if (knownAll[id]) return;
               
               // This is an extension or custom button!
               log("Dynamic button added to toolbar: " + id + ". Moving to extensions pill...");
@@ -1451,16 +1491,51 @@ try {
         } catch(e) {}
       }, { capture: true, passive: true });
 
-      // --- Tab switch / Navigation brings back toolbar & measures height ---
+      // --- Dynamic Adaptive Toolbar Luminance Detector ---
+      function updateToolbarLuminance() {
+        try {
+          var bg = win.getComputedStyle(toolbox).backgroundColor || "";
+          var isDark = true;
+          var m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          if (m) {
+            var r = parseInt(m[1], 10);
+            var g = parseInt(m[2], 10);
+            var b = parseInt(m[3], 10);
+            var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            isDark = lum < 145;
+          }
+          var themeVal = isDark ? "dark" : "light";
+          if (doc.documentElement.getAttribute("seafari-toolbar-theme") !== themeVal) {
+            doc.documentElement.setAttribute("seafari-toolbar-theme", themeVal);
+          }
+        } catch(e) {}
+      }
+
+      updateToolbarLuminance();
+      later(updateToolbarLuminance, 100);
+      later(updateToolbarLuminance, 400);
+      later(updateToolbarLuminance, 1000);
+
+      // --- Tab switch / Navigation brings back toolbar & updates luminance ---
       win.addEventListener("TabSelect", function() {
         setHidden(false);
         scrollAccum = 0;
         later(updateToolboxHeight, 100);
+        later(updateToolbarLuminance, 50);
+        later(updateToolbarLuminance, 250);
       }, true);
 
+      try {
+        var lumObserver = new win.MutationObserver(function() {
+          updateToolbarLuminance();
+        });
+        lumObserver.observe(toolbox, { attributes: true, attributeFilter: ["style", "class"] });
+        lumObserver.observe(doc.documentElement, { attributes: true, attributeFilter: ["style", "class"] });
+      } catch(e) {}
+
       if (urlbar) {
-        urlbar.addEventListener("focusin", function() { setHidden(false); });
-        urlbar.addEventListener("focusout", function() { scrollAccum = 0; });
+        urlbar.addEventListener("focusin", function() { setHidden(false); updateToolbarLuminance(); });
+        urlbar.addEventListener("focusout", function() { scrollAccum = 0; updateToolbarLuminance(); });
       }
 
     } catch(e) { log("setupOverlayUI error: " + e); }
@@ -1499,547 +1574,6 @@ THEME_DIR="$FIREFOX_DIR/seafari-theme"
 mkdir -p "$THEME_DIR"
 cp -r MacTahoe userChrome.css userContent.css customChrome.css newtab.html "$THEME_DIR/"
 cp "seafari.png" "$THEME_DIR/seafari.png"
-
-echo "Applying UI FIXES..."
-cat <<'EOF' > "$THEME_DIR/customChrome.css"
-@import "MacTahoe/theme-adaptive.css";
-
-:root {
-    --theme-primary-color: #0071e3 !important;
-    --theme-primary-hover-color: #005dc2 !important;
-    --theme-primary-active-color: #004da6 !important;
-    --gnome-toolbar-icon-fill: var(--toolbar-color, #2e2e2e) !important;
-    --gnome-toolbar-color: var(--toolbar-color, #2e2e2e) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
-        --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
-    }
-}
-
-:root[brighttext] {
-    --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
-    --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
-}
-
-.toolbarbutton-icon:not(.webextension-action), 
-.urlbar-icon, 
-.identity-icon, 
-#identity-icon, 
-.button-icon:not(.webextension-action), 
-.menu-iconic-icon { 
-    fill: var(--gnome-toolbar-icon-fill) !important; 
-    color: var(--gnome-toolbar-color) !important; 
-}
-
-@media (prefers-color-scheme: dark) {
-    .toolbar-primary image, 
-    .urlbar-icon image, 
-    #nav-bar toolbarbutton:not(.webextension-action) image { 
-        filter: invert(1) brightness(100) !important; 
-    }
-}
-
-:root[brighttext] .toolbar-primary image, 
-:root[brighttext] .urlbar-icon image, 
-:root[brighttext] #nav-bar toolbarbutton:not(.webextension-action) image { 
-    filter: invert(1) brightness(100) !important; 
-}
-
-/* Ocultar iconos no deseados (escudo de protección de rastreo, barra lateral, etc.) */
-#tracking-protection-icon-container,
-#tracking-protection-icon-box,
-#tracking-protection-icon,
-#tracking-protection-icon-animatable-image,
-.tracking-protection-button,
-#fxa-toolbar-button,
-#sidebar-button,
-#developer-button,
-#nav-bar #fxa-toolbar-button,
-#nav-bar #sidebar-button,
-#nav-bar #developer-button,
-notification[value="addon-webextension-newtab"],
-#addon-webextension-newtab-notification,
-.notificationbox-stack notification[value="addon-webextension-newtab"] {
-    display: none !important;
-    visibility: collapse !important;
-    width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Hide extension indicator in URL bar when on extension pages (e.g. newtab) */
-/* Ocultar indicador de extensión en la barra de URL cuando se está en páginas de extensiones */
-#identity-box.extensionPage,
-#identity-box.extensionPage #identity-icon-box,
-#identity-box.extensionPage #identity-icon,
-#identity-box.extensionPage #identity-icon-label {
-    display: none !important;
-    visibility: collapse !important;
-    width: 0 !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Hide new tab button on tab strip to prevent duplication */
-/* Ocultar botón de nueva pestaña en la barra de pestañas para evitar duplicación */
-#tabs-newtab-button,
-.tabs-newtab-button {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-#about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
-#about-logo { width: 150px !important; height: 150px !important; display: block !important; }
-
-/* Ensure New Tab and Overview buttons are visible */
-#new-tab-button, #tab-overview-button {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: flex !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #new-tab-button, #tab-overview-button {
-        fill: var(--gnome-toolbar-icon-fill) !important;
-        color: var(--gnome-toolbar-color) !important;
-    }
-    #new-tab-button image, #tab-overview-button image {
-        fill: var(--gnome-toolbar-icon-fill) !important;
-        color: var(--gnome-toolbar-color) !important;
-        filter: invert(1) brightness(100) !important;
-    }
-}
-
-:root[brighttext] #new-tab-button image, :root[brighttext] #tab-overview-button image {
-    fill: var(--gnome-toolbar-icon-fill) !important;
-    color: var(--gnome-toolbar-color) !important;
-    filter: invert(1) brightness(100) !important;
-}
-
-#tab-overview-button {
-    list-style-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") !important;
-}
-
-/* Reload button style */
-#urlbar-container:not(#hack) {
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-}
-
-#nav-bar #stop-reload-button:not(#hack) {
-    margin: 0 4px !important;
-    padding: 0 !important;
-}
-
-#nav-bar #stop-reload-button > #reload-button,
-#nav-bar #stop-reload-button > #stop-button {
-    margin: 0 !important;
-}
-
-/* ============================================================
-   LIQUID GLASS PILL WRAPPERS
-   The hbox[seafari-pill] wrapper is what shows the glass pill.
-   Buttons INSIDE the wrapper are transparent and square.
-   Specificity must beat: #nav-bar toolbarbutton:not(...) { ... }
-   ============================================================ */
-
-/* Layout: urlbar pill fills remaining space via XUL flex attribute (set in JS) */
-#seafari-pill-urlbar {
-    min-width: 0 !important;
-}
-
-/* The pill wrapper itself — keep XUL -moz-box display so flex attribute works */
-#nav-bar hbox[seafari-pill] {
-    display: -moz-box !important;
-    -moz-box-align: center !important;
-    padding: 0 !important;
-    margin: 2px 4px !important;
-    height: 34px !important;
-    border-radius: 999px !important;
-    background: rgba(0, 0, 0, 0.06) !important;
-    border: 1px solid rgba(0, 0, 0, 0.10) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.07) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    overflow: visible !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #nav-bar hbox[seafari-pill] {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
-    }
-}
-
-:root[brighttext] #nav-bar hbox[seafari-pill] {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
-}
-
-/* Urlbar container inside pill: kill MacTahoe's individual pill shape */
-#nav-bar hbox[seafari-pill] #urlbar-container,
-#nav-bar hbox[seafari-pill] #urlbar,
-#nav-bar hbox[seafari-pill] #urlbar-input-container,
-#nav-bar hbox[seafari-pill] .urlbar-input-container,
-#nav-bar hbox[seafari-pill] #searchbar {
-    background: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-    padding: 0 4px !important;
-    height: 34px !important;
-    max-height: 34px !important;
-    transition: none !important;
-}
-
-/* Stop/reload button inside pill: kill MacTahoe's combined-buttons pill shape */
-#nav-bar hbox[seafari-pill] #stop-reload-button,
-#nav-bar hbox[seafari-pill] #stop-reload-button.toolbaritem-combined-buttons,
-#nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button,
-#nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button {
-    -moz-appearance: none !important;
-    appearance: none !important;
-    background: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-    padding: 0 4px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    height: 34px !important;
-    --button-border-radius: 0px !important;
-    --toolbarbutton-border-radius: 0px !important;
-    transition: none !important;
-}
-#nav-bar hbox[seafari-pill] #stop-reload-button::before,
-#nav-bar hbox[seafari-pill] #stop-reload-button::after,
-#nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button::before,
-#nav-bar hbox[seafari-pill] #stop-reload-button > #reload-button::after,
-#nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button::before,
-#nav-bar hbox[seafari-pill] #stop-reload-button > #stop-button::after {
-    display: none !important;
-    content: none !important;
-    background: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-}
-
-/* Buttons INSIDE the pill: transparent, no individual effects.
-   Uses DESCENDANT selector to catch buttons inside toolbaritem wrappers.
-   Selector specificity: 2-4-2 — beats MacTahoe's 2-3-1. */
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
-#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button),
-#nav-bar hbox[seafari-pill] > *:not(#urlbar-zoom-button):not(.subviewbutton):not(.titlebar-button):not(.close-button) {
-    -moz-appearance: none !important;
-    appearance: none !important;
-    background: transparent !important;
-    background-image: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    --button-border-radius: 0px !important;
-    --toolbarbutton-border-radius: 0px !important;
-    box-shadow: none !important;
-    outline: none !important;
-    margin: 0 !important;
-    padding: 0 6px !important;
-    min-width: 34px !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    display: -moz-box !important;
-    -moz-box-align: center !important;
-    -moz-box-pack: center !important;
-    flex-shrink: 0 !important;
-}
-
-/* Collapsed buttons MUST stay hidden — overrides the display above */
-#nav-bar hbox[seafari-pill] [collapsed="true"],
-#nav-bar hbox[seafari-pill] toolbarbutton[collapsed="true"],
-#nav-bar hbox[seafari-pill] toolbaritem[collapsed="true"] {
-    display: none !important;
-}
-
-/* Reset pseudo-elements */
-#nav-bar hbox[seafari-pill] toolbarbutton::before,
-#nav-bar hbox[seafari-pill] toolbarbutton::after,
-#nav-bar hbox[seafari-pill] toolbaritem::before,
-#nav-bar hbox[seafari-pill] toolbaritem::after {
-    display: none !important;
-    content: none !important;
-    background: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-}
-
-/* Hover */
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
-    background: rgba(0, 0, 0, 0.08) !important;
-    box-shadow: none !important;
-}
-
-/* Active / open / checked */
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-#nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
-    background: rgba(0, 0, 0, 0.14) !important;
-    box-shadow: none !important;
-}
-
-/* Disabled */
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button)[disabled] {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Inactive window */
-#nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):-moz-window-inactive {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-    }
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
-        background: rgba(255, 255, 255, 0.20) !important;
-    }
-}
-
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-}
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
-    background: rgba(255, 255, 255, 0.20) !important;
-}
-
-/* First and last buttons inside pill get rounded ends */
-#nav-bar hbox[seafari-pill] > *:first-child {
-    padding-left: 10px !important;
-}
-#nav-bar hbox[seafari-pill] > *:last-child {
-    padding-right: 10px !important;
-}
-
-/* Ensure the URL Bar has a small spacing and default right padding */
-#urlbar-input-container,
-.urlbar-input-container {
-    padding-right: 8px !important;
-}
-
-/* Tab close button white in dark mode */
-@media (prefers-color-scheme: dark) {
-    .tab-close-button {
-        fill: var(--gnome-toolbar-icon-fill) !important;
-        color: var(--gnome-toolbar-color) !important;
-        filter: invert(1) brightness(100) !important;
-    }
-}
-
-:root[brighttext] .tab-close-button {
-    filter: invert(1) brightness(100) !important;
-}
-
-/* Replace Seafari tab icon for New Tab */
-.tab-icon-image[src="chrome://branding/content/icon32.png"],
-.tab-icon-image[src="chrome://browser/skin/newtab/favicon.png"],
-.tab-icon-image[src="page-icon:about:newtab"],
-.tab-icon-image[src="page-icon:about:home"] {
-    content: url("seafari.png") !important;
-}
-
-/* English: Flat blue style with rounded corners for chrome primary/dialog buttons */
-/* Español: Estilo azul plano con bordes redondeados para botones primarios/diálogos de chrome */
-button,
-.button,
-moz-button {
-    border-radius: 999px !important;
-    --button-border-radius: 999px !important;
-    --button-border-radius-hover: 999px !important;
-    --button-border-radius-active: 999px !important;
-    --button-border-radius-large: 999px !important;
-    --button-border-radius-medium: 999px !important;
-    --button-border-radius-small: 999px !important;
-    --button-background-color-primary: #0071e3 !important;
-    --button-background-color-primary-hover: #005dc2 !important;
-    --button-background-color-primary-active: #004da6 !important;
-    --button-text-color-primary: white !important;
-}
-
-button.main-button,
-button[type="submit"],
-.button-primary,
-button.button-primary,
-button.primary,
-button.dialog-button[default="true"],
-.dialog-button-box button[default="true"],
-#updateSettingsContainer button:not(moz-button),
-#aboutwelcome-onboarding button:not(moz-button) {
-    background-color: #0071e3 !important;
-    background-image: none !important;
-    border: none !important;
-    color: white !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    cursor: pointer !important;
-}
-
-button.main-button:hover,
-button[type="submit"]:hover,
-.button-primary:hover,
-button.button-primary:hover,
-button.primary:hover,
-button.dialog-button[default="true"]:hover,
-.dialog-button-box button[default="true"]:hover,
-#updateSettingsContainer button:hover:not(moz-button),
-#aboutwelcome-onboarding button:hover:not(moz-button) {
-    background-color: #005dc2 !important;
-    background-image: none !important;
-    box-shadow: none !important;
-}
-
-button.main-button:active,
-button[type="submit"]:active,
-.button-primary:active,
-button.button-primary:active,
-button.primary:active,
-button.dialog-button[default="true"]:active,
-.dialog-button-box button[default="true"]:active,
-#updateSettingsContainer button:active:not(moz-button),
-#aboutwelcome-onboarding button:active:not(moz-button) {
-    background-color: #004da6 !important;
-    background-image: none !important;
-    box-shadow: none !important;
-}
-
-#ublock0_raymondhill_net-BAP {
-    min-width: 30px !important;
-    min-height: 30px !important;
-    margin: 3px 3px 3px 0 !important;
-    padding: 7px !important;
-    border-radius: 999px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: relative !important;
-}
-
-#urlbar:not([pageproxystate="valid"]) #ublock0_raymondhill_net-BAP {
-    display: none !important;
-}
-
-#ublock0_raymondhill_net-BAP #trust-label {
-    display: none !important;
-}
-
-#ublock0_raymondhill_net-BAP #trust-icon {
-    width: 16px !important;
-    height: 16px !important;
-    max-width: 16px !important;
-    max-height: 16px !important;
-}
-
-/* Style the real uBlock button when placed in the URL bar */
-#ublock0_raymondhill_net-browser-action,
-[id*="ublock"][id*="browser-action"],
-#ublock0_raymondhill_net-BAP {
-    min-width: 30px !important;
-    max-width: 30px !important;
-    width: 30px !important;
-    min-height: 30px !important;
-    max-height: 30px !important;
-    height: 30px !important;
-    margin: 2px 2px 2px 4px !important;
-    padding: 0 !important;
-    border-radius: 999px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: relative !important;
-    flex-grow: 0 !important;
-    flex-shrink: 0 !important;
-    -moz-box-flex: 0 !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-#ublock0_raymondhill_net-browser-action:hover,
-[id*="ublock"][id*="browser-action"]:hover,
-#ublock0_raymondhill_net-BAP:hover {
-    background: rgba(0, 0, 0, 0.08) !important;
-}
-
-#ublock0_raymondhill_net-browser-action:active,
-[id*="ublock"][id*="browser-action"]:active,
-#ublock0_raymondhill_net-BAP:active {
-    background: rgba(0, 0, 0, 0.14) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #ublock0_raymondhill_net-browser-action:hover,
-    [id*="ublock"][id*="browser-action"]:hover,
-    #ublock0_raymondhill_net-BAP:hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-    }
-    #ublock0_raymondhill_net-browser-action:active,
-    [id*="ublock"][id*="browser-action"]:active,
-    #ublock0_raymondhill_net-BAP:active {
-        background: rgba(255, 255, 255, 0.20) !important;
-    }
-}
-
-#ublock0_raymondhill_net-browser-action image,
-[id*="ublock"][id*="browser-action"] image {
-    width: 16px !important;
-    height: 16px !important;
-    max-width: 16px !important;
-    max-height: 16px !important;
-}
-
-#ublock0_raymondhill_net-browser-action .webextension-browser-action-badge,
-[id*="ublock"][id*="browser-action"] .webextension-browser-action-badge {
-    position: absolute !important;
-    top: 1px !important;
-    right: 1px !important;
-    background-color: var(--theme-primary-color, #0071e3) !important;
-    color: white !important;
-    font-size: 8px !important;
-    font-weight: bold !important;
-    padding: 1px 2px !important;
-    border-radius: 4px !important;
-    pointer-events: none !important;
-}
-EOF
 
 cat <<EOF >> "$THEME_DIR/userContent.css"
 @-moz-document url-prefix("about:welcome") {

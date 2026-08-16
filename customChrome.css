@@ -1,45 +1,140 @@
+/* ============================================================
+   DYNAMIC THEME COLORS (ADAPTIVE LIGHT / DARK)
+   ============================================================ */
+
 :root {
     --theme-primary-color: #0071e3 !important;
     --theme-primary-hover-color: #005dc2 !important;
     --theme-primary-active-color: #004da6 !important;
-    --gnome-toolbar-icon-fill: var(--toolbar-color, #2e2e2e) !important;
-    --gnome-toolbar-color: var(--toolbar-color, #2e2e2e) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
-        --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
-    }
-}
-
-:root[brighttext] {
     --gnome-toolbar-icon-fill: var(--toolbar-color, #ffffff) !important;
     --gnome-toolbar-color: var(--toolbar-color, #ffffff) !important;
 }
 
-.toolbarbutton-icon:not(.webextension-action), 
-.urlbar-icon, 
-.identity-icon, 
-#identity-icon, 
-.button-icon:not(.webextension-action), 
-.menu-iconic-icon { 
-    fill: var(--gnome-toolbar-icon-fill) !important; 
-    color: var(--gnome-toolbar-color) !important; 
+#nav-bar,
+#navigator-toolbox,
+#TabsToolbar,
+#PersonalToolbar {
+    color: var(--toolbar-color, #ffffff) !important;
+    fill: var(--toolbar-color, #ffffff) !important;
 }
 
-@media (prefers-color-scheme: dark) {
-    .toolbar-primary image, 
-    .urlbar-icon image, 
-    #nav-bar toolbarbutton:not(.webextension-action) image { 
-        filter: invert(1) brightness(100) !important; 
-    }
+#nav-bar toolbarbutton,
+#nav-bar toolbarbutton *,
+#nav-bar toolbaritem,
+#nav-bar toolbaritem *,
+#nav-bar hbox[seafari-pill] *,
+#new-tab-button,
+#new-tab-button *,
+#tab-overview-button,
+#tab-overview-button *,
+.tab-close-button,
+.tab-close-button * {
+    -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity !important;
 }
 
-:root[brighttext] .toolbar-primary image, 
-:root[brighttext] .urlbar-icon image, 
-:root[brighttext] #nav-bar toolbarbutton:not(.webextension-action) image { 
-    filter: invert(1) brightness(100) !important; 
+/* 1. DARK THEME / DEFAULT (for dark pages, Start Page / NTP, dark toolbox): WHITE ICONS */
+:root:not([seafari-toolbar-theme="light"]) #nav-bar,
+:root[seafari-toolbar-theme="dark"] #nav-bar,
+:root:not([seafari-toolbar-theme="light"]) #navigator-toolbox,
+:root[seafari-toolbar-theme="dark"] #navigator-toolbox {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+:root:not([seafari-toolbar-theme="light"]) #nav-bar toolbarbutton,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar toolbarbutton *,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar toolbaritem,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar toolbaritem *,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar image,
+:root:not([seafari-toolbar-theme="light"]) #new-tab-button,
+:root:not([seafari-toolbar-theme="light"]) #new-tab-button *,
+:root:not([seafari-toolbar-theme="light"]) #tab-overview-button,
+:root:not([seafari-toolbar-theme="light"]) #tab-overview-button *,
+:root:not([seafari-toolbar-theme="light"]) .tab-close-button,
+:root:not([seafari-toolbar-theme="light"]) .tab-close-button *,
+:root[seafari-toolbar-theme="dark"] #nav-bar toolbarbutton,
+:root[seafari-toolbar-theme="dark"] #nav-bar toolbarbutton *,
+:root[seafari-toolbar-theme="dark"] #nav-bar toolbaritem,
+:root[seafari-toolbar-theme="dark"] #nav-bar toolbaritem *,
+:root[seafari-toolbar-theme="dark"] #nav-bar image,
+:root[seafari-toolbar-theme="dark"] #new-tab-button,
+:root[seafari-toolbar-theme="dark"] #new-tab-button *,
+:root[seafari-toolbar-theme="dark"] #tab-overview-button,
+:root[seafari-toolbar-theme="dark"] #tab-overview-button *,
+:root[seafari-toolbar-theme="dark"] .tab-close-button,
+:root[seafari-toolbar-theme="dark"] .tab-close-button * {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity !important;
+}
+
+/* Force pure white rendering across any icon format in dark mode */
+:root:not([seafari-toolbar-theme="light"]) #nav-bar toolbarbutton:not([class*="webextension"]):not([id*="ublock"]) .toolbarbutton-icon,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar toolbarbutton:not([class*="webextension"]):not([id*="ublock"]) image,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar .urlbar-icon,
+:root:not([seafari-toolbar-theme="light"]) #nav-bar .identity-icon,
+:root:not([seafari-toolbar-theme="light"]) #new-tab-button image,
+:root:not([seafari-toolbar-theme="light"]) #tab-overview-button image,
+:root:not([seafari-toolbar-theme="light"]) #PanelUI-menu-button image,
+:root:not([seafari-toolbar-theme="light"]) .tab-close-button image,
+:root[seafari-toolbar-theme="dark"] #nav-bar toolbarbutton:not([class*="webextension"]):not([id*="ublock"]) .toolbarbutton-icon,
+:root[seafari-toolbar-theme="dark"] #nav-bar toolbarbutton:not([class*="webextension"]):not([id*="ublock"]) image,
+:root[seafari-toolbar-theme="dark"] #nav-bar .urlbar-icon,
+:root[seafari-toolbar-theme="dark"] #nav-bar .identity-icon,
+:root[seafari-toolbar-theme="dark"] #new-tab-button image,
+:root[seafari-toolbar-theme="dark"] #tab-overview-button image,
+:root[seafari-toolbar-theme="dark"] #PanelUI-menu-button image,
+:root[seafari-toolbar-theme="dark"] .tab-close-button image {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.92 !important;
+}
+
+/* 2. LIGHT THEME (when browsing white/light pages like Google, Wikipedia): DARK ICONS */
+:root[seafari-toolbar-theme="light"] {
+    --gnome-toolbar-icon-fill: #2e2e2e !important;
+    --gnome-toolbar-color: #2e2e2e !important;
+}
+
+:root[seafari-toolbar-theme="light"] #nav-bar,
+:root[seafari-toolbar-theme="light"] #navigator-toolbox {
+    color: #2e2e2e !important;
+    fill: #2e2e2e !important;
+}
+
+:root[seafari-toolbar-theme="light"] #nav-bar toolbarbutton,
+:root[seafari-toolbar-theme="light"] #nav-bar toolbarbutton *,
+:root[seafari-toolbar-theme="light"] #nav-bar toolbaritem,
+:root[seafari-toolbar-theme="light"] #nav-bar toolbaritem *,
+:root[seafari-toolbar-theme="light"] #nav-bar image,
+:root[seafari-toolbar-theme="light"] #new-tab-button,
+:root[seafari-toolbar-theme="light"] #new-tab-button *,
+:root[seafari-toolbar-theme="light"] #tab-overview-button,
+:root[seafari-toolbar-theme="light"] #tab-overview-button *,
+:root[seafari-toolbar-theme="light"] .tab-close-button,
+:root[seafari-toolbar-theme="light"] .tab-close-button * {
+    fill: #2e2e2e !important;
+    color: #2e2e2e !important;
+    stroke: #2e2e2e !important;
+    -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity !important;
+}
+
+/* Force pure dark rendering across any icon format in light mode */
+:root[seafari-toolbar-theme="light"] #nav-bar toolbarbutton:not([class*="webextension"]):not([id*="ublock"]) .toolbarbutton-icon,
+:root[seafari-toolbar-theme="light"] #nav-bar toolbarbutton:not([class*="webextension"]):not([id*="ublock"]) image,
+:root[seafari-toolbar-theme="light"] #nav-bar .urlbar-icon,
+:root[seafari-toolbar-theme="light"] #nav-bar .identity-icon,
+:root[seafari-toolbar-theme="light"] #new-tab-button image,
+:root[seafari-toolbar-theme="light"] #tab-overview-button image,
+:root[seafari-toolbar-theme="light"] #PanelUI-menu-button image,
+:root[seafari-toolbar-theme="light"] .tab-close-button image {
+    filter: brightness(0) !important;
+    opacity: 0.82 !important;
+}
+
+#nav-bar toolbarbutton:hover image,
+#nav-bar toolbarbutton:hover .toolbarbutton-icon {
+    opacity: 1 !important;
 }
 
 /* Hide unwanted icons (sidebar, developer button, and extension newtab warning) */
@@ -58,6 +153,28 @@ notification[value="addon-webextension-newtab"],
     padding: 0 !important;
 }
 
+/* Hide extension indicator in URL bar when on extension pages (e.g. newtab / NTP) */
+/* Ocultar indicador/pill de extensión en la barra de URL cuando se está en páginas de extensiones (como la NTP) */
+#identity-box.extensionPage,
+#identity-box.extensionPage #identity-icon-box,
+#identity-box.extensionPage #identity-icon,
+#identity-box.extensionPage #identity-icon-label,
+#identity-box.extensionPage #identity-permission-box,
+#identity-box[pageproxystate="valid"].extensionPage,
+#identity-box.extensionPage > *,
+#identity-permission-box,
+#urlbar[pageproxystate="valid"] #identity-box.extensionPage,
+#identity-icon-label,
+.identity-icon-label,
+#urlbar-label-box {
+    display: none !important;
+    visibility: collapse !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 /* Hide new tab button on tab strip to prevent duplication */
 /* Ocultar botón de nueva pestaña en la barra de pestañas para evitar duplicación */
 #tabs-newtab-button,
@@ -69,33 +186,149 @@ notification[value="addon-webextension-newtab"],
 #about-logo, .about-logo, #toolbar-delegate-logo, #about-logo-container, .brand-logo-container { background: url("seafari.png") no-repeat center !important; background-size: contain !important; }
 #about-logo { width: 150px !important; height: 150px !important; display: block !important; }
 
-/* Ensure New Tab and Overview buttons are visible */
+/* ============================================================
+   INLINE ADAPTIVE VECTOR ICONS (NATIVE CURRENTCOLOR)
+   Immune to file:// sandbox dropping of -moz-context-properties.
+   ============================================================ */
+
+/* Back button */
+#back-button,
+#back-button .toolbarbutton-icon,
+#back-button image,
+#nav-bar #back-button,
+#nav-bar #back-button .toolbarbutton-icon,
+#nav-bar #back-button image,
+#context-back {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m10.159 1.8416c0.128 0 0.256 0.048 0.354 0.146 0.196 0.196 0.196 0.511 0 0.707l-5.305 5.305 5.305 5.305c0.196 0.196 0.196 0.511 0 0.707s-0.511 0.196-0.707 0l-5.658-5.658c-0.196-0.196-0.196-0.511 0-0.707l5.658-5.658c0.098-0.098 0.226-0.146 0.354-0.146z'/%3E%3C/svg%3E") !important;
+}
+
+/* Forward button */
+#forward-button,
+#forward-button .toolbarbutton-icon,
+#forward-button image,
+#nav-bar #forward-button,
+#nav-bar #forward-button .toolbarbutton-icon,
+#nav-bar #forward-button image,
+#context-forward,
+#urlbar-go-button {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m4.842 1.8416c-0.128 0-0.256 0.048-0.354 0.146-0.196 0.196-0.196 0.511 0 0.707l5.305 5.305-5.305 5.305c-0.196 0.196-0.196 0.511 0 0.707s0.511 0.196 0.707 0l5.658-5.658c0.196-0.196 0.196-0.511 0-0.707l-5.658-5.658c-0.098-0.098-0.226-0.146-0.354-0.146z'/%3E%3C/svg%3E") !important;
+}
+
+/* Reload button */
+#reload-button,
+#reload-button .toolbarbutton-icon,
+#reload-button image,
+#stop-reload-button > #reload-button,
+#stop-reload-button > #reload-button .toolbarbutton-icon,
+#stop-reload-button > #reload-button image,
+#nav-bar #stop-reload-button > #reload-button {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cg fill='currentColor'%3E%3Cpath d='m8 3a6 6 0 0 0-6 6 6 6 0 0 0 6 6 6 6 0 0 0 6-6h-1a5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5z'/%3E%3Cpath d='m8.172 0.672-0.707 0.707 2.121 2.121-2.121 2.121 0.707 0.707 2.828-2.828-0.707-0.707z'/%3E%3Crect x='8' y='3' width='2' height='1'/%3E%3C/g%3E%3C/svg%3E") !important;
+}
+
+/* Stop button */
+#stop-button,
+#stop-button .toolbarbutton-icon,
+#stop-button image,
+#stop-reload-button > #stop-button,
+#stop-reload-button > #stop-button .toolbarbutton-icon,
+#stop-reload-button > #stop-button image,
+#nav-bar #stop-reload-button > #stop-button {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m3.5 2.086-1.414 1.414 4.5 4.5-4.5 4.5 1.414 1.414 4.5-4.5 4.5 4.5 1.414-1.414-4.5-4.5 4.5-4.5-1.414-1.414-4.5 4.5z'/%3E%3C/svg%3E") !important;
+}
+
+/* New Tab button */
+#new-tab-button,
+#new-tab-button .toolbarbutton-icon,
+#new-tab-button image,
+.tabs-newtab-button,
+.tabs-newtab-button .toolbarbutton-icon,
+.tabs-newtab-button image,
+#tabs-newtab-button,
+#tabs-newtab-button .toolbarbutton-icon,
+#tabs-newtab-button image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='M8 2a1 1 0 0 0-1 1v4H3a1 1 0 0 0 0 2h4v4a1 1 0 0 0 2 0V9h4a1 1 0 0 0 0-2H9V3a1 1 0 0 0-1-1z'/%3E%3C/svg%3E") !important;
+}
+
+/* Menu button (Hamburger) */
+#PanelUI-menu-button,
+#PanelUI-menu-button .toolbarbutton-icon,
+#PanelUI-menu-button image,
+#PanelUI-menu-button .toolbarbutton-badge-stack {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cg fill='currentColor'%3E%3Crect x='2' y='3.5' width='12' height='1.5' rx='.75'/%3E%3Crect x='2' y='7.25' width='12' height='1.5' rx='.75'/%3E%3Crect x='2' y='11' width='12' height='1.5' rx='.75'/%3E%3C/g%3E%3C/svg%3E") !important;
+}
+
+/* Unified Extensions (Puzzle piece) */
+#unified-extensions-button,
+#unified-extensions-button .toolbarbutton-icon,
+#unified-extensions-button image,
+#add-ons-button,
+#add-ons-button .toolbarbutton-icon,
+#add-ons-button image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m7 0c-1.108 0-2 0.892-2 2v1h-2.154c-1.023 0-1.846 0.823-1.846 1.846v2.154 1h2c0.554 0 1 0.446 1 1s-0.446 1-1 1h-2v1 2.154c0 1.023 0.823 1.846 1.846 1.846h2.154 1v-2c0-0.554 0.446-1 1-1s1 0.446 1 1v2h1 2.154c1.023 0 1.846-0.823 1.846-1.846v-2.154h1c1.108 0 2-0.892 2-2s-0.892-2-2-2h-1v-2.154c0-1.023-0.823-1.846-1.846-1.846h-2.154v-1c0-1.108-0.892-2-2-2zm0 1c0.554 0 1 0.446 1 1v2h1 2c0.554 0 1 0.446 1 1v2 1h2c0.554 0 1 0.446 1 1s-0.446 1-1 1h-2v1 2c0 0.554-0.446 1-1 1h-2v-1c0-1.108-0.892-2-2-2s-2 0.892-2 2v1h-2c-0.554 0-1-0.446-1-1v-2h1c1.108 0 2-0.892 2-2s-0.892-2-2-2h-1v-2c0-0.554 0.446-1 1-1h2 1v-2c0-0.554 0.446-1 1-1z'/%3E%3C/svg%3E") !important;
+}
+
+/* User Account / Avatar */
+#fxa-toolbar-button,
+#fxa-toolbar-button .toolbarbutton-icon,
+#fxa-toolbar-button image,
+#fxa-avatar-image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m8 1a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm0 1a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm-5 8c-1.1 0-2 0.9-2 2v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2c0-1.1-0.9-2-2-2h-10zm0 1h10a1 1 0 0 1 1 1v1h-12v-1a1 1 0 0 1 1-1z'/%3E%3C/svg%3E") !important;
+}
+
+/* Bookmarks Star */
+#star-button,
+#star-button .toolbarbutton-icon,
+#star-button image,
+#star-button-box,
+#star-button-box image,
+#star-button-box .urlbar-icon {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m8.06 0.842a0.5 0.5 0 0 0-0.521 0.276l-2.038 4.152-4.575 0.676a0.5 0.5 0 0 0-0.274 0.853l3.32 3.22-0.771 4.56a0.5 0.5 0 0 0 0.727 0.527l4.088-2.163 4.099 2.143a0.5 0.5 0 0 0 0.724-0.529l-0.793-4.556 3.304-3.236a0.5 0.5 0 0 0-0.279-0.852l-4.578-0.655-2.057-4.143a0.5 0.5 0 0 0-0.376-0.272zm-0.07 1.626 1.724 3.47a0.5 0.5 0 0 0 0.377 0.273l3.836 0.547-2.769 2.711a0.5 0.5 0 0 0-0.143 0.444l0.664 3.816-3.434-1.795a0.5 0.5 0 0 0-0.465 0.002l-3.426 1.812 0.647-3.821a0.5 0.5 0 0 0-0.145-0.442l-2.78-2.699 3.831-0.565a0.5 0.5 0 0 0 0.376-0.276z'/%3E%3C/svg%3E") !important;
+}
+
+/* Tracking Protection Shield */
+#tracking-protection-icon,
+#tracking-protection-icon-box,
+#tracking-protection-icon-box image,
+#tracking-protection-icon-container,
+#tracking-protection-icon-container image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m8 0.352a1 1 0 0 0-0.371 0.072l-5 2a1 1 0 0 0-0.629 0.928v7c0 0.917 0.5 1.613 1.055 2.201s1.231 1.094 1.895 1.531c1.328 0.875 2.633 1.473 2.633 1.473a1 1 0 0 0 0.836 0s1.305-0.597 2.633-1.473c0.664-0.438 1.34-0.943 1.895-1.531 0.555-0.588 1.055-1.285 1.055-2.201v-7a1 1 0 0 0-0.629-0.928l-5-2a1 1 0 0 0-0.371-0.072zm0 1 5 2v7c0 2-5 4.297-5 4.297v-13.297z'/%3E%3C/svg%3E") !important;
+}
+
+/* Translations */
+#translations-button,
+#translations-button-icon,
+#translations-button image,
+#translations-button .urlbar-icon {
+    list-style-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='m4 0v2h-4v1h7.088c-0.328 1.217-1.052 3.17-2.588 4.961-1.161-1.355-1.859-2.806-2.273-3.961h-1.045c0.442 1.318 1.238 3.07 2.639 4.686-0.766 0.75-1.694 1.445-2.82 2.012v1.109c1.42-0.648 2.57-1.485 3.5-2.398 0.971 0.954 2.184 1.825 3.693 2.484l-1.897 4.107h1.1l1.385-3h4.438l1.385 3h1.1l-4.152-8.998v-0.002h-1.1l-1.84 3.984c-1.407-0.611-2.533-1.418-3.434-2.301 1.798-2.073 2.599-4.366 2.936-5.684h0.887v-1h-4v-2h-1zm7 8.191 1.758 3.809h-3.516l1.758-3.809z'/%3E%3C/svg%3E") !important;
+}
+
+/* Tab Close button */
+.tab-close-button,
+.tab-close-button .toolbarbutton-icon,
+.tab-close-button image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m4.5 3.086-1.414 1.414 3.5 3.5-3.5 3.5 1.414 1.414 3.5-3.5 3.5 3.5 1.414-1.414-3.5-3.5 3.5-3.5-1.414-1.414-3.5 3.5z'/%3E%3C/svg%3E") !important;
+}
+
+/* Identity Lock / Globe icon */
+#identity-icon,
+#identity-icon .toolbarbutton-icon,
+#identity-icon-box image,
+#identity-box image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='m8 1a4 4 0 0 0-4 4v2h-1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-1v-2a4 4 0 0 0-4-4zm0 1.2a2.8 2.8 0 0 1 2.8 2.8v2h-5.6v-2a2.8 2.8 0 0 1 2.8-2.8zm-4 6.8h8v5.6h-8z'/%3E%3C/svg%3E") !important;
+}
+
+/* Tab Overview button */
+#tab-overview-button,
+#tab-overview-button .toolbarbutton-icon,
+#tab-overview-button image {
+    list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") !important;
+}
+
+/* Ensure New Tab and Overview buttons are visible and adapt properly */
 #new-tab-button, #tab-overview-button {
     visibility: visible !important;
     opacity: 1 !important;
     display: flex !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #new-tab-button, #tab-overview-button {
-        fill: var(--gnome-toolbar-icon-fill) !important;
-        color: var(--gnome-toolbar-color) !important;
-    }
-    #new-tab-button image, #tab-overview-button image {
-        fill: var(--gnome-toolbar-icon-fill) !important;
-        color: var(--gnome-toolbar-color) !important;
-        filter: invert(1) brightness(100) !important;
-    }
-}
-
-:root[brighttext] #new-tab-button image, :root[brighttext] #tab-overview-button image {
-    fill: var(--gnome-toolbar-icon-fill) !important;
-    color: var(--gnome-toolbar-color) !important;
-    filter: invert(1) brightness(100) !important;
-}
-
-#tab-overview-button {
-    list-style-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") !important;
 }
 
 #urlbar-container:not(#hack) {
@@ -113,111 +346,47 @@ notification[value="addon-webextension-newtab"],
     margin: 0 !important;
 }
 
-/* --- Unified Left Button Group (Liquid Glass Capsule/Bubble) --- */
+/* --- Unified Left Button Group & Liquid Glass Capsules --- */
 #nav-bar toolbarbutton#back-button:not(#hack),
-#nav-bar toolbarbutton#forward-button:not(#hack) {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+#nav-bar toolbarbutton#forward-button:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
+#nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 8%, transparent) !important;
     border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 10px !important;
     min-width: 38px !important;
     min-height: 34px !important;
     height: 34px !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
-    border-left: none !important;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--toolbar-color, currentColor) 12%, transparent), 0 1px 3px rgba(0,0,0,0.06) !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
 #nav-bar toolbarbutton#back-button:hover:not(#hack),
-#nav-bar toolbarbutton#forward-button:hover:not(#hack) {
-    background: rgba(0, 0, 0, 0.1) !important;
-}
-#nav-bar toolbarbutton#back-button:active:not(#hack),
-#nav-bar toolbarbutton#forward-button:active:not(#hack) {
-    background: rgba(0, 0, 0, 0.15) !important;
-}
-
-    #nav-bar toolbarbutton#back-button:not(#hack),
-    #nav-bar toolbarbutton#forward-button:not(#hack) {
-        border-radius: 0 !important;
-    }
-}
-
-/* --- Liquid Glass Capsules General Style --- */
-#nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
-#nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
-#nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 10px !important;
-    min-width: 38px !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 3px rgba(0,0,0,0.05) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
+#nav-bar toolbarbutton#forward-button:hover:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-left]:hover:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-mid]:hover:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-right]:hover:not(#hack) {
-    background: rgba(0, 0, 0, 0.1) !important;
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 14%, transparent) !important;
 }
 
+#nav-bar toolbarbutton#back-button:active:not(#hack),
+#nav-bar toolbarbutton#forward-button:active:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-left]:active:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-mid]:active:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-right]:active:not(#hack) {
-    background: rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Dark Mode Liquid Glass */
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
-        background: rgba(255, 255, 255, 0.07) !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-    }
-    #nav-bar toolbarbutton[seafari-capsule-left]:hover:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid]:hover:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right]:hover:not(#hack) {
-        background: rgba(255, 255, 255, 0.15) !important;
-    }
-    #nav-bar toolbarbutton[seafari-capsule-left]:active:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid]:active:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right]:active:not(#hack) {
-        background: rgba(255, 255, 255, 0.22) !important;
-    }
-}
-
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right]:not(#hack) {
-    background: rgba(255, 255, 255, 0.07) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.2) !important;
-}
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left]:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid]:hover:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right]:hover:not(#hack) {
-    background: rgba(255, 255, 255, 0.16) !important;
-}
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left]:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid]:active:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right]:active:not(#hack) {
-    background: rgba(255, 255, 255, 0.22) !important;
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 22%, transparent) !important;
 }
 
 /* Border positioning (no internal divider lines) */
-/* Light Mode Borders */
 #nav-bar toolbarbutton[seafari-capsule-left="left"]:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-mid="left"]:not(#hack),
-#nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack) {
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+#nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack),
+#nav-bar toolbarbutton#back-button:not(#hack) {
+    border: 1px solid color-mix(in srgb, var(--toolbar-color, currentColor) 14%, transparent) !important;
     border-right: none !important;
     border-top-left-radius: 999px !important;
     border-bottom-left-radius: 999px !important;
@@ -226,14 +395,15 @@ notification[value="addon-webextension-newtab"],
 #nav-bar toolbarbutton[seafari-capsule-left="middle"]:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-mid="middle"]:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-right="middle"]:not(#hack) {
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid color-mix(in srgb, var(--toolbar-color, currentColor) 14%, transparent) !important;
     border-left: none !important;
     border-right: none !important;
 }
 #nav-bar toolbarbutton[seafari-capsule-left="right"]:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-mid="right"]:not(#hack),
-#nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack) {
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+#nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack),
+#nav-bar toolbarbutton#forward-button:not(#hack) {
+    border: 1px solid color-mix(in srgb, var(--toolbar-color, currentColor) 14%, transparent) !important;
     border-left: none !important;
     border-top-right-radius: 999px !important;
     border-bottom-right-radius: 999px !important;
@@ -242,62 +412,9 @@ notification[value="addon-webextension-newtab"],
 #nav-bar toolbarbutton[seafari-capsule-left="single"]:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-mid="single"]:not(#hack),
 #nav-bar toolbarbutton[seafari-capsule-right="single"]:not(#hack) {
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid color-mix(in srgb, var(--toolbar-color, currentColor) 14%, transparent) !important;
     border-radius: 999px !important;
     padding: 0 14px !important;
-}
-
-/* Dark Mode Borders */
-@media (prefers-color-scheme: dark) {
-    #nav-bar toolbarbutton[seafari-capsule-left="left"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid="left"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack) {
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-right: none !important;
-    }
-    #nav-bar toolbarbutton[seafari-capsule-left="middle"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid="middle"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right="middle"]:not(#hack) {
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-left: none !important;
-        border-right: none !important;
-    }
-    #nav-bar toolbarbutton[seafari-capsule-left="right"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid="right"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack) {
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-left: none !important;
-    }
-    #nav-bar toolbarbutton[seafari-capsule-left="single"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-mid="single"]:not(#hack),
-    #nav-bar toolbarbutton[seafari-capsule-right="single"]:not(#hack) {
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    }
-}
-
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="left"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="left"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="left"]:not(#hack) {
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-right: none !important;
-}
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="middle"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="middle"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="middle"]:not(#hack) {
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-left: none !important;
-    border-right: none !important;
-}
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="right"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="right"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="right"]:not(#hack) {
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-left: none !important;
-}
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-left="single"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-mid="single"]:not(#hack),
-:root[brighttext] #nav-bar toolbarbutton[seafari-capsule-right="single"]:not(#hack) {
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Ensure the URL Bar has a small spacing and default right padding */
@@ -306,17 +423,12 @@ notification[value="addon-webextension-newtab"],
     padding-right: 8px !important;
 }
 
-/* Tab close button white in dark mode */
-@media (prefers-color-scheme: dark) {
-    .tab-close-button {
-        fill: var(--gnome-toolbar-icon-fill) !important;
-        color: var(--gnome-toolbar-color) !important;
-        filter: invert(1) brightness(100) !important;
-    }
-}
-
-:root[brighttext] .tab-close-button {
-    filter: invert(1) brightness(100) !important;
+/* Tab close button adaptive color */
+.tab-close-button {
+    fill: var(--toolbar-color, var(--gnome-toolbar-icon-fill)) !important;
+    color: var(--toolbar-color, var(--gnome-toolbar-color)) !important;
+    stroke: var(--toolbar-color, var(--gnome-toolbar-color)) !important;
+    -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity !important;
 }
 
 /* Replace Seafari tab icon for New Tab */
@@ -410,26 +522,12 @@ button.dialog-button[default="true"]:active,
     margin: 2px 4px !important;
     height: 34px !important;
     border-radius: 999px !important;
-    background: rgba(0, 0, 0, 0.06) !important;
-    border: 1px solid rgba(0, 0, 0, 0.10) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.07) !important;
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 8%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--toolbar-color, currentColor) 14%, transparent) !important;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--toolbar-color, currentColor) 12%, transparent), 0 1px 4px rgba(0,0,0,0.08) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     overflow: visible !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #nav-bar hbox[seafari-pill] {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
-    }
-}
-
-:root[brighttext] #nav-bar hbox[seafari-pill] {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25) !important;
 }
 
 /* Urlbar container inside pill: kill MacTahoe's individual pill shape */
@@ -445,9 +543,22 @@ button.dialog-button[default="true"]:active,
     border: none !important;
     margin: 0 !important;
     padding: 0 4px !important;
+    transition: none !important;
+}
+
+#nav-bar hbox[seafari-pill] #urlbar-container,
+#nav-bar hbox[seafari-pill] #urlbar:not([open]),
+#nav-bar hbox[seafari-pill] #urlbar-input-container,
+#nav-bar hbox[seafari-pill] .urlbar-input-container,
+#nav-bar hbox[seafari-pill] #searchbar {
     height: 34px !important;
     max-height: 34px !important;
-    transition: none !important;
+}
+
+#nav-bar hbox[seafari-pill] #urlbar[open] {
+    height: auto !important;
+    max-height: unset !important;
+    background: transparent !important;
 }
 
 /* Stop/reload button inside pill: kill MacTahoe's combined-buttons pill shape */
@@ -535,7 +646,7 @@ button.dialog-button[default="true"]:active,
 /* Hover — specificity 2-7-2, beats MacTahoe's 2-6-1 */
 #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
 #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
-    background: rgba(0, 0, 0, 0.08) !important;
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 12%, transparent) !important;
     box-shadow: none !important;
 }
 
@@ -546,7 +657,7 @@ button.dialog-button[default="true"]:active,
 #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
 #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
 #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
-    background: rgba(0, 0, 0, 0.14) !important;
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 20%, transparent) !important;
     box-shadow: none !important;
 }
 
@@ -560,34 +671,6 @@ button.dialog-button[default="true"]:active,
 #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):-moz-window-inactive {
     background: transparent !important;
     box-shadow: none !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-    }
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-    #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-    #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
-        background: rgba(255, 255, 255, 0.20) !important;
-    }
-}
-
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover,
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([open]):not([disabled]):not([checked]):hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-}
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbarbutton:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked],
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled]):not(#hack):active,
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[open],
-:root[brighttext] #nav-bar hbox[seafari-pill] toolbaritem:not(#urlbar-zoom-button):not(.titlebar-button):not(.close-button):not([disabled])[checked] {
-    background: rgba(255, 255, 255, 0.20) !important;
 }
 
 /* First and last buttons inside pill get rounded ends */
@@ -628,26 +711,13 @@ button.dialog-button[default="true"]:active,
 #ublock0_raymondhill_net-browser-action:hover,
 [id*="ublock"][id*="browser-action"]:hover,
 #ublock0_raymondhill_net-BAP:hover {
-    background: rgba(0, 0, 0, 0.08) !important;
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 12%, transparent) !important;
 }
 
 #ublock0_raymondhill_net-browser-action:active,
 [id*="ublock"][id*="browser-action"]:active,
 #ublock0_raymondhill_net-BAP:active {
-    background: rgba(0, 0, 0, 0.14) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    #ublock0_raymondhill_net-browser-action:hover,
-    [id*="ublock"][id*="browser-action"]:hover,
-    #ublock0_raymondhill_net-BAP:hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-    }
-    #ublock0_raymondhill_net-browser-action:active,
-    [id*="ublock"][id*="browser-action"]:active,
-    #ublock0_raymondhill_net-BAP:active {
-        background: rgba(255, 255, 255, 0.20) !important;
-    }
+    background: color-mix(in srgb, var(--toolbar-color, currentColor) 20%, transparent) !important;
 }
 
 #ublock0_raymondhill_net-browser-action image,
@@ -672,3 +742,135 @@ button.dialog-button[default="true"]:active,
     pointer-events: none !important;
 }
 
+/* ============================================================
+   ADDRESS BAR RESULTS DROPDOWN (SOLID & OPAQUE)
+   Fixes transparent dropdown in all theme modes.
+   ============================================================ */
+
+/* Base urlbar dropdown container */
+.urlbarView {
+    background: #ffffff !important;
+    color: #1c1c1e !important;
+    margin: 6px 0 0 0 !important;
+    width: 100% !important;
+    position: absolute !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    overflow: hidden !important;
+    z-index: 99999 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .urlbarView {
+        background: #252528 !important;
+        color: #f5f5f7 !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+    }
+}
+
+.urlbarView-body-outer {
+    --item-padding-start: 0 !important;
+    --item-padding-end: 0 !important;
+    max-height: 50vh !important;
+    overflow-x: hidden !important;
+    padding: 6px !important;
+    background: transparent !important;
+}
+
+.urlbarView-body-inner {
+    border: 0 !important;
+    background: transparent !important;
+}
+
+.urlbarView-row {
+    border: none !important;
+    border-radius: 8px !important;
+    margin: 2px 0 !important;
+    padding: 0 !important;
+    color: inherit !important;
+    background: transparent !important;
+    transition: background-color 120ms ease !important;
+}
+
+.urlbarView-row-inner {
+    padding-block: 6px !important;
+    padding-inline: 8px !important;
+    border-radius: 8px !important;
+    align-items: center !important;
+}
+
+/* Hover state */
+.urlbarView-row[row-selectable]:not([selected]):hover {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .urlbarView-row[row-selectable]:not([selected]):hover {
+        background-color: rgba(255, 255, 255, 0.09) !important;
+    }
+}
+
+/* Selected state */
+.urlbarView-row[selected] {
+    background-color: #0071e3 !important;
+    color: #ffffff !important;
+}
+
+.urlbarView-row[selected] > .urlbarView-row-inner,
+.urlbarView-row[selected] :is(.urlbarView-title, .urlbarView-title-separator, .urlbarView-url, .urlbarView-action, .urlbarView-secondary) {
+    color: #ffffff !important;
+}
+
+/* Text and URL colors */
+.urlbarView-row:not([selected]) .urlbarView-title {
+    color: #1c1c1e !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .urlbarView-row:not([selected]) .urlbarView-title {
+        color: #f5f5f7 !important;
+    }
+}
+
+.urlbarView-row:not([selected]) .urlbarView-url {
+    color: #0071e3 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .urlbarView-row:not([selected]) .urlbarView-url {
+        color: #5ac8fa !important;
+    }
+}
+
+.urlbarView-row:not([selected]) :is(.urlbarView-action, .urlbarView-secondary, .urlbarView-title-separator) {
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .urlbarView-row:not([selected]) :is(.urlbarView-action, .urlbarView-secondary, .urlbarView-title-separator) {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+}
+
+.urlbarView-type-icon {
+    fill: currentColor !important;
+    -moz-context-properties: fill !important;
+}
+
+/* Search engines buttons footer */
+.search-one-offs {
+    margin: 0 !important;
+    padding: 8px !important;
+    border-radius: 0 0 14px 14px !important;
+    background: #f6f6f8 !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .search-one-offs {
+        background: #1c1c1e !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+}

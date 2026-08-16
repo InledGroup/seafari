@@ -54,29 +54,67 @@ Seafari is distributed with versions compatible with Debian, Fedora, Arch and th
 ## Daily security updates  
 Seafari is updated daily by downloading the latest version of Firefox from Mozilla. That is why a smaller version is published every day. It's not a bug, it's a security feature.
 
-## Development
+## Development & Building
 
-To build Seafari locally:
+### Build Dependencies
+
+The build script creates native packages (`.deb`, `.pkg.tar.zst`, `.rpm`) and a portable `.AppImage`. Ensure the required tools are installed:
+
+| Tool | Purpose |
+| :--- | :--- |
+| `wget` | Download base Firefox archive and extensions |
+| `tar` / `xz` | Extraction of the Firefox base package |
+| `unzip` / `zip` | Patching uBlock Origin manifest & integration scripts |
+| `python3` | Editing extension manifests |
+| `dpkg-deb` (`dpkg`) | Building `.deb` Debian/Ubuntu packages |
+| `bsdtar` (`libarchive`) | Packaging `.pkg.tar.zst` Arch Linux packages |
+| `zstd` | Compressing `.pkg.tar.zst` packages |
+| `rpmbuild` (`rpm-tools`) | Building `.rpm` Fedora/openSUSE packages |
+
+#### Installing Dependencies
+
+* **Arch Linux / Pulsar OS / Manjaro:**
+  ```bash
+  sudo pacman -S --needed wget tar xz unzip zip python dpkg rpm-tools libarchive zstd
+  ```
+
+* **Debian / Ubuntu / Linux Mint:**
+  ```bash
+  sudo apt update && sudo apt install -y wget tar xz-utils unzip zip python3 dpkg-dev rpm libarchive-tools zstd
+  ```
+
+* **Fedora / RHEL / AlmaLinux:**
+  ```bash
+  sudo dnf install -y wget tar xz unzip zip python3 dpkg rpm-build bsdtar zstd
+  ```
+
+---
+
+### Building Seafari Locally
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/InledGroup/seafari.git
    cd seafari
    ```
-2. Run the build script (requires `dpkg-dev`, `binutils`, and `rpmbuild` for RPM):
-   ```bash
-   ./build_seafari.sh amd64 --skip-rpm
-   ```
-`---skip-rpm` is optional, only is you want to generate a .deb and appimage faster.  
 
-3. Clean your system for unwanted old configs **IMPORTANT**
-```bash
-rm -rf ~/.mozilla/seafari-profile
-```
-4. Run the Appimage
-```bash
-./Seafari-x86_64.AppImage
-```
+2. Run the build script:
+   ```bash
+   ./build_seafari.sh --version 2.8.0 --arch amd64
+   ```
+   * *Optional flags:*
+     * `--skip-rpm`: Skip RPM packaging to build faster.
+     * `--safari-ua`: Enable Safari user-agent override.
+
+3. Clean your system of unwanted old configs (**IMPORTANT** when testing UI changes):
+   ```bash
+   rm -rf ~/.mozilla/seafari-profile
+   ```
+
+4. Run the generated AppImage:
+   ```bash
+   ./Seafari-x86_64.AppImage
+   ```
 ## Auto publish system  
 Write [RELEASE] on commit for acumulative release.  
 
