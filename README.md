@@ -40,7 +40,14 @@ This way, Seafari is updated at the same time as Firefox. And you can audit how 
 
 Seafari is distributed with versions compatible with Debian, Fedora, Arch and their respective AMD and ARM architectures. A generic Appimage is also distributed.
 
-## Changelog  
+## Changelog    
+
+
+
+### v2.8.*  
+
+- Icons now change color automatically to provide contrast.
+- Dropdown of suggestions with contrast
 
 ### v2.7.*  
 - Now the top toolbox is automatically hidden when scrolling a page and reappears in the same way.
