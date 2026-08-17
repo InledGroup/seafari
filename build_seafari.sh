@@ -1515,6 +1515,9 @@ try {
       later(updateToolbarLuminance, 100);
       later(updateToolbarLuminance, 400);
       later(updateToolbarLuminance, 1000);
+      later(updateToolbarLuminance, 2000);
+      later(updateToolbarLuminance, 3500);
+      later(updateToolbarLuminance, 5000);
 
       // --- Tab switch / Navigation brings back toolbar & updates luminance ---
       win.addEventListener("TabSelect", function() {
@@ -1523,6 +1526,7 @@ try {
         later(updateToolboxHeight, 100);
         later(updateToolbarLuminance, 50);
         later(updateToolbarLuminance, 250);
+        later(updateToolbarLuminance, 800);
       }, true);
 
       try {
@@ -1531,6 +1535,28 @@ try {
         });
         lumObserver.observe(toolbox, { attributes: true, attributeFilter: ["style", "class"] });
         lumObserver.observe(doc.documentElement, { attributes: true, attributeFilter: ["style", "class"] });
+        lumObserver.observe(toolbox, { subtree: true, childList: true });
+      } catch(e) {}
+
+      try {
+        var lastLumCheck = 0;
+        var lumPollId = null;
+        function pollLuminance() {
+          var now = Date.now();
+          if (now - lastLumCheck > 300) {
+            lastLumCheck = now;
+            updateToolbarLuminance();
+          }
+        }
+        function startLumPoll() {
+          if (lumPollId) return;
+          lumPollId = win.setInterval(pollLuminance, 500);
+          win.setTimeout(function() {
+            if (lumPollId) { win.clearInterval(lumPollId); lumPollId = null; }
+          }, 6000);
+        }
+        startLumPoll();
+        win.addEventListener("TabSelect", function() { startLumPoll(); }, true);
       } catch(e) {}
 
       if (urlbar) {
