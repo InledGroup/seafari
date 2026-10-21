@@ -122,17 +122,17 @@
 	--gnome-private-urlbar-background: var(--toolbar-field-background-color);
 
 	/* Tabs */
-	--gnome-tabbar-tab-color: var(--lwt-tab-text, var(--toolbar-color, #ffffff));
+	--gnome-tabbar-tab-color: var(--lwt-tab-text, var(--toolbar-color, rgba(255, 255, 255, 0.72)));
 	--gnome-tabbar-tab-background: var(--lwt-accent-color, #363636);
 	--gnome-tabbar-tab-border-color: var(--gnome-toolbar-border-color);
 	--gnome-tabbar-tab-hover-background: color-mix(in srgb, var(--gnome-tabbar-tab-color) 12%, var(--gnome-tabbar-tab-background));
 	--gnome-tabbar-tab-hover-border-color: var(--gnome-toolbar-border-color);
-	--gnome-tabbar-tab-hover-color: var(--lwt-tab-text, var(--toolbar-color));
+	--gnome-tabbar-tab-hover-color: var(--lwt-tab-text, var(--toolbar-color, #ffffff));
 	--gnome-tabbar-tab-active-background: color-mix(in srgb, var(--gnome-tabbar-tab-color) 15%, var(--gnome-tabbar-tab-background));
 	--gnome-tabbar-tab-active-border-color: color-mix(in srgb, var(--gnome-tabbar-tab-color) 12%, var(--gnome-tabbar-tab-background));
-	--gnome-tabbar-tab-active-color: var(--lwt-tab-text, var(--toolbar-color));
+	--gnome-tabbar-tab-active-color: var(--lwt-tab-text, var(--toolbar-color, #ffffff));
 	--gnome-tabbar-tab-active-hover-background: color-mix(in srgb, var(--gnome-tabbar-tab-color) 20%, var(--gnome-tabbar-tab-background));
-	--gnome-inactive-tabbar-tab-color: var(--lwt-tab-text, var(--toolbar-color));
+	--gnome-inactive-tabbar-tab-color: var(--lwt-tab-text, var(--toolbar-color, rgba(255, 255, 255, 0.45)));
 	--gnome-inactive-tabbar-tab-background: var(--gnome-tabstoolbar-background);
 	--gnome-inactive-tabbar-tab-active-background: color-mix(in srgb, var(--gnome-tabbar-tab-color) 8%, var(--gnome-tabbar-tab-background));
 	--gnome-inactive-tabbar-tab-active-border-color: var(--gnome-tabbar-tab-active-border-bottom-color);

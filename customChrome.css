@@ -32,13 +32,55 @@
     -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity !important;
 }
 
-/* 1. DARK THEME / DEFAULT (for dark pages, Start Page / NTP, dark toolbox): WHITE ICONS */
+/* 1. DARK THEME / DEFAULT (for dark pages, Start Page / NTP, dark toolbox): WHITE ICONS & TABS */
+:root:not([seafari-toolbar-theme="light"]),
+:root[seafari-toolbar-theme="dark"] {
+    --gnome-tabbar-tab-color: rgba(255, 255, 255, 0.72) !important;
+    --gnome-tabbar-tab-hover-color: #ffffff !important;
+    --gnome-tabbar-tab-active-color: #ffffff !important;
+    --gnome-inactive-tabbar-tab-color: rgba(255, 255, 255, 0.45) !important;
+    --gnome-inactive-tabbar-tab-active-color: rgba(255, 255, 255, 0.8) !important;
+    --gnome-tabbar-tab-hover-background: rgba(255, 255, 255, 0.08) !important;
+    --gnome-tabbar-tab-separator-color: rgba(255, 255, 255, 0.12) !important;
+}
+
 :root:not([seafari-toolbar-theme="light"]) #nav-bar,
 :root[seafari-toolbar-theme="dark"] #nav-bar,
 :root:not([seafari-toolbar-theme="light"]) #navigator-toolbox,
-:root[seafari-toolbar-theme="dark"] #navigator-toolbox {
+:root[seafari-toolbar-theme="dark"] #navigator-toolbox,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar {
     color: #ffffff !important;
     fill: #ffffff !important;
+}
+
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]),
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]) .tab-label,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]) .tab-secondary-label,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar tab:not([selected]) .tab-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]),
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]) .tab-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]) .tab-secondary-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar tab:not([selected]) .tab-label {
+    color: rgba(255, 255, 255, 0.72) !important;
+}
+
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]):hover,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]):hover .tab-label,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar tab:not([selected]):hover .tab-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]):hover,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]):hover .tab-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar tab:not([selected]):hover .tab-label {
+    color: #ffffff !important;
+}
+
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]):-moz-window-inactive,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar .tabbrowser-tab:not([selected]):-moz-window-inactive .tab-label,
+:root:not([seafari-toolbar-theme="light"]) #TabsToolbar tab:not([selected]):-moz-window-inactive .tab-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]):-moz-window-inactive,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar .tabbrowser-tab:not([selected]):-moz-window-inactive .tab-label,
+:root[seafari-toolbar-theme="dark"] #TabsToolbar tab:not([selected]):-moz-window-inactive .tab-label {
+    color: rgba(255, 255, 255, 0.45) !important;
 }
 
 :root:not([seafari-toolbar-theme="light"]) #nav-bar toolbarbutton,
@@ -90,16 +132,44 @@
     opacity: 0.92 !important;
 }
 
-/* 2. LIGHT THEME (when browsing white/light pages like Google, Wikipedia): DARK ICONS */
+/* 2. LIGHT THEME (when browsing white/light pages like Google, Wikipedia): DARK ICONS & TABS */
 :root[seafari-toolbar-theme="light"] {
     --gnome-toolbar-icon-fill: #2e2e2e !important;
     --gnome-toolbar-color: #2e2e2e !important;
+    --toolbar-color: #2e2e2e !important;
+    --gnome-tabbar-tab-color: rgba(0, 0, 0, 0.72) !important;
+    --gnome-tabbar-tab-hover-color: #000000 !important;
+    --gnome-tabbar-tab-active-color: #1c1c1e !important;
+    --gnome-inactive-tabbar-tab-color: rgba(0, 0, 0, 0.45) !important;
+    --gnome-inactive-tabbar-tab-active-color: rgba(0, 0, 0, 0.75) !important;
+    --gnome-tabbar-tab-hover-background: rgba(0, 0, 0, 0.06) !important;
+    --gnome-tabbar-tab-separator-color: rgba(0, 0, 0, 0.12) !important;
 }
 
 :root[seafari-toolbar-theme="light"] #nav-bar,
-:root[seafari-toolbar-theme="light"] #navigator-toolbox {
+:root[seafari-toolbar-theme="light"] #navigator-toolbox,
+:root[seafari-toolbar-theme="light"] #TabsToolbar {
     color: #2e2e2e !important;
     fill: #2e2e2e !important;
+}
+
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]),
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]) .tab-label,
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]) .tab-secondary-label,
+:root[seafari-toolbar-theme="light"] #TabsToolbar tab:not([selected]) .tab-label {
+    color: rgba(0, 0, 0, 0.72) !important;
+}
+
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]):hover,
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]):hover .tab-label,
+:root[seafari-toolbar-theme="light"] #TabsToolbar tab:not([selected]):hover .tab-label {
+    color: #000000 !important;
+}
+
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]):-moz-window-inactive,
+:root[seafari-toolbar-theme="light"] #TabsToolbar .tabbrowser-tab:not([selected]):-moz-window-inactive .tab-label,
+:root[seafari-toolbar-theme="light"] #TabsToolbar tab:not([selected]):-moz-window-inactive .tab-label {
+    color: rgba(0, 0, 0, 0.45) !important;
 }
 
 :root[seafari-toolbar-theme="light"] #nav-bar toolbarbutton,
