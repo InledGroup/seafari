@@ -52,13 +52,16 @@ jobs:
           
           IS_RELEASE_COMMIT=false
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            # English: If commit specifies target version via [RELEASE][X.X]
-            # Español: Si el commit especifica la versión objetivo vía [RELEASE][X.X]
-            if [[ "$COMMIT_MSG" =~ \[RELEASE\]\[([0-9]+\.[0-9]+)\] ]]; then
-              VERSION_XX="${BASH_REMATCH[1]}"
-              MAJOR=$(echo "$VERSION_XX" | cut -d'.' -f1)
-              MINOR=$(echo "$VERSION_XX" | cut -d'.' -f2)
-              PATCH="0"
+            # English: If commit specifies target version via [RELEASE][X.X] or [RELEASE][X.X.X]
+            # Español: Si el commit especifica la versión objetivo vía [RELEASE][X.X] o [RELEASE][X.X.X]
+            if [[ "$COMMIT_MSG" =~ \[RELEASE\]\[([0-9]+\.[0-9]+(\.[0-9]+)?)\] ]]; then
+              VERSION_MATCH="${BASH_REMATCH[1]}"
+              MAJOR=$(echo "$VERSION_MATCH" | cut -d'.' -f1)
+              MINOR=$(echo "$VERSION_MATCH" | cut -d'.' -f2)
+              PATCH=$(echo "$VERSION_MATCH" | cut -d'.' -f3)
+              if [ -z "$PATCH" ]; then
+                PATCH="0"
+              fi
               NEW_VERSION="$MAJOR.$MINOR.$PATCH"
               IS_RELEASE_COMMIT=true
               echo "Release commit detected with target version: $NEW_VERSION"

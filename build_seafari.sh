@@ -6,13 +6,14 @@ ARCH_TYPE="amd64"
 SKIP_RPM="false"
 
 # Parse arguments
-SAFARI_UA="false"
+SAFARI_UA="true"
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --version) VERSION="$2"; shift ;;
         --arch) ARCH_TYPE="$2"; shift ;;
         --skip-rpm) SKIP_RPM="true" ;;
         --safari-ua) SAFARI_UA="true" ;;
+        --no-safari-ua) SAFARI_UA="false" ;;
         *) ARCH_TYPE="$1";;
     esac
     shift
@@ -20,7 +21,7 @@ done
 
 UA_LINE=""
 if [ "$SAFARI_UA" == "true" ]; then
-    UA_LINE='pref("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15");
+    UA_LINE='pref("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15");
   pref("general.useragent.vendor", "Apple Computer, Inc.");
   pref("general.useragent.vendorSub", "");
   pref("general.platform.override", "MacIntel");
