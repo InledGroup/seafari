@@ -4,9 +4,8 @@
 </div>
 
 Seafari is a browser made on top of Mozilla Firefox. Gets daily updates from Mozilla source and is fully open-source.  
-Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.    
+Seafari replicates the UI and look of Safari and can be recognized as Safari.
 
-**NEW! Now Seafari identifies as Safari 18 on MacOS X. See report [here](https://www.whatsmybrowser.org/b/RZBGN) and try yourself**
 
 **Seafari is the default browser of our distro PulsarOS and Alex's PearOS!**
 
@@ -17,7 +16,23 @@ Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is 
 
 <p align="center">
   <img src="demo.png" alt="Seafari demo" width="55%">
-</p>
+</p>  
+
+## BIG CHANGES V3!  
+- Dual user agent support: can be Safari 18 of macosX or Firefox 158 of Linux. Websites see this as real, implemented at the core  
+- No Firefox fox :)  
+- Tab Overview + Contextual Menu + NTP improvements  
+- Firefox Addons as Seafari App Store  
+
+**Go now and change your user agent with one click on the button near to extensions button**  
+
+<p align="center">
+  <video src="https://hosted.inled.es/cdn/seafari-user-agent-demo.mp4" alt="If you cant see the demo, go to https://hosted.inled.es/asset/seafari-user-agent-demo.mp4" width="85%">
+  If you cant see the demo, <a href="https://hosted.inled.es/asset/seafari-user-agent-demo.mp4"> click here</a>
+</p>  
+<p align="center">
+  If you cant see the demo, <a href="https://hosted.inled.es/asset/seafari-user-agent-demo.mp4"> click here</a>
+</p>  
 
 
 ##  It's different
