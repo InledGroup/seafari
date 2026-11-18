@@ -4,13 +4,12 @@
 </div>
 
 Seafari is a browser made on top of Mozilla Firefox. Gets daily updates from Mozilla source and is fully open-source.  
-Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.  
+Seafari replicates the UI and look of Safari, the browser of MacOS.  Seafari is WIP, so expect visual bugs or incoherences.    
 
-**We are proud to announce that Seafari is now the default browser for Pear OS**
+**NEW! Now Seafari identifies as Safari 18 on MacOS X. See report [here](https://www.whatsmybrowser.org/b/RZBGN) and try yourself**
 
-<p align="center">
-  <img src="seafari-pear-os.gif" alt="Seafari pear os" width="100%">
-</p>
+**Seafari is the default browser of our distro PulsarOS and Alex's PearOS!**
+
 
 <p align="center">
   <img src="demo-seafari-v2.6.gif" alt="Seafari demo" width="85%">
