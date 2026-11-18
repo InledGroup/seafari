@@ -13,12 +13,12 @@ menupopup, panel {
 	/* --panel-shadow-margin: 3px 8px 13px !important; */
 	--panel-separator-color: var(--gnome-popover-separator-color) !important;
 	--panel-border-color: transparent !important;
-	--panel-color: var(--gnome-toolbar-color) !important;
+	--panel-color: #ffffff !important;
 	--arrowpanel-border-radius: 12px !important;
 	--arrowpanel-background: var(--gnome-menu-background) !important;
 	--arrowpanel-border-color: transparent !important;
-	--arrowpanel-color: var(--gnome-toolbar-color) !important;
-	color: var(--gnome-toolbar-color) !important;
+	--arrowpanel-color: #ffffff !important;
+	color: #ffffff !important;
 	padding: 2px 4px 9px !important;
 }
 
@@ -46,7 +46,7 @@ menupopup {
 }
 
 menupopup label {
-	color: var(--gnome-toolbar-color) !important;
+	color: #ffffff !important;
 }
 
 menubar > menu > menupopup {
@@ -195,7 +195,7 @@ menuitem, menupopup menu,
 #downloadsPanel-mainView .download-state {
 	-moz-appearance: none !important;
 	border-radius: 6px !important;
-	color: var(--gnome-toolbar-color) !important;
+	color: #ffffff !important;
 	font: menu !important;
 	padding: 0 6px !important;
 	min-height: 28px !important;

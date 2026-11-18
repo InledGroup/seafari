@@ -22,7 +22,7 @@ const state = {
     privacy: true,
     reading: true
   },
-  background: "mountains", 
+  background: "aurora", 
   customBgData: "",
   videoBg: ""
 };

@@ -203,19 +203,7 @@ cat <<EOF > "$DIST_DIR/policies.json"
     "SearchEngines": {
       "Default": "Google"
     },
-    "ExtensionSettings": {
-      "ATBC@EasonWong": {
-        "installation_mode": "normal_installed",
-        "install_url": "file:///usr/lib/seafari/distribution/extensions/ATBC@EasonWong.xpi"
-      },
-      "uBlock0@raymondhill.net": {
-        "installation_mode": "normal_installed",
-        "install_url": "file:///usr/lib/seafari/distribution/extensions/uBlock0@raymondhill.net.xpi"
-      }
-    },
     "Preferences": {
-      "extensions.webextensions.remote": false,
-      "browser.tabs.remote.autostart": false,
       "toolkit.legacyUserProfileCustomizations.stylesheets": true,
       "keyword.enabled": true,
       "browser.search.suggest.enabled": true,
@@ -244,7 +232,18 @@ cat <<EOF > "$DIST_DIR/policies.json"
       "browser.newtabpage.activity-stream.section.highlights.includePocket": false,
       "browser.newtabpage.activity-stream.feeds.section.highlights": true,
       "browser.newtabpage.activity-stream.topSitesRows": 1,
-      "browser.newtabpage.activity-stream.highlights.rows": 1
+      "browser.newtabpage.activity-stream.highlights.rows": 1,
+      "browser.preonboarding.enabled": true,
+      "termsofuse.bypassNotification": true,
+      "termsofuse.acceptedVersion": 999,
+      "datareporting.policy.dataSubmissionPolicyAcceptedVersion": 999,
+      "datareporting.policy.dataSubmissionPolicyNotifiedTime": "1",
+      "browser.aboutwelcome.enabled": false,
+      "browser.aboutwelcome.experimentsGate.enabled": false,
+      "xpinstall.enabled": true,
+      "xpinstall.whitelist.required": false,
+      "browser.tabs.remote.autostart": true,
+      "extensions.webextensions.remote": true
     }
   }
 }
@@ -347,7 +346,28 @@ try {
   pref("browser.startup.homepage_override.mstone", "ignore");
   pref("browser.newtabpage.activity-stream.enabled", false);
   pref("browser.dom.window.dump.enabled", true);
-  $UA_LINE
+  pref("browser.preonboarding.enabled", true);
+  pref("termsofuse.bypassNotification", true);
+  pref("termsofuse.acceptedVersion", 999);
+  pref("datareporting.policy.dataSubmissionEnabled", false);
+  pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 999);
+  pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "1");
+  pref("browser.aboutwelcome.enabled", false);
+  pref("browser.aboutwelcome.experimentsGate.enabled", false);
+  pref("xpinstall.enabled", true);
+  pref("xpinstall.whitelist.required", false);
+  pref("browser.tabs.remote.autostart", true);
+  pref("extensions.webextensions.remote", true);
+  try {
+    var amoUri = Services.io.newURI("https://addons.mozilla.org");
+    var amoPrincipal = Services.scriptSecurityManager.createContentPrincipal(amoUri, {});
+    Services.perms.addFromPrincipal(amoPrincipal, "install", Ci.nsIPermissionManager.ALLOW_ACTION);
+  } catch(e) {}
+  if (Services.prefs.prefHasUserValue("seafari.useragent.mode") && Services.prefs.getStringPref("seafari.useragent.mode") === "linux") {
+    // Current user mode is native Linux: do not apply macOS UA
+  } else {
+    $UA_LINE
+  }
 } catch (e) {
   // Silently ignore if preference engine is not fully loaded
 }
@@ -795,6 +815,24 @@ try {
       navBar.appendChild(overviewBtn);
     }
 
+    // Programmatically create the seafari-ua-switch-button if it doesn't exist
+    var appleSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170' width='16' height='16' fill='currentColor'%3E%3Cpath d='M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.44-8.49-9.75-17.96-12.93-28.41-3.18-10.45-4.77-20.57-4.77-30.37 0-14.15 3.37-25.79 10.12-34.93 6.74-9.14 15.45-13.78 26.13-13.91 4.79 0 10.33 1.25 16.63 3.75 6.3 2.5 10.17 3.81 11.61 3.93 2.07-.33 6.35-1.8 12.83-4.41 6.48-2.61 12.19-3.86 17.13-3.75 12.85.65 22.86 5.54 30.04 14.67-11.53 7.08-17.18 16.89-16.96 29.43.22 9.79 3.97 17.84 11.25 24.15 4.58 3.92 9.8 6.75 15.66 8.5-2.29 6.86-5.06 13.93-8.32 21.21zm-28.61-105.15c0 7.3-2.67 14.16-8.01 20.58-6.19 7.29-13.8 11.42-22.83 12.39-.22-.98-.33-1.96-.33-2.94 0-7.08 2.89-14.26 8.67-21.54 2.83-3.59 6.47-6.53 10.93-8.81 4.46-2.29 8.32-3.59 11.57-3.92.11 1.42.11 2.84 0 4.24z'/%3E%3C/svg%3E";
+    var tuxSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' fill='currentColor'%3E%3Cpath d='M12 2C9.79 2 8 3.79 8 6v1.2C6.83 7.85 6 9.3 6 11c0 .88.23 1.7.63 2.42L5.2 16.5c-.13.3-.2.63-.2 1 0 1.93 1.57 3.5 3.5 3.5.7 0 1.36-.21 1.91-.56.51.35 1.13.56 1.8.56s1.29-.21 1.8-.56c.55.35 1.21.56 1.91.56 1.93 0 3.5-1.57 3.5-3.5 0-.37-.07-.7-.2-1l-1.43-3.08c.4-.72.63-1.54.63-2.42 0-1.7-.83-3.15-2-3.8V6c0-2.21-1.79-4-4-4zm0 2c1.1 0 2 .9 2 2v1h-4V6c0-1.1.9-2 2-2zm-2 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-3.5 3.5h3c.83 0 1.5.67 1.5 1.5v1h-6v-1c0-.83.67-1.5 1.5-1.5z'/%3E%3C/svg%3E";
+    var uaBtn = document.getElementById("seafari-ua-switch-button");
+    if (!uaBtn) {
+      if (typeof document.createXULElement === "function") {
+        uaBtn = document.createXULElement("toolbarbutton");
+      } else {
+        uaBtn = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "toolbarbutton");
+      }
+      uaBtn.setAttribute("id", "seafari-ua-switch-button");
+      uaBtn.setAttribute("class", "toolbarbutton-1 chromeclass-toolbar-additional");
+      uaBtn.setAttribute("title", "Plataforma");
+      uaBtn.setAttribute("label", "macOS");
+      uaBtn.setAttribute("image", appleSvg);
+      navBar.appendChild(uaBtn);
+    }
+
     // --- KDE Global Menu / DBus AppMenu integration ---
     // Populate #toolbar-menubar with XUL menu items so KDE's global menu panel
     // picks them up via DBus. The menubar stays hidden in Firefox (CSS),
@@ -908,7 +946,10 @@ try {
     }
 
     // IDs to fully hide
-    var idsToHide = ["sidebar-button", "developer-button"];
+    var idsToHide = [
+      "sidebar-button", "developer-button",
+      "fxa-toolbar-button", "fxa-toolbar-menu-button", "fxa-avatar-image"
+    ];
     idsToHide.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) {
@@ -939,7 +980,10 @@ try {
     var knownMenuIds  = ["new-tab-button", "PanelUI-menu-button", "tab-overview-button"];
     var knownSkipIds  = ["urlbar-container", "stop-reload-button",
                          "sidebar-button", "developer-button",
-                         "fxa-toolbar-button", "unified-extensions-button"];
+                         "fxa-toolbar-button", "fxa-toolbar-menu-button", "fxa-avatar-image",
+                         "unified-extensions-button", "seafari-ua-switch-button",
+                         "customizableui-special-spring1", "customizableui-special-spring2",
+                         "vertical-spacer"];
 
     var knownAll = {};
     knownLeftIds.forEach(function(id) { knownAll[id] = true; });
@@ -948,7 +992,15 @@ try {
 
     function findNode(id) {
       var el = document.getElementById(id);
+      if (!el && id === "new-tab-button") {
+        el = document.getElementById("tabs-newtab-button");
+      }
       return el || null;
+    }
+
+    var dupTabBtn = document.getElementById("tabs-newtab-button");
+    if (dupTabBtn && document.getElementById("new-tab-button")) {
+      dupTabBtn.style.setProperty("display", "none", "important");
     }
 
     knownLeftIds.forEach(function(id) {
@@ -961,14 +1013,18 @@ try {
       if (node) menuNodes.push(node);
     });
 
-    // Extensions pill: fxa first (explicit), then unified-extensions, then any unknown dynamic buttons
-    var fxaNode = findNode("fxa-toolbar-button");
+    // Extensions pill: seafari-ua-switch-button, then unified-extensions, then any unknown dynamic buttons
+    var uaBtnNode = findNode("seafari-ua-switch-button");
     var unifiedExtNode = findNode("unified-extensions-button");
-    if (fxaNode) extensionNodes.push(fxaNode);
+    if (uaBtnNode) extensionNodes.push(uaBtnNode);
     if (unifiedExtNode) extensionNodes.push(unifiedExtNode);
 
     Array.from(navBar.children).forEach(function(node) {
+      var tag = (node.tagName || "").toLowerCase();
       var id = node.id || "";
+      if (tag.indexOf("spring") !== -1 || tag.indexOf("spacer") !== -1) return;
+      if (id.indexOf("spring") !== -1 || id.indexOf("spacer") !== -1) return;
+      if (id.indexOf("fxa") !== -1) return;
       if (knownSkipIds.indexOf(id) !== -1) return;
       if (id.indexOf("seafari-pill") === 0) return;
       if (knownLeftIds.indexOf(id) !== -1) return;
@@ -1005,6 +1061,12 @@ try {
       forceStyle(pill, "box-shadow", "inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(0,0,0,0.08)");
       forceStyle(pill, "overflow", "hidden");
       forceStyle(pill, "flex-shrink", "0");
+      if (id === "seafari-pill-extensions") {
+        forceStyle(pill, "width", "fit-content");
+        forceStyle(pill, "min-width", "0");
+        forceStyle(pill, "max-width", "fit-content");
+        forceStyle(pill, "flex-grow", "0");
+      }
 
       nodes.forEach(function(node) {
         pill.appendChild(node);
@@ -1077,7 +1139,11 @@ try {
           if (mutation.addedNodes) {
             Array.from(mutation.addedNodes).forEach(function(node) {
               if (node.nodeType !== 1) return; // Only element nodes
+              var tag = (node.tagName || "").toLowerCase();
               var id = node.id || "";
+              if (tag.indexOf("spring") !== -1 || tag.indexOf("spacer") !== -1) return;
+              if (id.indexOf("spring") !== -1 || id.indexOf("spacer") !== -1) return;
+              if (id.indexOf("fxa") !== -1) return;
               if (id.indexOf("seafari-pill") === 0) return;
               if (knownSkipIds.indexOf(id) !== -1) return;
               if (knownAll[id]) return;
@@ -1156,6 +1222,97 @@ try {
           } catch(err) {}
         }, true);
         overviewBtn._listenerAdded = true;
+      }
+    }
+
+    // --- Dynamic User-Agent / Platform Switch (macOS Safari <-> Linux Nativo) ---
+    function getUAMode() {
+      try {
+        if (Services.prefs.prefHasUserValue("seafari.useragent.mode")) {
+          return Services.prefs.getStringPref("seafari.useragent.mode");
+        }
+      } catch(e) {}
+      return "macos";
+    }
+
+    function applyUAMode(mode) {
+      var defaultBranch = Services.prefs.getDefaultBranch(null);
+      if (mode === "linux") {
+        try {
+          Services.prefs.clearUserPref("general.useragent.override");
+          Services.prefs.clearUserPref("general.useragent.vendor");
+          Services.prefs.clearUserPref("general.useragent.vendorSub");
+          Services.prefs.clearUserPref("general.platform.override");
+          Services.prefs.clearUserPref("general.oscpu.override");
+          Services.prefs.clearUserPref("general.appname.override");
+          Services.prefs.clearUserPref("general.appversion.override");
+
+          ["general.useragent.override", "general.platform.override", "general.oscpu.override",
+           "general.useragent.vendor", "general.useragent.vendorSub", "general.appname.override",
+           "general.appversion.override"].forEach(function(p) {
+            try { defaultBranch.deleteBranch(p); } catch(err) {}
+          });
+        } catch(e) {}
+        Services.prefs.setStringPref("seafari.useragent.mode", "linux");
+      } else {
+        try {
+          Services.prefs.setStringPref("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15");
+          Services.prefs.setStringPref("general.useragent.vendor", "Apple Computer, Inc.");
+          Services.prefs.setStringPref("general.useragent.vendorSub", "");
+          Services.prefs.setStringPref("general.platform.override", "MacIntel");
+          Services.prefs.setStringPref("general.oscpu.override", "Intel Mac OS X 10.15.7");
+          Services.prefs.setStringPref("general.appname.override", "Netscape");
+          Services.prefs.setStringPref("general.appversion.override", "5.0 (Macintosh)");
+        } catch(e) {}
+        Services.prefs.setStringPref("seafari.useragent.mode", "macos");
+      }
+    }
+
+    function updateUABtnState(btn, mode) {
+      if (!btn) return;
+      if (mode === "linux") {
+        btn.setAttribute("seafari-ua-mode", "linux");
+        btn.setAttribute("image", tuxSvg);
+        btn.setAttribute("title", "Plataforma actual: Linux Nativo (Clic para cambiar a macOS Safari)");
+        btn.setAttribute("tooltiptext", "Plataforma actual: Linux Nativo (Clic para cambiar a macOS Safari)");
+        btn.setAttribute("label", "Linux");
+      } else {
+        btn.setAttribute("seafari-ua-mode", "macos");
+        btn.setAttribute("image", appleSvg);
+        btn.setAttribute("title", "Plataforma actual: macOS Safari (Clic para cambiar a Linux Nativo)");
+        btn.setAttribute("tooltiptext", "Plataforma actual: macOS Safari (Clic para cambiar a Linux Nativo)");
+        btn.setAttribute("label", "macOS");
+      }
+    }
+
+    var uaBtn = document.getElementById("seafari-ua-switch-button");
+    if (uaBtn) {
+      updateUABtnState(uaBtn, getUAMode());
+      if (!uaBtn._listenerAdded) {
+        uaBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var current = getUAMode();
+          var next = (current === "macos") ? "linux" : "macos";
+          applyUAMode(next);
+          updateUABtnState(uaBtn, next);
+          // Sync all open browser windows
+          try {
+            var wins = windowMediator.getEnumerator("navigator:browser");
+            while (wins.hasMoreElements()) {
+              var w = wins.getNext();
+              var otherBtn = w.document.getElementById("seafari-ua-switch-button");
+              if (otherBtn) updateUABtnState(otherBtn, next);
+            }
+          } catch(err) {}
+          // Reload active tab so webpage detects change immediately
+          try {
+            if (window.gBrowser && window.gBrowser.selectedBrowser) {
+              window.gBrowser.reload();
+            }
+          } catch(err) {}
+        }, true);
+        uaBtn._listenerAdded = true;
       }
     }
 
@@ -1260,6 +1417,47 @@ try {
       setupUI(window);
     }
   }
+
+  // Re-run setupUI whenever tabstrip orientation changes or verticalTabs pref changes
+  try {
+    observerService.addObserver({
+      observe: function(aSubject, aTopic, aData) {
+        if (aTopic === "tabstrip-orientation-change") {
+          var wins = windowMediator.getEnumerator("navigator:browser");
+          while (wins.hasMoreElements()) {
+            var w = wins.getNext();
+            try { setupUI(w); } catch(e) {}
+          }
+        }
+      }
+    }, "tabstrip-orientation-change", false);
+  } catch(e) {}
+
+  try {
+    Services.prefs.addObserver("sidebar.verticalTabs", {
+      observe: function() {
+        var wins = windowMediator.getEnumerator("navigator:browser");
+        while (wins.hasMoreElements()) {
+          var w = wins.getNext();
+          try { setupUI(w); } catch(e) {}
+        }
+      }
+    });
+  } catch(e) {}
+
+  // Language & langpack observer: ensure Seafari branding source stays registered
+  var ensureSeafariBranding = function() {
+    try {
+      var { L10nRegistry, L10nFileSource } = ChromeUtils.importESModule("resource://gre/modules/L10nRegistry.sys.mjs");
+      var locales = Services.locale.appLocalesAsBCP47;
+      var src = new L10nFileSource("seafari-brand-dynamic", "app", locales, "resource:///localization/en-US/");
+      L10nRegistry.getInstance().registerSources([src]);
+    } catch(e) {}
+  };
+  try {
+    observerService.addObserver(ensureSeafariBranding, "intl:app-locales-changed", false);
+    observerService.addObserver(ensureSeafariBranding, "webextension-langpack-startup", false);
+  } catch(e) {}
 
   // 1. Progress listener: redirect about:newtab AND inject data into NTP
   var resolvedExtNewtabURL = null;
@@ -1709,10 +1907,18 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
 /* Apple Safari layout variables and overrides */
 @-moz-document url-prefix("about:"), url-prefix("chrome://"), url-prefix("resource://") {
     :root {
-        --color-violet-90: #0071e3 !important;
-        --color-violet-80: #005dc2 !important;
-        --color-violet-70: #004da6 !important;
+        --color-violet-10: #004da6 !important;
+        --color-violet-20: #005dc2 !important;
+        --color-violet-30: #0071e3 !important;
+        --color-violet-40: #0071e3 !important;
+        --color-violet-50: #0071e3 !important;
         --color-violet-60: #0071e3 !important;
+        --color-violet-70: #004da6 !important;
+        --color-violet-80: #005dc2 !important;
+        --color-violet-90: #0071e3 !important;
+        --color-accent-primary: #0071e3 !important;
+        --color-accent-primary-hover: #005dc2 !important;
+        --color-accent-primary-active: #004da6 !important;
         --button-background-color-primary: #0071e3 !important;
         --button-background-color-primary-hover: #005dc2 !important;
         --button-background-color-primary-active: #004da6 !important;
@@ -1741,6 +1947,16 @@ cat <<EOF >> "$THEME_DIR/userContent.css"
         --button-background-color-primary-hover: #005dc2 !important;
         --button-background-color-primary-active: #004da6 !important;
         --button-text-color-primary: white !important;
+    }
+
+    moz-button[appearance="primary"]:hover,
+    moz-button[appearance="primary"] button:hover,
+    moz-button[appearance="primary"] .button-background:hover,
+    moz-button[appearance="primary"] button:hover > .button-background {
+        background-color: #005dc2 !important;
+        border-color: #005dc2 !important;
+        --button-background-color-primary-hover: #005dc2 !important;
+        --color-accent-primary-hover: #005dc2 !important;
     }
 
     button.main-button,
@@ -1809,6 +2025,10 @@ patch_ja() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
+    local SEAFARI_PNG_B64=""
+    if [ -f "$ROOT_DIR/seafari.png" ]; then
+        SEAFARI_PNG_B64=$(base64 -w 0 "$ROOT_DIR/seafari.png" 2>/dev/null || true)
+    fi
 
     # English: Extract the omni.ja file to a temporary directory using unzip. Ignore warnings (unzip exits with 1 or 2 for extra bytes) but verify files were actually extracted.
     # Español: Extraer el archivo omni.ja a un directorio temporal usando unzip. Ignorar advertencias (unzip sale con 1 o 2 por bytes extra) pero verificar que los archivos realmente se hayan extraído.
@@ -1879,6 +2099,73 @@ EOF
     fi
 
 
+    # English: Replace splash-logo.svg with Seafari logo and smooth breathing pulse
+    # Español: Reemplazar splash-logo.svg con el logo de Seafari y pulso suave
+    find "$temp_dir" -name "splash-logo.svg" 2>/dev/null | while read -r splash_file; do
+        echo "Replacing splash-logo.svg with Seafari breathing logo: $splash_file"
+        cat <<EOF_SPLASH > "$splash_file"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <style>
+      @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 0.92; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(0.95); opacity: 0.92; }
+      }
+      .seafari-splash-img {
+        transform-origin: center;
+        animation: pulse 2.5s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+  <image class="seafari-splash-img" href="data:image/png;base64,${SEAFARI_PNG_B64}" x="50" y="50" width="400" height="400"/>
+</svg>
+EOF_SPLASH
+    done
+
+    # English: Remove all fox/kit illustrations, mascots, and promotional artwork (make 1x1 transparent)
+    # Español: Eliminar todas las ilustraciones y mascotas de zorros/kits y arte promocional (hacer transparentes 1x1)
+    find "$temp_dir" -type f \( \
+        -iname "*kit*.svg" -o -iname "*kit*.png" -o -iname "*kit*.ico" \
+        -o -iname "*fox*.svg" -o -iname "*fox*.png" -o -iname "foxy.svg" \
+        -o -iname "*mascot*.svg" -o -iname "*doodle*.svg" \
+        -o -iname "*cpm-fox*.svg" \
+        -o -iname "sync-illustration*.svg" -o -iname "sync-promo*.svg" \
+        -o -iname "avatar-fox*.svg" \
+    \) ! -name "splash-logo.svg" ! -name "share-firefox.svg" ! -name "window-firefox.svg" ! -name "aboutdebugging-firefox*.svg" ! -name "sidebar-firefox.svg" ! -name "firefox.svg" ! -name "firefox-view.svg" 2>/dev/null | while read -r file; do
+        echo "Making fox/kit/mascot illustration transparent: $file"
+        case "$file" in
+            *.svg)
+                cat <<'EOF_ILL' > "$file"
+<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"/>
+EOF_ILL
+                ;;
+            *.png|*.ico)
+                echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" | base64 -d > "$file"
+                ;;
+        esac
+    done
+
+    # English: Disable image container in addons-promo component
+    # Español: Desactivar el contenedor de imagen en el componente addons-promo
+    find "$temp_dir" -name "addons-promo.mjs" 2>/dev/null | while read -r ap_file; do
+        perl -0777 -pi -e 's|imageTemplate\(\)\s*\{[^}]*\}|imageTemplate() { return nothing; }|s' "$ap_file"
+    done
+    find "$temp_dir" -name "addons-promo.css" 2>/dev/null | while read -r apc_file; do
+        echo -e "\n.image-container { display: none !important; }\n:host { --addons-promo-image-size: 0px !important; }" >> "$apc_file"
+    done
+
+    # English: Replace all fox branding logos with Seafari compass logo
+    # Español: Reemplazar todos los logos de marca del zorro con el logo de Seafari
+    find "$temp_dir" -type f \( -iname "*share*firefox*.svg" -o -iname "*window*firefox*.svg" -o -iname "*avatar*fox*.svg" -o -iname "*aboutdebugging*firefox*.svg" -o -iname "*aboutdebugging*firefox*logo*.svg" -o -iname "*sidebar*firefox*.svg" -o -iname "*pbm-logo.svg" \) 2>/dev/null | while read -r file; do
+        echo "Replacing fox branding with Seafari logo: $file"
+        cat <<EOF_LOGO > "$file"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <image href="data:image/png;base64,${SEAFARI_PNG_B64}" x="0" y="0" width="128" height="128"/>
+</svg>
+EOF_LOGO
+    done
+
     # English: Make the fox-ai.svg preference icon transparent
     # Español: Hacer transparente el icono de preferencias fox-ai.svg
     local fox_ai_svg="$temp_dir/chrome/browser/skin/classic/browser/preferences/fox-ai.svg"
@@ -1888,6 +2175,146 @@ EOF
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"/>
 EOF
     fi
+
+    # English: Eliminate the first-run Terms of Use modal while keeping the intro splash animation
+    # Español: Eliminar el modal de términos de uso manteniendo la animación de intro
+    local onboarding_provider="$temp_dir/modules/asrouter/OnboardingMessageProvider.sys.mjs"
+    if [ -f "$onboarding_provider" ]; then
+        echo "Disabling TOU modal in OnboardingMessageProvider.sys.mjs..."
+        perl -0777 -pi -e 's|id:\s*"NEW_USER_TOU_ONBOARDING",\s*enabled:\s*true|id: "NEW_USER_TOU_ONBOARDING", enabled: false|g' "$onboarding_provider"
+        perl -0777 -pi -e 's|id:\s*"TOU_ONBOARDING",|id: "TOU_ONBOARDING", targeting: "false",|g' "$onboarding_provider"
+    fi
+    local splash_sys="$temp_dir/modules/asrouter/PreonboardingSplash.sys.mjs"
+    if [ -f "$splash_sys" ]; then
+        echo "Configuring PreonboardingSplash for Seafari breathing logo..."
+        python3 -c "
+with open('$splash_sys', 'r') as f:
+    c = f.read()
+
+idx1 = c.find('  _shouldShow() {')
+if idx1 == -1:
+    idx1 = c.find('_shouldShow() {')
+idx2 = c.find('  async _show(screens)')
+if idx2 == -1:
+    idx2 = c.find('async _show(screens)')
+
+if idx1 != -1 and idx2 != -1:
+    rep = '''_shouldShow() {
+    if (Services.prefs.getBoolPref(\"browser.preonboarding.splashShown\", false)) {
+      return false;
+    }
+    return true;
+  },
+
+  _willShowAboutWelcome() {
+    return true;
+  },
+
+  _getSplashScreens() {
+    return [
+      {
+        id: \"TOU_ONBOARDING_LOADING\",
+        advance_on_experiment_load: { minDisplayMs: 2500, maxDisplayMs: 4000 },
+        force_hide_steps_indicator: true,
+        content: {
+          screen_style: { overflow: \"auto\", display: \"block\", padding: \"0\", width: \"100vw\", height: \"100vh\" },
+          main_content_style: { display: \"none\" },
+          logo: {
+            imageURL: \"chrome://activity-stream/content/data/content/assets/splash-logo.svg\",
+            height: \"500px\",
+            width: \"500px\",
+            style: { display: \"flex\", justifyContent: \"center\", alignItems: \"center\", flexGrow: \"1\" }
+          }
+        }
+      }
+    ];
+  },
+
+  '''
+    c = c[:idx1] + rep + c[idx2:]
+    with open('$splash_sys', 'w') as f:
+        f.write(c)
+"
+    fi
+
+    # English: Prevent CustomizableUI from removing new-tab-button when vertical tabs are toggled
+    # Español: Evitar que CustomizableUI elimine new-tab-button al cambiar a pestañas verticales
+    find "$temp_dir" -name "CustomizableUI.sys.mjs" 2>/dev/null | while read -r cui_file; do
+        echo "Preserving new-tab-button in $cui_file..."
+        perl -pi -e 's|this\.removeWidgetFromArea\("new-tab-button"\);|// this.removeWidgetFromArea("new-tab-button"); // Preserved by Seafari|g' "$cui_file"
+    done
+
+    # English: Preserve Seafari branding when language packs are installed
+    # Español: Preservar la marca Seafari cuando se instalan paquetes de idioma
+    local ext_sys="$temp_dir/modules/Extension.sys.mjs"
+    if [ -f "$ext_sys" ]; then
+        echo "Patching Extension.sys.mjs for multilingual branding preservation..."
+        perl -pi -e 's|if \(typeof path === "string"\) \{|if (alias === "branding") continue;\n          if (typeof path === "string") {|g' "$ext_sys"
+        perl -0777 -pi -e 's|(L10nRegistry\.getInstance\(\)\.registerSources\(fileSources\);)|try {\n      fileSources.push(new L10nFileSource("seafari-brand-" + langpackId, langpackId, this.startupData.languages, "resource:///localization/en-US/"));\n    } catch(e) {}\n    ${1}|g' "$ext_sys"
+    fi
+
+    # English: Replicate Seafari brand.ftl across common locales in omni.ja
+    # Español: Replicar brand.ftl de Seafari en idiomas comunes en omni.ja
+    local us_branding="$temp_dir/localization/en-US/branding"
+    if [ -d "$us_branding" ]; then
+        echo "Replicating Seafari brand.ftl across common locales in omni.ja..."
+        for loc in es-ES es-AR es-CL es-MX fr de it pt-BR pt-PT ca gl eu ru zh-CN ja pl nl; do
+            local loc_dir="$temp_dir/localization/$loc/branding"
+            mkdir -p "$loc_dir"
+            cp -r "$us_branding"/* "$loc_dir/" 2>/dev/null || true
+        done
+    fi
+
+    # English: Patch violet / purple tokens in design-system tokens-shared.css and tokens-brand.css
+    # Español: Parchear tokens violeta / morados en tokens-shared.css y tokens-brand.css
+    find "$temp_dir" -name "tokens-shared.css" 2>/dev/null | while read -r tok_file; do
+        echo "Patching violet tokens in $tok_file..."
+        perl -pi -e 's|--color-accent-primary-hover:\s*[^;]+;|--color-accent-primary-hover: #005dc2;|g' "$tok_file"
+        perl -pi -e 's|--button-background-color-primary-hover:\s*[^;]+;|--button-background-color-primary-hover: #005dc2;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-60:\s*[^;]+;|--color-violet-60: #0071e3;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-20:\s*[^;]+;|--color-violet-20: #005dc2;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-0:\s*[^;]+;|--color-violet-desaturated-0: #f2f2f7;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-10:\s*[^;]+;|--color-violet-desaturated-10: #e5e5ea;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-20:\s*[^;]+;|--color-violet-desaturated-20: #d1d1d6;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-30:\s*[^;]+;|--color-violet-desaturated-30: #c7c7cc;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-40:\s*[^;]+;|--color-violet-desaturated-40: #8e8e93;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-50:\s*[^;]+;|--color-violet-desaturated-50: #636366;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-60:\s*[^;]+;|--color-violet-desaturated-60: #48484a;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-70:\s*[^;]+;|--color-violet-desaturated-70: #3a3a3c;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-80:\s*[^;]+;|--color-violet-desaturated-80: #2c2c2e;|g' "$tok_file"
+        perl -pi -e 's|--color-violet-desaturated-90:\s*[^;]+;|--color-violet-desaturated-90: #1c1c1e;|g' "$tok_file"
+        perl -pi -e 's|rgba\(117, 102, 159,|rgba(100, 100, 100,|g' "$tok_file"
+        perl -pi -e 's|rgba\(182, 170, 217,|rgba(200, 200, 200,|g' "$tok_file"
+    done
+
+    find "$temp_dir" -name "tokens-brand.css" 2>/dev/null | while read -r tb_file; do
+        perl -pi -e 's|--button-background-color-hover:\s*light-dark\(var\(--color-violet-desaturated-20\),\s*var\(--color-violet-desaturated-50\)\);|--button-background-color-hover: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.08));|g' "$tb_file"
+        perl -pi -e 's|--button-background-color-active:\s*light-dark\(var\(--color-violet-desaturated-30\),\s*var\(--color-violet-desaturated-40\)\);|--button-background-color-active: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.14));|g' "$tb_file"
+    done
+
+    find "$temp_dir" -name "moz-page-nav.tokens.css" 2>/dev/null | while read -r mpn_file; do
+        perl -pi -e 's|--page-nav-button-background-color-hover:\s*[^;]+;|--page-nav-button-background-color-hover: rgba(255, 255, 255, 0.08);|g' "$mpn_file"
+        perl -pi -e 's|--page-nav-button-background-color-active:\s*[^;]+;|--page-nav-button-background-color-active: rgba(255, 255, 255, 0.15);|g' "$mpn_file"
+    done
+
+    find "$temp_dir" -name "moz-page-nav-button.css" 2>/dev/null | while read -r mpnb_file; do
+        echo -e "\nbutton:hover:not([selected]), a[href]:hover { background-color: rgba(255, 255, 255, 0.08) !important; border-color: transparent !important; }" >> "$mpnb_file"
+    done
+
+    # English: Replace all Mozilla mascot / fox drawings and illustrations across omni.ja with 1x1 transparent
+    # Español: Reemplazar todos los dibujos e ilustraciones del zorro / mascotas de Mozilla en todo omni.ja con 1x1 transparente
+    local empty_svg='<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"/>'
+    for pat in "*kit-addons*.svg" "*fox-smiling*.svg" "*foxy*.svg" "*avatar-fox*.svg" "*puzzle-fox*.svg" "*cpm-fox*.svg" "*fox-tail*.svg" "*fox-ai*.svg" "*widget-privacy-kit*.svg" "*kit-in-circle*.svg" "*kit-circle-animated*.svg" "*kit-tabs-devices*.svg" "*kit-page-history*.svg" "*kit-history-import*.svg" "*kit-pbw*.svg" "*sync-illustration*.svg" "*sync-promo*.svg"; do
+        find "$temp_dir" -name "$pat" 2>/dev/null | while read -r svg_f; do
+            echo "$empty_svg" > "$svg_f"
+        done
+    done
+    find "$temp_dir" -name "addons-promo.css" 2>/dev/null | while read -r ap_file; do
+        echo -e "\n.image-container { display: none !important; } :host { --addons-promo-image-size: 0px !important; }" >> "$ap_file"
+    done
+    find "$temp_dir" -name "moz-promo.css" 2>/dev/null | while read -r mp_file; do
+        echo -e "\n.image-container { display: none !important; } :host { --promo-image-size: 0px !important; }" >> "$mp_file"
+    done
 
     # English: Make all illustrations transparent in any folder named 'illustrations'
     # Español: Hacer transparentes todas las ilustraciones en cualquier carpeta llamada 'illustrations'
@@ -1923,6 +2350,20 @@ EOF
     --color-violet-80: #005dc2 !important;
     --color-violet-70: #004da6 !important;
     --color-violet-60: #0071e3 !important;
+    --color-violet-desaturated-0: #f2f2f7 !important;
+    --color-violet-desaturated-10: #e5e5ea !important;
+    --color-violet-desaturated-20: #d1d1d6 !important;
+    --color-violet-desaturated-30: #c7c7cc !important;
+    --color-violet-desaturated-40: #8e8e93 !important;
+    --color-violet-desaturated-50: #636366 !important;
+    --color-violet-desaturated-60: #48484a !important;
+    --color-violet-desaturated-70: #3a3a3c !important;
+    --color-violet-desaturated-80: #2c2c2e !important;
+    --color-violet-desaturated-90: #1c1c1e !important;
+    --page-nav-button-background-color-hover: rgba(255, 255, 255, 0.08) !important;
+    --page-nav-button-background-color-active: rgba(255, 255, 255, 0.15) !important;
+    --button-background-color-hover: rgba(255, 255, 255, 0.08) !important;
+    --button-background-color-ghost-hover: rgba(255, 255, 255, 0.08) !important;
     --button-background-color-primary: #0071e3 !important;
     --button-background-color-primary-hover: #005dc2 !important;
     --button-background-color-primary-active: #004da6 !important;
@@ -1934,6 +2375,19 @@ EOF
     --theme-primary-hover-color: #005dc2 !important;
     --theme-primary-active-color: #004da6 !important;
     --button-border-radius: 999px !important;
+}
+
+moz-page-nav-button button:hover:not([selected]),
+moz-page-nav-button a:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: transparent !important;
+}
+
+addons-promo img,
+addons-promo .image-container,
+.addons-promo-image,
+addons-promo [part="image"] {
+    display: none !important;
 }
 
 
@@ -2039,7 +2493,7 @@ h1,
 }
 
 @media (prefers-color-scheme: light) {
-    body {  <span class="warning-highlight">Important:</span> Currently, Seafari requires your operating system to be in <strong>Dark Mode</strong> (it does not render correctly in Light Mode).
+    body {
         background-color: #f5f5f7 !important;
         color: #1d1d1f !important;
     }
@@ -2095,9 +2549,9 @@ EOF
     if [ -f "$about_firefox_mjs" ]; then
         echo "Patching about-firefox.mjs..."
         # 1. Register the settings
-        perl -0777 -pi -e 's|Preferences\.addSetting\(\{\s*id:\s*"supportShareIdeas",\s*\}\);|Preferences.addSetting({\n  id: "supportShareIdeas",\n});\nPreferences.addSetting({\n  id: "supportDiscord",\n});\nPreferences.addSetting({\n  id: "supportMatrix",\n});\nPreferences.addSetting({\n  id: "supportGithub",\n});|g' "$about_firefox_mjs"
+        perl -0777 -pi -e 's|Preferences\.addSetting\(\{\s*id:\s*"supportShareIdeas",\s*\}\);|Preferences.addSetting({\n  id: "supportShareIdeas",\n});\nPreferences.addSetting({\n  id: "supportDiscord",\n});\nPreferences.addSetting({\n  id: "supportTelegram",\n});\nPreferences.addSetting({\n  id: "supportGithub",\n});|g' "$about_firefox_mjs"
         # 2. Add items to supportLinksGroup
-        perl -0777 -pi -e 's|(\{\s*id:\s*"supportShareIdeas",\s*l10nId:\s*"support-share-ideas",\s*control:\s*"moz-box-link",\s*controlAttrs:\s*\{\s*href:\s*"https://connect.mozilla.org/",\s*\},\s*\})|${1},\n          {\n            id: "supportDiscord",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://discord.com/invite/PSeTkDMnr",\n              label: "Join our Discord",\n            },\n          },\n          {\n            id: "supportMatrix",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://matrix.inled.es",\n              label: "Join our Matrix space",\n            },\n          },\n          {\n            id: "supportGithub",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://github.com/InledGroup/seafari",\n              label: "GitHub Repository",\n            },\n          }|g' "$about_firefox_mjs"
+        perl -0777 -pi -e 's|(\{\s*id:\s*"supportShareIdeas",\s*l10nId:\s*"support-share-ideas",\s*control:\s*"moz-box-link",\s*controlAttrs:\s*\{\s*href:\s*"https://connect\.mozilla\.org/",\s*\}\s*,?\s*\})|${1},\n          {\n            id: "supportDiscord",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://link.inled.es/discord",\n              label: "Join our Discord",\n            },\n          },\n          {\n            id: "supportTelegram",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://link.inled.es/telegram",\n              label: "Join our Telegram",\n            },\n          },\n          {\n            id: "supportGithub",\n            control: "moz-box-link",\n            controlAttrs: {\n              href: "https://github.com/InledGroup/seafari",\n              label: "GitHub Repository",\n            },\n          }|g' "$about_firefox_mjs"
     fi
 
     # Find and redirect native newtab pages to our extension's newtab (CSP-safe by modifying external JS)
@@ -2218,6 +2672,28 @@ sed -i '/browser.newtabpage.url/d' "$USER_JS"
 echo "user_pref(\"browser.newtabpage.url\", \"file://$PROFILE_DIR/chrome/newtab.html\");" >> "$USER_JS"
 sed -i '/browser.newtabpage.activity-stream.enabled/d' "$USER_JS"
 echo 'user_pref("browser.newtabpage.activity-stream.enabled", false);' >> "$USER_JS"
+sed -i '/browser.preonboarding.enabled/d' "$USER_JS"
+echo 'user_pref("browser.preonboarding.enabled", true);' >> "$USER_JS"
+sed -i '/termsofuse.bypassNotification/d' "$USER_JS"
+echo 'user_pref("termsofuse.bypassNotification", true);' >> "$USER_JS"
+sed -i '/termsofuse.acceptedVersion/d' "$USER_JS"
+echo 'user_pref("termsofuse.acceptedVersion", 999);' >> "$USER_JS"
+sed -i '/datareporting.policy.dataSubmissionEnabled/d' "$USER_JS"
+echo 'user_pref("datareporting.policy.dataSubmissionEnabled", false);' >> "$USER_JS"
+sed -i '/datareporting.policy.dataSubmissionPolicyAcceptedVersion/d' "$USER_JS"
+echo 'user_pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 999);' >> "$USER_JS"
+sed -i '/browser.aboutwelcome.enabled/d' "$USER_JS"
+echo 'user_pref("browser.aboutwelcome.enabled", false);' >> "$USER_JS"
+sed -i '/browser.aboutwelcome.experimentsGate.enabled/d' "$USER_JS"
+echo 'user_pref("browser.aboutwelcome.experimentsGate.enabled", false);' >> "$USER_JS"
+sed -i '/xpinstall.enabled/d' "$USER_JS"
+echo 'user_pref("xpinstall.enabled", true);' >> "$USER_JS"
+sed -i '/xpinstall.whitelist.required/d' "$USER_JS"
+echo 'user_pref("xpinstall.whitelist.required", false);' >> "$USER_JS"
+sed -i '/browser.tabs.remote.autostart/d' "$USER_JS"
+echo 'user_pref("browser.tabs.remote.autostart", true);' >> "$USER_JS"
+sed -i '/extensions.webextensions.remote/d' "$USER_JS"
+echo 'user_pref("extensions.webextensions.remote", true);' >> "$USER_JS"
 sed -i '/browser.startup.homepage/d' "$USER_JS"
 echo "user_pref(\"browser.startup.homepage\", \"file://$PROFILE_DIR/chrome/newtab.html\");" >> "$USER_JS"
 
